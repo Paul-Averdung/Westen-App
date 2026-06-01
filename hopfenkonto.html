@@ -563,9 +563,10 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     const dateEl  = document.getElementById('countdown-date');
     const title   = document.getElementById('countdown-title');
 
+    const MO = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+
     // Always show the Fronleichnam date
     if (dateEl) dateEl.textContent = 'Fronleichnam · ' + thu.getDate() + '. ' + MO[thu.getMonth()] + ' ' + y;
-    const MO = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
 
     const isFest = (d1, d2) => d1.getTime() === d2.getTime();
 
