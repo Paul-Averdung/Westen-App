@@ -295,7 +295,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   }
 
   function updateBeerLevel() {
-    const total = Object.values(state).reduce((a, b) => a + b, 0);
+    const total = state.b02 + state.b033 + state.b05 + state.shots + state.misch;
     const pct = Math.min(total / LEVEL_MAX * 100, 100);
     document.getElementById('beer-fill').style.height = pct + '%';
     if (total > 0 && !bubbleTimer) {
@@ -342,7 +342,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     document.getElementById('total-bier').textContent  = totalBierL.toFixed(2).replace('.',',') + ' l';
     document.getElementById('total-shots').textContent = totalShotsCl + ' cl';
     document.getElementById('total-misch').textContent = totalMischCl + ' cl';
-    document.getElementById('grand-total').textContent = state.b02 + state.b033 + state.b05 + state.shots + state.misch + state.manta;
+    document.getElementById('grand-total').textContent = state.b02 + state.b033 + state.b05 + state.shots + state.misch;
   }
 
   function triggerAnim(btn, dir) {
@@ -367,7 +367,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     if (btn) triggerAnim(btn, dir);
     state[key] = Math.max(0, state[key] + dir);
     const h = currentHour();
-    hourlyCount[h] = Math.max(0, (hourlyCount[h] || 0) + dir);
+    if (key !== 'manta') hourlyCount[h] = Math.max(0, (hourlyCount[h] || 0) + dir);
     document.getElementById('b02-count').textContent  = state.b02;
     document.getElementById('b033-count').textContent = state.b033;
     document.getElementById('b05-count').textContent  = state.b05;
