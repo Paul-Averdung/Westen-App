@@ -95,12 +95,25 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 .grand-label { font-size: 10px; color: #97C459; margin-bottom: 1px; }
 .grand-val { font-size: 20px; font-weight: 500; color: #C0DD97; }
 .reset-btn {
+  position: relative; overflow: hidden;
   width: 100%; border: 0.5px solid #3B6D11; background: transparent;
   color: #97C459; border-radius: 8px; padding: 8px; font-size: 13px;
   cursor: pointer; margin-top: 10px;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  user-select: none; -webkit-user-select: none;
+  touch-action: none;
 }
-.reset-btn:active { background: #27500A; }
+.reset-btn-fill {
+  position: absolute; top: 0; left: 0; bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(180,100,10,0.55) 0%, rgba(220,150,20,0.62) 60%, rgba(240,190,40,0.55) 100%);
+  border-radius: 8px;
+  pointer-events: none;
+  transition: none;
+}
+.reset-btn-label {
+  position: relative; z-index: 1; pointer-events: none;
+}
 
 /* ── Beer level ────────────────────────────────────────────────────── */
 #beer-fill {
@@ -243,6 +256,52 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   100% { transform: scale(1);   }
 }
 
+/* ── Reaction / Promille Test ───────────────────────────────────────────── */
+#reaction-overlay { touch-action: none; }
+@keyframes xhPulse {
+  0%,100% { filter: drop-shadow(0 0 4px rgba(255,60,60,0.7)); }
+  50%     { filter: drop-shadow(0 0 12px rgba(255,60,60,1)); }
+}
+.crosshair-svg { animation: xhPulse 0.75s ease-in-out infinite; }
+@keyframes xhAppear {
+  from { opacity:0; transform:scale(0.2); }
+  to   { opacity:1; transform:scale(1); }
+}
+.crosshair-appear { animation: xhAppear 0.12s ease-out forwards; }
+
+/* ── Slot Machine ──────────────────────────────────────────── */
+.slots-reel {
+  width: min(19vw,74px); height: min(19vw,74px);
+  background: #0a1c04; border: 1.5px solid #3B6D11;
+  border-radius: 10px; display: flex;
+  align-items: center; justify-content: center; overflow: hidden;
+  transition: border-color 0.25s;
+}
+.reel-inner {
+  font-size: min(12vw,46px); line-height: 1;
+  user-select: none; display: block; filter: none;
+  transition: filter 0.06s;
+}
+.slots-reel.spinning { border-color: #EFC93D; }
+.slots-reel.spinning .reel-inner { filter: blur(2px); }
+.slots-reel.win-flash {
+  animation: reelWinFlash 0.55s ease-out;
+}
+@keyframes reelWinFlash {
+  0%,100% { border-color: #3B6D11; background:#0a1c04; }
+  40%     { border-color: #FFD700; background:#1c2a04; box-shadow:0 0 18px rgba(255,215,0,0.5); }
+}
+.slots-bet-btn {
+  background: transparent; border: 1px solid #3B6D11;
+  color: #97C459; padding: 6px 15px; border-radius: 8px;
+  font-size: 14px; cursor: pointer; margin: 0 3px;
+  transition: all 0.15s; font-family: -apple-system,BlinkMacSystemFont,sans-serif;
+}
+.slots-bet-btn.active {
+  background: #3B6D11; color: #EFC93D; font-weight: 700;
+  border-color: #EFC93D;
+}
+.slots-bet-btn:disabled { opacity: 0.35; cursor: default; }
 </style>
 </head>
 <body>
@@ -338,7 +397,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
       <div class="grand-val" id="grand-total">0</div>
     </div>
     <div id="medals-display"></div>
-    <button class="reset-btn" onclick="resetAll()">↺ Alles zurücksetzen</button>
+    <button class="reset-btn" id="reset-btn"><span class="reset-btn-fill" id="reset-fill"></span><span class="reset-btn-label">↺ Alles zurücksetzen</span></button>
   </div>
 
   <div class="graph-card" id="countdown-card" style="text-align:center; padding:16px 14px;">
@@ -359,10 +418,60 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   </div>
 
   <!-- Settings -->
-  <div style="text-align:center; margin:10px 0 4px;">
+  <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin:10px 0 4px;">
     <button id="settings-btn" onclick="toggleSettings()"
+      style="background:none; border:none; color:#3B6D11; cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
+      title="Einstellungen">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" stroke="none">
+        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54A.49.49 0 0 0 13.92 2.4H10.08a.49.49 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.72 8.87c-.12.22-.07.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94L2.84 14.52c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/>
+      </svg>
+    </button>
+    <button id="reaction-btn" onclick="openReactionTest()"
       style="background:none; border:none; color:#3B6D11; font-size:18px; cursor:pointer; opacity:0.7; padding:4px 8px;"
-      title="Einstellungen">⚙</button>
+      title="Promille-Reaktionstest">
+      <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="9"/>
+        <circle cx="11" cy="11" r="3.5"/>
+        <line x1="11" y1="1"  x2="11" y2="6.5"/>
+        <line x1="11" y1="15.5" x2="11" y2="21"/>
+        <line x1="1"  y1="11" x2="6.5" y2="11"/>
+        <line x1="15.5" y1="11" x2="21" y2="11"/>
+      </svg>
+    </button>
+    <button id="timer-btn" onclick="openTimerOverlay()"
+      style="background:none; border:none; color:#3B6D11; cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
+      title="Exen-Timer">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" stroke="none">
+        <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61 1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.96 8.96 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9a9 9 0 0 0 9-9 8.96 8.96 0 0 0-2.97-6.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+      </svg>
+    </button>
+    <button id="dice-btn" onclick="openDiceGame()"
+      style="background:none; border:none; color:#3B6D11; cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
+      title="Würfelspiel">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="2" width="20" height="20" rx="3.5"/>
+        <circle cx="8"  cy="8"  r="1.3" fill="currentColor" stroke="none"/>
+        <circle cx="16" cy="8"  r="1.3" fill="currentColor" stroke="none"/>
+        <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/>
+        <circle cx="8"  cy="16" r="1.3" fill="currentColor" stroke="none"/>
+        <circle cx="16" cy="16" r="1.3" fill="currentColor" stroke="none"/>
+      </svg>
+    </button>
+    <button id="slots-btn" onclick="openSlotsGame()"
+      style="background:none; border:none; color:#3B6D11; cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
+      title="Hopfen-Slots">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <!-- machine body -->
+        <rect x="1" y="4" width="19" height="16" rx="2"/>
+        <!-- 3 reel windows -->
+        <rect x="3"   y="8" width="4" height="7" rx="1" stroke-width="1.5"/>
+        <rect x="8.5" y="8" width="4" height="7" rx="1" stroke-width="1.5"/>
+        <rect x="14"  y="8" width="4" height="7" rx="1" stroke-width="1.5"/>
+        <!-- lever arm -->
+        <line x1="22" y1="5" x2="22" y2="15"/>
+        <circle cx="22" cy="16.5" r="2" fill="currentColor" stroke="none"/>
+      </svg>
+    </button>
   </div>
   <div id="settings-panel" style="display:none; background:#173404; border:0.5px solid #3B6D11; border-radius:10px; padding:14px; margin-bottom:14px;">
     <p style="color:#97C459; font-size:12px; margin-bottom:8px; font-weight:500;">Einstellungen</p>
@@ -373,6 +482,14 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
       style="background:#0f2204; border:0.5px solid #3B6D11; color:#C0DD97; padding:6px 10px;
              border-radius:8px; font-size:15px; width:100%; box-sizing:border-box; outline:none;
              font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+  <div style="margin-top:12px; border-top:0.5px solid #3B6D11; padding-top:12px;">
+    <button onclick="location.reload()"
+      style="width:100%; padding:8px; background:transparent; border:0.5px solid #3B6D11;
+             color:#97C459; border-radius:8px; font-size:13px; cursor:pointer;
+             font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+      🔄 App aktualisieren
+    </button>
+  </div>
   </div>
 </div>
 
@@ -386,6 +503,109 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   </div>
 </div>
 
+<!-- ── Promille-Reaktionstest Overlay ───────────────────────────────── -->
+<div id="reaction-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,15,2,0.97); z-index:11000; font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+  <button onclick="closeReactionTest()" style="position:absolute;top:18px;right:18px;background:none;border:none;color:#97C459;font-size:22px;cursor:pointer;z-index:2;padding:4px 8px;">✕</button>
+  <div id="rxn-countdown" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+    <div id="rxn-num"  style="font-size:96px;font-weight:900;color:#EFC93D;line-height:1;"></div>
+    <div id="rxn-text" style="font-size:17px;color:#97C459;margin-top:10px;"></div>
+  </div>
+  <div id="rxn-results" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;padding:28px;min-width:260px;">
+    <div id="rxn-result-content"></div>
+    <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button onclick="closeReactionTest()" style="padding:9px 22px;background:transparent;border:1px solid #3B6D11;color:#97C459;border-radius:8px;font-size:14px;cursor:pointer;">Schließen</button>
+      <button onclick="startReactionTest()" style="padding:9px 22px;background:transparent;border:1px solid #3B6D11;color:#97C459;border-radius:8px;font-size:14px;cursor:pointer;">Nochmal 🎯</button>
+    </div>
+  </div>
+</div>
+<!-- ── Exen-Timer Overlay ───────────────────────────────────────────── -->
+<div id="timer-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,15,2,0.97); z-index:11000; font-family:-apple-system,BlinkMacSystemFont,sans-serif; display:none;">
+  <button onclick="closeTimerOverlay()" style="position:absolute;top:18px;right:18px;background:none;border:none;color:#97C459;font-size:22px;cursor:pointer;z-index:2;padding:4px 8px;">✕</button>
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);text-align:center;width:90vw;">
+    <div style="color:#97C459;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;opacity:0.7;">Exen-Timer</div>
+    <div id="timer-display"
+         style="font-size:clamp(56px,18vw,88px);font-weight:900;color:#EFC93D;letter-spacing:2px;
+                font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace;line-height:1;">00.00</div>
+    <div id="timer-state" style="color:#97C459;font-size:13px;margin:10px 0 28px;min-height:18px;opacity:0.75;"></div>
+    <div id="timer-rating" style="font-size:17px;font-weight:700;min-height:26px;margin-bottom:22px;"></div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button id="timer-start-stop" onclick="timerStartStop()"
+        style="padding:14px 44px;font-size:17px;font-weight:700;letter-spacing:1px;
+               background:transparent;border:2px solid #3B6D11;color:#97C459;
+               border-radius:10px;cursor:pointer;transition:all 0.18s;min-width:140px;">
+        START
+      </button>
+      <button id="timer-reset-btn" onclick="timerReset()"
+        style="display:none;padding:14px 28px;font-size:15px;
+               background:transparent;border:1px solid #3B6D11;color:#97C459;
+               border-radius:10px;cursor:pointer;">
+        RESET
+      </button>
+    </div>
+  </div>
+</div>
+<!-- ── Würfelspiel Overlay ──────────────────────────────────────────── -->
+<div id="dice-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,15,2,0.97); z-index:11000; font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+  <button onclick="closeDiceGame()" style="position:absolute;top:18px;right:18px;background:none;border:none;color:#97C459;font-size:22px;cursor:pointer;z-index:2;padding:4px 8px;">✕</button>
+
+  <!-- Step 1: Player count input -->
+  <div id="dice-setup" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:85vw;max-width:320px;">
+    <div style="font-size:40px;margin-bottom:16px;">🎲</div>
+    <div style="color:#EFC93D;font-size:20px;font-weight:700;margin-bottom:6px;">Würfelspiel</div>
+    <div style="color:#97C459;font-size:13px;margin-bottom:24px;opacity:0.8;">Wer kauft die nächste Runde?</div>
+    <div style="color:#C0DD97;font-size:15px;margin-bottom:10px;">Wie viele Leute seid ihr?</div>
+    <input id="dice-count-input" type="number" min="2" max="30" placeholder="z.B. 4"
+      style="width:100%;box-sizing:border-box;padding:12px 16px;font-size:22px;font-weight:700;text-align:center;
+             background:#0f2204;border:1.5px solid #3B6D11;color:#EFC93D;border-radius:10px;outline:none;
+             font-family:-apple-system,BlinkMacSystemFont,sans-serif;"
+      onkeydown="if(event.key==='Enter') confirmPlayerCount()"/>
+    <div id="dice-count-error" style="display:none;color:#FF6666;font-size:12px;margin-top:6px;">Bitte eine Zahl zwischen 2 und 30 eingeben</div>
+    <button onclick="confirmPlayerCount()"
+      style="margin-top:18px;width:100%;padding:13px;font-size:16px;font-weight:700;
+             background:transparent;border:2px solid #3B6D11;color:#97C459;border-radius:10px;cursor:pointer;">
+      Weiter →
+    </button>
+  </div>
+
+  <!-- Step 2: Roll screen -->
+  <div id="dice-roll-screen" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);text-align:center;">
+    <div id="dice-player-count-label" style="color:#97C459;font-size:14px;margin-bottom:20px;opacity:0.8;letter-spacing:1px;"></div>
+    <div id="dice-face"
+      style="width:min(52vw,180px);height:min(52vw,180px);line-height:min(52vw,180px);
+             font-size:min(26vw,90px);font-weight:900;color:#EFC93D;
+             border:3px solid #3B6D11;border-radius:20px;
+             background:#0a1c04;margin:0 auto 28px;
+             font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace;
+             box-shadow:0 0 30px rgba(59,109,17,0.25);">?</div>
+    <button id="dice-roll-btn" onclick="rollDice()"
+      style="padding:14px 52px;font-size:18px;font-weight:700;letter-spacing:1px;
+             background:transparent;border:2px solid #3B6D11;color:#97C459;
+             border-radius:10px;cursor:pointer;">
+      🎲 Würfeln!
+    </button>
+    <div style="margin-top:14px;">
+      <button onclick="openDiceSetup()" style="background:none;border:none;color:#3B6D11;font-size:12px;cursor:pointer;opacity:0.7;">← Spieleranzahl ändern</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Result screen -->
+  <div id="dice-result-screen" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);text-align:center;width:85vw;max-width:320px;">
+    <div style="color:#97C459;font-size:13px;margin-bottom:16px;opacity:0.8;letter-spacing:1px;">Das Ergebnis:</div>
+    <div id="dice-result-face"
+      style="width:min(52vw,180px);height:min(52vw,180px);line-height:min(52vw,180px);
+             font-size:min(26vw,90px);font-weight:900;color:#EFC93D;
+             border:3px solid #EFC93D;border-radius:20px;
+             background:#0a1c04;margin:0 auto 20px;
+             font-family:ui-monospace,monospace;
+             box-shadow:0 0 40px rgba(239,199,61,0.3);"></div>
+    <div id="dice-result-text" style="color:#C0DD97;font-size:19px;font-weight:700;margin-bottom:6px;"></div>
+    <div id="dice-result-sub"  style="color:#97C459;font-size:14px;margin-bottom:28px;opacity:0.8;"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button onclick="rollDiceAgain()" style="padding:12px 24px;font-size:15px;background:transparent;border:2px solid #3B6D11;color:#97C459;border-radius:10px;cursor:pointer;">🎲 Nochmal</button>
+      <button onclick="openDiceSetup()" style="padding:12px 24px;font-size:15px;background:transparent;border:1px solid #3B6D11;color:#97C459;border-radius:10px;cursor:pointer;opacity:0.8;">Neue Runde</button>
+    </div>
+  </div>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 (function(){
@@ -845,8 +1065,549 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     updateMedalsDisplay();
   };
 
+
+  // ── Hold-to-Reset ────────────────────────────────────────────────────────────
+  (function() {
+    const btn  = document.getElementById('reset-btn');
+    const fill = document.getElementById('reset-fill');
+    if (!btn || !fill) return;
+    const HOLD_MS = 2000;
+    let animFrame = null;
+    let startTime = null;
+
+    function startHold(e) {
+      e.preventDefault();
+      startTime = Date.now();
+      fill.style.transition = 'none';
+      tick();
+    }
+
+    function tick() {
+      const pct = Math.min((Date.now() - startTime) / HOLD_MS, 1);
+      fill.style.width = (pct * 100) + '%';
+      if (pct < 1) {
+        animFrame = requestAnimationFrame(tick);
+      } else {
+        // Held long enough — flash and reset
+        fill.style.background = 'rgba(151,196,89,0.5)';
+        setTimeout(() => {
+          fill.style.transition = 'width 0.35s ease';
+          fill.style.width = '0%';
+          fill.style.background = 'linear-gradient(90deg, rgba(180,100,10,0.55) 0%, rgba(220,150,20,0.62) 60%, rgba(240,190,40,0.55) 100%)';
+        }, 250);
+        resetAll();
+      }
+    }
+
+    function cancelHold() {
+      if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+      if (startTime === null) return;
+      startTime = null;
+      fill.style.transition = 'width 0.4s ease';
+      fill.style.width = '0%';
+    }
+
+    btn.addEventListener('pointerdown', startHold);
+    btn.addEventListener('pointerup',   cancelHold);
+    btn.addEventListener('pointerleave', cancelHold);
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+  })();
+
+  // ── Promille-Reaktionstest ────────────────────────────────────────────────────
+  window.openReactionTest = function() {
+    document.getElementById('reaction-overlay').style.display = 'block';
+    startReactionTest();
+  };
+
+  window.closeReactionTest = function() {
+    document.getElementById('reaction-overlay').style.display = 'none';
+    const xh = document.getElementById('active-xhair');
+    if (xh) xh.remove();
+    if (window._rxnCountdown) clearInterval(window._rxnCountdown);
+  };
+
+  window.startReactionTest = function() {
+    const overlay    = document.getElementById('reaction-overlay');
+    const cdEl       = document.getElementById('rxn-countdown');
+    const resultsEl  = document.getElementById('rxn-results');
+    const numEl      = document.getElementById('rxn-num');
+    const textEl     = document.getElementById('rxn-text');
+    const old = document.getElementById('active-xhair');
+    if (old) old.remove();
+    resultsEl.style.display = 'none';
+    cdEl.style.display = 'block';
+
+    const times = [];
+    let shownAt = 0, hitCount = 0;
+    const TOTAL = 3;
+
+    let count = 3;
+    numEl.textContent  = count;
+    textEl.textContent = 'Bereit machen…';
+
+    window._rxnCountdown = setInterval(() => {
+      count--;
+      if (count > 0) {
+        numEl.textContent  = count;
+        textEl.textContent = '';
+      } else if (count === 0) {
+        numEl.textContent  = '🎯';
+        textEl.textContent = 'LOS!';
+      } else {
+        clearInterval(window._rxnCountdown);
+        cdEl.style.display = 'none';
+        spawnTarget();
+      }
+    }, 850);
+
+    function spawnTarget() {
+      const W = overlay.clientWidth, H = overlay.clientHeight;
+      const S = Math.min(72, W * 0.18);
+      const pad = S + 10;
+      const x = pad + Math.random() * (W - S - pad * 2);
+      const y = pad + Math.random() * (H - S - pad * 2);
+
+      const div = document.createElement('div');
+      div.id = 'active-xhair';
+      div.style.cssText = `position:absolute;left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;width:${S}px;height:${S}px;cursor:crosshair;touch-action:none;`;
+      const r = (S/2).toFixed(1), cx = r, cy = r;
+      const gap = (S*0.15).toFixed(1), inner = (S*0.13).toFixed(1), end = (S*0.04).toFixed(1);
+      div.innerHTML = `<svg viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" class="crosshair-svg crosshair-appear">
+        <circle cx="${r}" cy="${r}" r="${(S/2-2).toFixed(1)}" fill="rgba(255,40,40,0.07)" stroke="#FF3333" stroke-width="2.5"/>
+        <circle cx="${r}" cy="${r}" r="${inner}" fill="none" stroke="#FF3333" stroke-width="2"/>
+        <line x1="${end}" y1="${r}" x2="${(parseFloat(r)-parseFloat(gap)-parseFloat(inner)).toFixed(1)}" y2="${r}" stroke="#FF3333" stroke-width="2.5"/>
+        <line x1="${(parseFloat(r)+parseFloat(gap)+parseFloat(inner)).toFixed(1)}" y1="${r}" x2="${(S-parseFloat(end)).toFixed(1)}" y2="${r}" stroke="#FF3333" stroke-width="2.5"/>
+        <line x1="${r}" y1="${end}" x2="${r}" y2="${(parseFloat(r)-parseFloat(gap)-parseFloat(inner)).toFixed(1)}" stroke="#FF3333" stroke-width="2.5"/>
+        <line x1="${r}" y1="${(parseFloat(r)+parseFloat(gap)+parseFloat(inner)).toFixed(1)}" x2="${r}" y2="${(S-parseFloat(end)).toFixed(1)}" stroke="#FF3333" stroke-width="2.5"/>
+        <circle cx="${r}" cy="${r}" r="2.8" fill="#FF3333"/>
+      </svg>`;
+      overlay.appendChild(div);
+      shownAt = Date.now();
+      hitCount++;
+
+      div.addEventListener('pointerdown', function onHit(e) {
+        e.preventDefault();
+        div.removeEventListener('pointerdown', onHit);
+        times.push(Date.now() - shownAt);
+        div.style.transition = 'opacity 0.13s, transform 0.13s';
+        div.style.opacity = '0';
+        div.style.transform = 'scale(1.5)';
+        setTimeout(() => {
+          div.remove();
+          if (hitCount < TOTAL) spawnTarget(); else showResults(times);
+        }, 130);
+      });
+    }
+
+    function showResults(times) {
+      const avg = times.reduce((a,b)=>a+b,0) / times.length;
+      let rating, col;
+      if      (avg < 300)  { rating = 'Scharf wie ein Adler 🦅';       col = '#50C878'; }
+      else if (avg < 500)  { rating = 'Leicht angeheitert 🍺';          col = '#FFD700'; }
+      else if (avg < 700)  { rating = 'Schützenfest-Niveau 🍻';         col = '#CD7F32'; }
+      else if (avg < 1000) { rating = 'Gut gebechert 🥴';               col = '#E0115F'; }
+      else                 { rating = 'Lieber Taxi rufen 🚕';           col = '#9966CC'; }
+
+      const rows = times.map((t,i) =>
+        `<div style="color:#C0DD97;font-size:14px;margin:5px 0;">Treffer ${i+1}: <b>${(t/1000).toFixed(2)} s</b></div>`
+      ).join('');
+
+      document.getElementById('rxn-result-content').innerHTML = `
+        <div style="font-size:22px;font-weight:900;color:#EFC93D;margin-bottom:16px;">Reaktionszeit</div>
+        ${rows}
+        <div style="margin-top:14px;font-size:20px;color:#C0DD97;">Ø <b>${(avg/1000).toFixed(2)} s</b></div>
+        <div style="margin-top:18px;font-size:16px;font-weight:700;color:${col};">${rating}</div>
+      `;
+      document.getElementById('rxn-results').style.display = 'block';
+    }
+  };
+
+  // ── Exen-Timer ────────────────────────────────────────────────────────────────
+  (function() {
+    let _interval = null, _start = null, _elapsed = 0, _running = false, _stopped = false;
+
+    function fmt(ms) {
+      const cs   = Math.floor(ms / 10) % 100;
+      const secs = Math.floor(ms / 1000);
+      return String(secs).padStart(2,'0') + '.' + String(cs).padStart(2,'0');
+    }
+
+    function tick() {
+      const el = document.getElementById('timer-display');
+      if (el) el.textContent = fmt(Date.now() - _start);
+    }
+
+    function rating(ms) {
+      const s = ms / 1000;
+      if (s < 1.0) return { text: 'Absolute Legende 🏆',       col: '#50C878' };
+      if (s < 1.8) return { text: 'Profi-Exer 🥇',             col: '#FFD700' };
+      if (s < 3.0) return { text: 'Schützenfest-tauglich 🍺',  col: '#CD7F32' };
+      if (s < 5.0) return { text: 'Noch Luft nach oben 😅',    col: '#C0C0C0' };
+      return              { text: 'Lieber in Ruhe trinken 😄',  col: '#9966CC' };
+    }
+
+    window.openTimerOverlay = function() {
+      const ov = document.getElementById('timer-overlay');
+      ov.style.display = 'block';
+      timerReset();
+    };
+
+    window.closeTimerOverlay = function() {
+      document.getElementById('timer-overlay').style.display = 'none';
+      if (_interval) clearInterval(_interval);
+      _running = false;
+    };
+
+    window.timerStartStop = function() {
+      const btn      = document.getElementById('timer-start-stop');
+      const stateEl  = document.getElementById('timer-state');
+      const resetBtn = document.getElementById('timer-reset-btn');
+      const ratingEl = document.getElementById('timer-rating');
+
+      if (!_running && !_stopped) {
+        // ── START ──
+        _start    = Date.now() - _elapsed;
+        _interval = setInterval(tick, 10);
+        _running  = true;
+        btn.textContent   = 'STOP';
+        btn.style.borderColor = '#CC2200';
+        btn.style.color       = '#FF6666';
+        btn.style.borderWidth = '2px';
+        stateEl.textContent   = 'Läuft…';
+        ratingEl.textContent  = '';
+        resetBtn.style.display = 'none';
+
+      } else if (_running) {
+        // ── STOP ──
+        clearInterval(_interval);
+        _elapsed  = Date.now() - _start;
+        _running  = false;
+        _stopped  = true;
+        const r   = rating(_elapsed);
+        const dispEl = document.getElementById('timer-display');
+        if (dispEl) dispEl.textContent = fmt(_elapsed);
+        btn.textContent       = 'START';
+        btn.style.borderColor = '#3B6D11';
+        btn.style.color       = '#97C459';
+        stateEl.textContent   = 'Gestoppt';
+        ratingEl.textContent  = r.text;
+        ratingEl.style.color  = r.col;
+        resetBtn.style.display = 'inline-block';
+      }
+    };
+
+    window.timerReset = function() {
+      if (_interval) clearInterval(_interval);
+      _interval = null; _start = null; _elapsed = 0; _running = false; _stopped = false;
+      const dispEl   = document.getElementById('timer-display');
+      const stateEl  = document.getElementById('timer-state');
+      const ratingEl = document.getElementById('timer-rating');
+      const btn      = document.getElementById('timer-start-stop');
+      const resetBtn = document.getElementById('timer-reset-btn');
+      if (dispEl)   dispEl.textContent   = '00.00';
+      if (stateEl)  stateEl.textContent  = '';
+      if (ratingEl) ratingEl.textContent = '';
+      if (btn)      { btn.textContent = 'START'; btn.style.borderColor='#3B6D11'; btn.style.color='#97C459'; }
+      if (resetBtn) resetBtn.style.display = 'none';
+    };
+  })();
+
+  // ── Würfelspiel ───────────────────────────────────────────────────────────────
+  (function() {
+    let _playerCount = 0;
+
+    window.openDiceGame = function() {
+      document.getElementById('dice-overlay').style.display = 'block';
+      openDiceSetup();
+    };
+    window.closeDiceGame = function() {
+      document.getElementById('dice-overlay').style.display = 'none';
+    };
+    window.openDiceSetup = function() {
+      document.getElementById('dice-setup').style.display        = 'block';
+      document.getElementById('dice-roll-screen').style.display  = 'none';
+      document.getElementById('dice-result-screen').style.display= 'none';
+      document.getElementById('dice-count-error').style.display  = 'none';
+      const inp = document.getElementById('dice-count-input');
+      inp.value = _playerCount || '';
+      setTimeout(() => inp.focus(), 80);
+    };
+    window.confirmPlayerCount = function() {
+      const val = parseInt(document.getElementById('dice-count-input').value);
+      if (!val || val < 2 || val > 30) {
+        document.getElementById('dice-count-error').style.display = 'block';
+        return;
+      }
+      _playerCount = val;
+      document.getElementById('dice-count-error').style.display  = 'none';
+      document.getElementById('dice-setup').style.display        = 'none';
+      document.getElementById('dice-roll-screen').style.display  = 'block';
+      document.getElementById('dice-result-screen').style.display= 'none';
+      document.getElementById('dice-player-count-label').textContent = _playerCount + ' Spieler · Wer zahlt?';
+      document.getElementById('dice-face').textContent = '?';
+      document.getElementById('dice-roll-btn').disabled = false;
+    };
+    window.rollDice = function() {
+      const btn  = document.getElementById('dice-roll-btn');
+      const face = document.getElementById('dice-face');
+      btn.disabled = true;
+      const result = 1 + Math.floor(Math.random() * _playerCount);
+      let step = 0, total = 22;
+      function tick() {
+        face.textContent = 1 + Math.floor(Math.random() * _playerCount);
+        step++;
+        if (step < total) {
+          // exponential slowdown
+          setTimeout(tick, 55 + Math.pow(step, 1.7));
+        } else {
+          face.textContent = result;
+          setTimeout(() => showDiceResult(result), 280);
+        }
+      }
+      tick();
+    };
+    window.rollDiceAgain = function() {
+      document.getElementById('dice-roll-screen').style.display  = 'block';
+      document.getElementById('dice-result-screen').style.display= 'none';
+      document.getElementById('dice-face').textContent = '?';
+      document.getElementById('dice-roll-btn').disabled = false;
+    };
+    function showDiceResult(num) {
+      document.getElementById('dice-roll-screen').style.display  = 'none';
+      document.getElementById('dice-result-screen').style.display= 'block';
+      document.getElementById('dice-result-face').textContent    = num;
+      document.getElementById('dice-result-text').textContent    = 'Spieler ' + num + ' ist dran!';
+      const subs = ['Prost! 🍺', 'Eine Runde bitte! 🥂', 'Ab an die Bar! 🎉', 'Das Schicksal hat gesprochen! 🎲'];
+      document.getElementById('dice-result-sub').textContent = subs[Math.floor(Math.random() * subs.length)];
+    }
+  })();
+  // ── Hopfen-Slots ─────────────────────────────────────────────────────────────
+  (function() {
+    const SYMBOLS = ['🍺','🎩','🦅','🌭','🪶','🍟','🥃'];
+    let _spinning = false;
+
+    // ── Coins helpers ────────────────────────────────────────────────────────
+    function getCoins() { return parseInt(localStorage.getItem('hopfenkonto_coins') || '-1'); }
+    function setCoins(n) { localStorage.setItem('hopfenkonto_coins', String(Math.max(0, n))); }
+
+    function checkDailyCoins() {
+      const today = new Date().toDateString();
+      const last  = localStorage.getItem('hopfenkonto_coins_day');
+      if (!last) {
+        // First ever open → 100 Startguthaben
+        setCoins(100);
+        localStorage.setItem('hopfenkonto_coins_day', today);
+        return 'start';
+      }
+      if (last !== today) {
+        setCoins(getCoins() + 30);
+        localStorage.setItem('hopfenkonto_coins_day', today);
+        return 'daily';
+      }
+      return false;
+    }
+
+    // Silent init on page load
+    checkDailyCoins();
+
+    // ── UI helpers ────────────────────────────────────────────────────────────
+    function updateCoinsDisplay() {
+      const el = document.getElementById('slots-coins-val');
+      if (el) el.textContent = getCoins();
+    }
+
+    function currentBet() {
+      const inp = document.getElementById('slots-bet-input');
+      const val = inp ? parseInt(inp.value) : 1;
+      return (isNaN(val) || val < 1) ? 1 : val;
+    }
+
+    function updateSpinBtn() {
+      const btn = document.getElementById('slots-spin-btn');
+      if (!btn) return;
+      const ok = !_spinning && getCoins() >= 1 && currentBet() >= 1 && currentBet() <= getCoins();
+      btn.disabled  = !ok;
+      btn.style.opacity = ok ? '1' : '0.45';
+    }
+
+    function refreshUI() {
+      updateCoinsDisplay();
+      updateSpinBtn();
+      const maxEl = document.getElementById('slots-bet-max');
+      const inp   = document.getElementById('slots-bet-input');
+      const coins = getCoins();
+      if (maxEl) maxEl.textContent = 'Max: ' + coins;
+      if (inp)   inp.max = coins;
+      const nc = document.getElementById('slots-no-coins-msg');
+      if (nc) nc.style.display = (coins === 0 && !_spinning) ? 'block' : 'none';
+    }
+
+    window.updateSlotsbet = function() { refreshUI(); };
+
+    // ── Public API ────────────────────────────────────────────────────────────
+    window.openSlotsGame = function() {
+      const result = checkDailyCoins();
+      document.getElementById('slots-overlay').style.display = 'block';
+      document.getElementById('slots-result').innerHTML = '';
+      ['reel-sym-0','reel-sym-1','reel-sym-2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '🍺';
+      });
+      const msgEl = document.getElementById('slots-daily-msg');
+      if (msgEl) {
+        if (result === 'start')      msgEl.textContent = '🎁 Willkommen! 100 Startguthaben gutgeschrieben!';
+        else if (result === 'daily') msgEl.textContent = '🎁 +30 Tages-Coins gutgeschrieben!';
+        else                         msgEl.textContent = '';
+      }
+      refreshUI();
+    };
+
+    window.closeSlotsGame = function() {
+      document.getElementById('slots-overlay').style.display = 'none';
+    };
+
+    window.spinSlots = function() {
+      const bet = currentBet();
+      if (_spinning || bet < 1 || bet > getCoins()) return;
+      _spinning = true;
+      setCoins(getCoins() - bet);
+      refreshUI();
+      document.getElementById('slots-result').innerHTML = '';
+
+      // 35 % Gewinnwahrscheinlichkeit
+      let finals;
+      if (Math.random() < 0.35) {
+        const sym = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+        finals = [sym, sym, sym];
+      } else {
+        finals = [
+          SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
+          SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
+          SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]
+        ];
+        // Avoid accidental triple on the losing path
+        if (finals[0] === finals[1] && finals[1] === finals[2]) finals[2] = SYMBOLS[(SYMBOLS.indexOf(finals[2]) + 1) % SYMBOLS.length];
+      }
+
+      const STEPS = 20;
+      let done = 0;
+
+      function spinReel(idx, finalSym, startDelay) {
+        setTimeout(() => {
+          const reel = document.getElementById('reel-' + idx);
+          const sym  = document.getElementById('reel-sym-' + idx);
+          if (!reel || !sym) { reelDone(); return; }
+          reel.classList.add('spinning');
+          let step = 0;
+          function tick() {
+            sym.textContent = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+            step++;
+            if (step < STEPS) {
+              setTimeout(tick, 55 + Math.pow(step * 0.85, 1.7));
+            } else {
+              sym.textContent = finalSym;
+              reel.classList.remove('spinning');
+              reelDone();
+            }
+          }
+          tick();
+        }, startDelay);
+      }
+
+      function reelDone() {
+        done++;
+        if (done === 3) {
+          _spinning = false;
+          setTimeout(() => showSlotsResult(finals, bet), 220);
+        }
+      }
+
+      spinReel(0, finals[0], 0);
+      spinReel(1, finals[1], 380);
+      spinReel(2, finals[2], 760);
+    };
+
+    function showSlotsResult(syms, bet) {
+      const win = syms[0] === syms[1] && syms[1] === syms[2];
+      const resultEl = document.getElementById('slots-result');
+
+      if (win) {
+        const gain = bet * 3;
+        setCoins(getCoins() + gain);
+        const msgs = ['Jackpot! 🎉', 'Volltreffer! 🏆', 'Dreifach! 💰', 'Glückspilz! 🍀'];
+        const msg  = msgs[Math.floor(Math.random() * msgs.length)];
+        resultEl.innerHTML =
+          '<div style="color:#FFD700;font-size:20px;font-weight:700;margin-bottom:4px;">' + msg + '</div>' +
+          '<div style="color:#50C878;font-size:15px;margin-bottom:8px;">+' + gain + ' Coins gewonnen! 🪙</div>' +
+          '<div style="font-size:30px;letter-spacing:6px;">' + syms.join(' ') + '</div>';
+        ['reel-0','reel-1','reel-2'].forEach(id => {
+          const r = document.getElementById(id);
+          if (r) { r.classList.remove('win-flash'); void r.offsetWidth; r.classList.add('win-flash'); }
+        });
+      } else {
+        const msgs = ['Nicht heute… 😅','Knapp vorbei! 🍺','Nächstes Mal! 🎲','Das Glück kommt noch! 🤞'];
+        const msg  = msgs[Math.floor(Math.random() * msgs.length)];
+        resultEl.innerHTML =
+          '<div style="color:#E0115F;font-size:18px;font-weight:700;margin-bottom:6px;">' + msg + '</div>' +
+          '<div style="font-size:28px;letter-spacing:6px;opacity:0.7;">' + syms.join(' ') + '</div>';
+      }
+      refreshUI();
+    }
+  })();
+
 })();
 </script>
+
+
+<!-- ── Hopfen-Slots Overlay ─────────────────────────────────────────── -->
+<div id="slots-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,15,2,0.97); z-index:11000; font-family:-apple-system,BlinkMacSystemFont,sans-serif; overflow-y:auto;">
+  <button onclick="closeSlotsGame()" style="position:absolute;top:18px;right:18px;background:none;border:none;color:#97C459;font-size:22px;cursor:pointer;z-index:2;padding:4px 8px;">✕</button>
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:90vw;max-width:360px;">
+    <!-- Title + Coins -->
+    <div style="color:#EFC93D;font-size:22px;font-weight:700;margin-bottom:6px;">🎰 Hopfen-Slots</div>
+    <div style="color:#C0DD97;font-size:16px;font-weight:600;margin-bottom:3px;">🪙 <span id="slots-coins-val">0</span> Coins</div>
+    <div id="slots-daily-msg" style="color:#50C878;font-size:12px;min-height:16px;margin-bottom:14px;"></div>
+
+    <!-- Reels -->
+    <div style="background:#0a1c04;padding:14px 10px;border-radius:14px;border:2px solid #3B6D11;margin-bottom:14px;">
+      <!-- Payline label -->
+      <div style="color:#EFC93D;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;opacity:0.7;">— Gewinnlinie —</div>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <div class="slots-reel" id="reel-0"><span class="reel-inner" id="reel-sym-0">🍺</span></div>
+        <div class="slots-reel" id="reel-1"><span class="reel-inner" id="reel-sym-1">🍺</span></div>
+        <div class="slots-reel" id="reel-2"><span class="reel-inner" id="reel-sym-2">🍺</span></div>
+      </div>
+    </div>
+
+    <!-- Bet buttons -->
+    <div style="margin-bottom:14px;">
+      <span style="color:#97C459;font-size:13px;margin-right:8px;">Einsatz:</span>
+      <input id="slots-bet-input" type="number" min="1" value="1"
+        oninput="updateSlotsbet()"
+        style="width:80px;padding:6px 10px;font-size:16px;font-weight:700;text-align:center;
+               background:#0f2204;border:1.5px solid #3B6D11;color:#EFC93D;border-radius:8px;
+               outline:none;font-family:-apple-system,BlinkMacSystemFont,sans-serif;"/>
+      <span id="slots-bet-max" style="color:#97C459;font-size:12px;margin-left:6px;opacity:0.65;"></span>
+    </div>
+
+    <!-- Lever / Spin button -->
+    <button id="slots-spin-btn" onclick="spinSlots()"
+      style="padding:13px 0;font-size:17px;font-weight:700;letter-spacing:1px;
+             background:transparent;border:2px solid #3B6D11;color:#97C459;
+             border-radius:10px;cursor:pointer;width:100%;margin-bottom:14px;
+             font-family:-apple-system,BlinkMacSystemFont,sans-serif;transition:opacity 0.2s;">
+      🎰 Hebel ziehen!
+    </button>
+
+    <!-- Result -->
+    <div id="slots-result" style="min-height:54px;"></div>
+
+    <!-- No-coins hint -->
+    <div id="slots-no-coins-msg" style="display:none;color:#97C459;font-size:12px;opacity:0.75;margin-top:6px;">
+      Keine Coins mehr – neue gibt es morgen! ☀️
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
