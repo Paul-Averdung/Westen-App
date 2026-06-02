@@ -161,6 +161,88 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 .cd-lbl  { font-size:9px; color:#97C459; margin-top:2px; letter-spacing:0.5px; }
 .cd-sep  { font-size:26px; font-weight:700; color:#3B6D11; align-self:flex-start; margin-top:2px; }
 
+/* ── Orden / Medal Milestone Animations ────────────────────────────────── */
+#medal-overlay {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  background: rgba(0,0,0,0); z-index: 10000;
+  display: none; align-items: center; justify-content: center;
+}
+#medal-overlay.active {
+  display: flex;
+  animation: medalOverlayIn 0.5s ease forwards;
+}
+@keyframes medalOverlayIn {
+  from { background: rgba(0,0,0,0); }
+  to   { background: rgba(0,0,0,0.88); }
+}
+#medal-scene {
+  position: relative; width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+#medal-title {
+  position: absolute; top: 10%; left: 0; right: 0; text-align: center;
+  font-size: 24px; font-weight: 900; color: #EFC93D;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.8), 0 0 30px rgba(239,201,61,0.5);
+  letter-spacing: 1px; opacity: 0; transition: opacity 0.5s;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 0 16px;
+}
+#medal-title.show { opacity: 1; }
+#medal-subtitle {
+  position: absolute; top: 19%; left: 0; right: 0; text-align: center;
+  color: rgba(192,221,151,0.75); font-size: 14px; opacity: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: opacity 0.5s;
+}
+#medal-subtitle.show { opacity: 1; }
+#medals-wrap {
+  display: flex; flex-direction: row; align-items: flex-end;
+  justify-content: center; gap: 10px;
+  flex-wrap: wrap; max-width: min(92vw, 460px);
+}
+.medal-item {
+  opacity: 0;
+  transform: translateY(-90px);
+  transition: transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.35s;
+}
+.medal-item.dropped {
+  opacity: 1;
+  transform: translateY(0);
+}
+.medal-item.new-medal {
+  filter: drop-shadow(0 0 18px rgba(255,240,120,0.9));
+}
+#medal-tap-hint {
+  position: absolute; bottom: 9%; left: 0; right: 0; text-align: center;
+  color: rgba(192,221,151,0.6); font-size: 14px; opacity: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: opacity 0.6s;
+}
+#medal-tap-hint.show { opacity: 1; }
+/* Persistent medals display */
+#medals-display {
+  display: flex; flex-direction: row; justify-content: center;
+  gap: 5px; flex-wrap: wrap; margin-top: 8px;
+}
+.medal-badge {
+  opacity: 0.2;
+  filter: grayscale(1) brightness(0.65);
+  transition: opacity 0.6s, filter 0.6s, transform 0.3s;
+}
+.medal-badge.unlocked {
+  opacity: 1;
+  filter: none;
+}
+.medal-badge.newest {
+  animation: medalBadgePop 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes medalBadgePop {
+  0%   { transform: scale(0.5); }
+  65%  { transform: scale(1.3); }
+  100% { transform: scale(1);   }
+}
+
 </style>
 </head>
 <body>
@@ -255,6 +337,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
       <div class="grand-label">Getränke insgesamt</div>
       <div class="grand-val" id="grand-total">0</div>
     </div>
+    <div id="medals-display"></div>
     <button class="reset-btn" onclick="resetAll()">↺ Alles zurücksetzen</button>
   </div>
 
@@ -293,11 +376,22 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   </div>
 </div>
 
+<!-- ── Orden Milestone Animation Overlay ────────────────────────── -->
+<div id="medal-overlay" onclick="closeMedalAnim()">
+  <div id="medal-scene">
+    <div id="medal-title"></div>
+    <div id="medal-subtitle"></div>
+    <div id="medals-wrap"></div>
+    <div id="medal-tap-hint">Tippen zum Schließen</div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 (function(){
   const state = {b02:0, b033:0, b05:0, shots:0, misch:0, manta:0};
   let hourlyCount = {};
+  let milestonesShown = new Set();
   let chart = null;
 
   // ── Restore saved state ───────────────────────────────────────────────────
@@ -313,6 +407,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
         const keys = Object.keys(d.hourlyCount).map(Number);
         if (keys.length === 0 || Math.max(...keys) > 23) Object.assign(hourlyCount, d.hourlyCount);
       }
+      if (Array.isArray(d.milestonesShown)) d.milestonesShown.forEach(m => milestonesShown.add(m));
     } catch(e) {}
   })();
 
@@ -354,7 +449,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 
   function saveState() {
     try {
-      localStorage.setItem('hopfenkonto_v2', JSON.stringify({state, hourlyCount}));
+      localStorage.setItem('hopfenkonto_v2', JSON.stringify({state, hourlyCount, milestonesShown: [...milestonesShown]}));
     } catch(e) {}
   }
 
@@ -429,6 +524,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     document.getElementById('manta-total').textContent = state.manta;
     updateChart();
     updateBeerLevel();
+    if (dir > 0) checkMilestone();
     saveState();
   };
 
@@ -444,6 +540,8 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
       chart.data.datasets.forEach(ds => ds.data = [0]);
       chart.update();
     }
+    milestonesShown.clear();
+    updateMedalsDisplay();
     updateBeerLevel();
     saveState();
   };
@@ -495,6 +593,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     document.getElementById('manta-total').textContent = state.manta;
     updateChart();
     updateBeerLevel();
+    updateMedalsDisplay();
     updateCountdown();
   });
 
@@ -629,6 +728,123 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     else     localStorage.removeItem('hopfenkonto_entry_year');
     updateCountdown();
   };
+
+  // ── Orden (Medal) Milestone Animations ──────────────────────────────────────
+  const MEDAL_TIERS = {
+    5:  { name:'Bronze',            fill:'#CD7F32', shade:'#9A5E20', dark:'#5C2F08', star:'#5C2F08' },
+    10: { name:'Silber',            fill:'#C0C0C0', shade:'#909090', dark:'#484848', star:'#484848' },
+    15: { name:'Gold',              fill:'#FFD700', shade:'#C8A200', dark:'#7A5800', star:'#7A5800' },
+    20: { name:'Platin',            fill:'#E5E4E2', shade:'#AEADAB', dark:'#585858', star:'#585858' },
+    25: { name:'Diamant',           fill:'#B9F2FF', shade:'#60C0D8', dark:'#107888', star:'#107888' },
+    30: { name:'Rubin',             fill:'#E0115F', shade:'#A80040', dark:'#600020', star:'#FFD0DA' },
+    35: { name:'Saphir',            fill:'#0F52BA', shade:'#0A3A88', dark:'#061A50', star:'#C8DAFF' },
+    40: { name:'Smaragd',           fill:'#50C878', shade:'#2A9850', dark:'#0E4820', star:'#0E4820' },
+    45: { name:'Amethyst',          fill:'#9966CC', shade:'#6A3A9A', dark:'#3C1868', star:'#F0DEFF' },
+    50: { name:'Schwarzer Diamant', fill:'#2B2B2B', shade:'#181818', dark:'#060606', star:'#E0E0E0' },
+  };
+
+  function buildMedalSVG(size, fill, shade, dark, star) {
+    star = star || dark;
+    const h = Math.round(size * 100 / 58);
+    return `<svg viewBox="0 0 58 100" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${h}">
+      <rect x="17" y="2" width="24" height="32" rx="2" fill="${fill}" stroke="${dark}" stroke-width="1.8"/>
+      <line x1="23" y1="2"  x2="23" y2="34" stroke="${dark}" stroke-width="1.3" stroke-opacity="0.5"/>
+      <line x1="29" y1="2"  x2="29" y2="34" stroke="${dark}" stroke-width="1.3" stroke-opacity="0.5"/>
+      <line x1="35" y1="2"  x2="35" y2="34" stroke="${dark}" stroke-width="1.3" stroke-opacity="0.5"/>
+      <polygon points="17,34 29,43 41,34" fill="${shade}" stroke="${dark}" stroke-width="1.8" stroke-linejoin="round"/>
+      <circle cx="29" cy="72" r="26" fill="${fill}" stroke="${dark}" stroke-width="2.5"/>
+      <circle cx="29" cy="72" r="20" fill="none" stroke="${dark}" stroke-width="1.3"/>
+      <polygon points="29,56 33.1,66.3 44.2,67.1 35.7,74.2 38.4,84.9 29,79 19.6,84.9 22.3,74.2 13.8,67.1 24.9,66.3"
+               fill="${star}"/>
+    </svg>`;
+  }
+
+  function updateMedalsDisplay() {
+    const el = document.getElementById('medals-display');
+    if (!el) return;
+    el.innerHTML = '';
+    const newest = [...milestonesShown].pop();
+    [5, 10, 15, 20, 25, 30, 35, 40, 45, 50].forEach(m => {
+      const tier = MEDAL_TIERS[m];
+      const unlocked = milestonesShown.has(m);
+      const div = document.createElement('div');
+      div.className = 'medal-badge' + (unlocked ? ' unlocked' : '') + (m === newest ? ' newest' : '');
+      if (unlocked) {
+        div.innerHTML = buildMedalSVG(26, tier.fill, tier.shade, tier.dark, tier.star);
+      } else {
+        div.innerHTML = buildMedalSVG(26, '#303030', '#202020', '#101010', '#484848');
+      }
+      el.appendChild(div);
+    });
+  }
+
+  function checkMilestone() {
+    const total = state.b02 + state.b033 + state.b05 + state.shots + state.misch;
+    for (const m of [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]) {
+      if (total >= m && !milestonesShown.has(m)) {
+        milestonesShown.add(m);
+        saveState();
+        setTimeout(() => showMedalAnimation(m), 600);
+        break;
+      }
+    }
+  }
+
+  function showMedalAnimation(milestone) {
+    const tier = MEDAL_TIERS[milestone];
+    if (!tier) return;
+    const count = milestonesShown.size;
+
+    const overlay    = document.getElementById('medal-overlay');
+    const wrap       = document.getElementById('medals-wrap');
+    const titleEl    = document.getElementById('medal-title');
+    const subtitleEl = document.getElementById('medal-subtitle');
+    const hintEl     = document.getElementById('medal-tap-hint');
+
+    overlay.classList.remove('active');
+    titleEl.classList.remove('show');
+    subtitleEl.classList.remove('show');
+    hintEl.classList.remove('show');
+    wrap.innerHTML = '';
+
+    const medalSize = count <= 2 ? 82 : count <= 4 ? 68 : count <= 6 ? 56 : count <= 8 ? 48 : 42;
+    const allTiers  = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+    const shown     = allTiers.filter(m => milestonesShown.has(m));
+
+    shown.forEach((m, idx) => {
+      const t = MEDAL_TIERS[m];
+      const div = document.createElement('div');
+      div.className = 'medal-item' + (m === milestone ? ' new-medal' : '');
+      div.innerHTML = buildMedalSVG(medalSize, t.fill, t.shade, t.dark, t.star);
+      wrap.appendChild(div);
+    });
+
+    titleEl.textContent    = tier.name + '-Orden!';
+    subtitleEl.textContent = milestone + ' Getränke erreicht — Glückwunsch!';
+    overlay.classList.add('active');
+
+    const dropDelay = count <= 5 ? 155 : 110;
+    const items = wrap.querySelectorAll('.medal-item');
+    items.forEach((item, idx) => {
+      setTimeout(() => item.classList.add('dropped'), 220 + idx * dropDelay);
+    });
+
+    const allDropped = 220 + count * dropDelay;
+    setTimeout(() => subtitleEl.classList.add('show'), allDropped + 120);
+    setTimeout(() => titleEl.classList.add('show'),    allDropped + 320);
+    setTimeout(() => hintEl.classList.add('show'),     allDropped + 1400);
+
+    const t = setTimeout(closeMedalAnim, allDropped + 5000);
+    overlay._closeTimer = t;
+  }
+
+  window.closeMedalAnim = function() {
+    const overlay = document.getElementById('medal-overlay');
+    if (overlay._closeTimer) clearTimeout(overlay._closeTimer);
+    overlay.classList.remove('active');
+    updateMedalsDisplay();
+  };
+
 })();
 </script>
 
