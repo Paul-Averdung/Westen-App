@@ -472,32 +472,15 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
         <circle cx="22" cy="16.5" r="2" fill="currentColor" stroke="none"/>
       </svg>
     </button>
-  </div>
-  <div id="settings-panel" style="display:none; background:#173404; border:0.5px solid #3B6D11; border-radius:10px; padding:14px; margin-bottom:14px;">
-    <p style="color:#97C459; font-size:12px; margin-bottom:8px; font-weight:500;">Einstellungen</p>
-    <label style="color:#97C459; font-size:12px; display:block; margin-bottom:4px;">Eintrittsjahr</label>
-    <input type="number" id="entry-year-input" placeholder="z.B. 2010"
-      min="1900" max="2099"
-      oninput="saveEntryYear()"
-      style="background:#0f2204; border:0.5px solid #3B6D11; color:#C0DD97; padding:6px 10px;
-             border-radius:8px; font-size:15px; width:100%; box-sizing:border-box; outline:none;
-             font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
-  <div style="margin-top:10px;">
-    <button id="sound-toggle-btn" onclick="toggleSound()"
-      style="width:100%; padding:8px; background:transparent; border:0.5px solid #3B6D11;
-             color:#97C459; border-radius:8px; font-size:13px; cursor:pointer;
-             font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
-      🔊 Ton an
+    <button id="verlauf-btn" onclick="openVerlauf()"
+      style="background:none; border:none; color:#3B6D11; cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
+      title="Verlauf">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 11a9 9 0 1 0 2.6-6.36"/>
+        <path d="M3 3.5V8h4.5"/>
+        <path d="M12 7v5l3.5 2"/>
+      </svg>
     </button>
-  </div>
-  <div style="margin-top:8px; border-top:0.5px solid #3B6D11; padding-top:10px;">
-    <button onclick="location.reload()"
-      style="width:100%; padding:8px; background:transparent; border:0.5px solid #3B6D11;
-             color:#97C459; border-radius:8px; font-size:13px; cursor:pointer;
-             font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
-      🔄 App aktualisieren
-    </button>
-  </div>
   </div>
 </div>
 
@@ -620,6 +603,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   const state = {b02:0, b033:0, b05:0, shots:0, misch:0, manta:0};
   let hourlyCount = {};
   let milestonesShown = new Set();
+  let drinkLog = []; // current session: [{ts, key, dir}]
   let chart = null;
 
   // ── Restore saved state ───────────────────────────────────────────────────
@@ -636,11 +620,74 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
         if (keys.length === 0 || Math.max(...keys) > 23) Object.assign(hourlyCount, d.hourlyCount);
       }
       if (Array.isArray(d.milestonesShown)) d.milestonesShown.forEach(m => milestonesShown.add(m));
+      if (Array.isArray(d.drinkLog)) drinkLog = d.drinkLog;
     } catch(e) {}
   })();
 
   const LEVEL_MAX = 50;
   let bubbleTimer = null;
+
+  // ── Punkte-Score für Orden & Bierpegel ──────────────────────────────────────
+  // 0,2 l Bier = 1 | 0,33 l Bier = 1,65 | 0,5 l Bier = 2,5 | Shot = 1 | Mischgetränk = 1,65
+  const DRINK_POINTS = { b02: 1, b033: 1.65, b05: 2.5, shots: 1, misch: 1.65 };
+  function calcScore() {
+    let s = 0;
+    for (const k in DRINK_POINTS) s += state[k] * DRINK_POINTS[k];
+    return Math.round(s * 100) / 100;
+  }
+
+  // ── Verlauf / Historie ───────────────────────────────────────────────────────
+  const DRINK_INFO = {
+    b02:   { label: '0,2 l Bier',   emoji: '🍺' },
+    b033:  { label: '0,33 l Bier',  emoji: '🍺' },
+    b05:   { label: '0,5 l Bier',   emoji: '🍺' },
+    shots: { label: 'Shot',         emoji: '🥃' },
+    misch: { label: 'Mischgetränk', emoji: '🍹' },
+    manta: { label: 'Mantaplatte',  emoji: '🍽️' },
+  };
+  const WEEKDAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+  function localDateStr(ts) {
+    const d = new Date(ts);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function dayLabel(dateStr) {
+    const parts = dateStr.split('-').map(Number);
+    const d = new Date(parts[0], parts[1]-1, parts[2], 12);
+    return WEEKDAYS[d.getDay()] + ', ' + String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
+  }
+
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem('hopfenkonto_history') || '[]'); }
+    catch(e) { return []; }
+  }
+  function saveHistory(hist) {
+    try { localStorage.setItem('hopfenkonto_history', JSON.stringify(hist)); } catch(e) {}
+  }
+
+  function summarizeEntries(entries) {
+    const totals = {};
+    entries.forEach(e => { totals[e.key] = (totals[e.key]||0) + e.dir; });
+    const count = (totals.b02||0)+(totals.b033||0)+(totals.b05||0)+(totals.shots||0)+(totals.misch||0);
+    const liters = (totals.b02||0)*0.2 + (totals.b033||0)*0.33 + (totals.b05||0)*0.5;
+    let score = 0;
+    for (const k in DRINK_POINTS) score += (totals[k]||0) * DRINK_POINTS[k];
+    return {
+      count: Math.max(0, count),
+      liters: Math.round(liters*100)/100,
+      score: Math.round(score*100)/100
+    };
+  }
+
+  function archiveCurrentSession() {
+    if (drinkLog.length > 0) {
+      const hist = loadHistory();
+      hist.push({ date: localDateStr(drinkLog[0].ts), entries: drinkLog });
+      saveHistory(hist);
+    }
+    drinkLog = [];
+  }
 
   function spawnBubble() {
     const fill = document.getElementById('beer-fill');
@@ -663,13 +710,13 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   }
 
   function updateBeerLevel() {
-    const total = state.b02 + state.b033 + state.b05 + state.shots + state.misch;
-    const pct = Math.min(total / LEVEL_MAX * 100, 100);
+    const score = calcScore();
+    const pct = Math.min(score / LEVEL_MAX * 100, 100);
     document.getElementById('beer-fill').style.height = pct + '%';
-    if (total > 0 && !bubbleTimer) {
+    if (score > 0 && !bubbleTimer) {
       spawnBubble();
       bubbleTimer = setInterval(spawnBubble, 380);
-    } else if (total === 0 && bubbleTimer) {
+    } else if (score === 0 && bubbleTimer) {
       clearInterval(bubbleTimer);
       bubbleTimer = null;
     }
@@ -677,7 +724,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 
   function saveState() {
     try {
-      localStorage.setItem('hopfenkonto_v2', JSON.stringify({state, hourlyCount, milestonesShown: [...milestonesShown]}));
+      localStorage.setItem('hopfenkonto_v2', JSON.stringify({state, hourlyCount, milestonesShown: [...milestonesShown], drinkLog}));
     } catch(e) {}
   }
 
@@ -809,6 +856,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     if (dir < 0 && state[key] <= 0) return;
     if (btn) triggerAnim(btn, dir);
     state[key] = Math.max(0, state[key] + dir);
+    drinkLog.push({ts: Date.now(), key, dir});
     const h = currentHour();
     if (key !== 'manta') hourlyCount[h] = Math.max(0, (hourlyCount[h] || 0) + dir);
     document.getElementById('b02-count').textContent  = state.b02;
@@ -824,7 +872,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     saveState();
   };
 
-  window.resetAll = function() {
+  function performReset() {
     Object.keys(state).forEach(k => state[k] = 0);
     hourlyCount = {};
     ['b02-count','b033-count','b05-count'].forEach(id => document.getElementById(id).textContent = '0');
@@ -840,6 +888,11 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     updateMedalsDisplay();
     updateBeerLevel();
     saveState();
+  }
+
+  window.resetAll = function() {
+    archiveCurrentSession();
+    performReset();
   };
 
   window.addEventListener('load', function() {
@@ -1007,17 +1060,19 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   }
 
   window.toggleSettings = function() {
-    const panel = document.getElementById('settings-panel');
-    const btn   = document.getElementById('settings-btn');
-    const open  = panel.style.display === 'none';
-    panel.style.display = open ? 'block' : 'none';
-    btn.style.opacity   = open ? '1' : '0.7';
+    const overlay = document.getElementById('settings-overlay');
+    const open    = overlay.style.display === 'none' || overlay.style.display === '';
+    overlay.style.display = open ? 'block' : 'none';
     if (open) {
       const saved = localStorage.getItem('hopfenkonto_entry_year');
       if (saved) document.getElementById('entry-year-input').value = saved;
       const sndBtn = document.getElementById('sound-toggle-btn');
       if (sndBtn) sndBtn.textContent = isSoundOn() ? '🔊 Ton an' : '🔇 Ton aus';
     }
+  };
+
+  window.closeSettings = function() {
+    document.getElementById('settings-overlay').style.display = 'none';
   };
 
   window.saveEntryYear = function() {
@@ -1077,9 +1132,9 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   }
 
   function checkMilestone() {
-    const total = state.b02 + state.b033 + state.b05 + state.shots + state.misch;
+    const score = calcScore();
     for (const m of [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]) {
-      if (total >= m && !milestonesShown.has(m)) {
+      if (score >= m && !milestonesShown.has(m)) {
         milestonesShown.add(m);
         saveState();
         setTimeout(() => showMedalAnimation(m), 600);
@@ -1118,7 +1173,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     });
 
     titleEl.textContent    = tier.name + '-Orden!';
-    subtitleEl.textContent = milestone + ' Getränke erreicht — Glückwunsch!';
+    subtitleEl.textContent = milestone + ' Punkte erreicht — Glückwunsch!';
     overlay.classList.add('active');
 
     const dropDelay = count <= 5 ? 155 : 110;
@@ -1463,6 +1518,8 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   (function() {
     const SYMBOLS = ['🍺','🎩','🦅','🌭','🪶','🍟','🥃'];
     let _spinning = false;
+    let _doubleRisk = 0;
+    let _doubling = false;
 
     // ── Coins helpers ────────────────────────────────────────────────────────
     function getCoins() { return parseInt(localStorage.getItem('hopfenkonto_coins') || '-1'); }
@@ -1548,6 +1605,8 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
       const bet = currentBet();
       if (_spinning || bet < 1 || bet > getCoins()) return;
       _spinning = true;
+      _doubleRisk = 0;
+      _doubling = false;
       setCoins(getCoins() - bet);
       refreshUI();
       document.getElementById('slots-result').innerHTML = '';
@@ -1612,17 +1671,27 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
       if (win) {
         const gain = bet * 3;
         setCoins(getCoins() + gain);
+        _doubleRisk = gain;
         const msgs = ['Jackpot! 🎉', 'Volltreffer! 🏆', 'Dreifach! 💰', 'Glückspilz! 🍀'];
         const msg  = msgs[Math.floor(Math.random() * msgs.length)];
         resultEl.innerHTML =
           '<div style="color:#FFD700;font-size:20px;font-weight:700;margin-bottom:4px;">' + msg + '</div>' +
           '<div style="color:#50C878;font-size:15px;margin-bottom:8px;">+' + gain + ' Coins gewonnen! 🪙</div>' +
-          '<div style="font-size:30px;letter-spacing:6px;">' + syms.join(' ') + '</div>';
+          '<div style="font-size:30px;letter-spacing:6px;margin-bottom:12px;">' + syms.join(' ') + '</div>' +
+          '<button id="double-btn" onclick="doubleOrNothing()" ' +
+            'style="padding:10px 0;font-size:14px;font-weight:700;letter-spacing:0.5px;' +
+            'background:transparent;border:2px solid #EFC93D;color:#EFC93D;' +
+            'border-radius:10px;cursor:pointer;width:100%;' +
+            'font-family:-apple-system,BlinkMacSystemFont,sans-serif;transition:opacity 0.2s;">' +
+            '🎲 Doppel oder Nichts (' + gain + ' 🪙)' +
+          '</button>' +
+          '<div id="double-msg" style="margin-top:8px;font-size:13px;min-height:18px;font-weight:600;"></div>';
         ['reel-0','reel-1','reel-2'].forEach(id => {
           const r = document.getElementById(id);
           if (r) { r.classList.remove('win-flash'); void r.offsetWidth; r.classList.add('win-flash'); }
         });
       } else {
+        _doubleRisk = 0;
         const msgs = ['Nicht heute… 😅','Knapp vorbei! 🍺','Nächstes Mal! 🎲','Das Glück kommt noch! 🤞'];
         const msg  = msgs[Math.floor(Math.random() * msgs.length)];
         resultEl.innerHTML =
@@ -1631,6 +1700,181 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
       }
       refreshUI();
     }
+
+    window.doubleOrNothing = function() {
+      if (_doubleRisk <= 0 || _doubling) return;
+      _doubling = true;
+      const btn   = document.getElementById('double-btn');
+      const msgEl = document.getElementById('double-msg');
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.textContent = '🪙 ...';
+      }
+      if (msgEl) { msgEl.textContent = ''; msgEl.style.color = ''; }
+      setTimeout(() => {
+        const won = Math.random() < 0.5;
+        if (won) {
+          setCoins(getCoins() + _doubleRisk);
+          _doubleRisk *= 2;
+          if (msgEl) { msgEl.style.color = '#50C878'; msgEl.textContent = 'Verdoppelt! 🎉'; }
+          if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.textContent = '🎲 Doppel oder Nichts (' + _doubleRisk + ' 🪙)';
+          }
+        } else {
+          setCoins(getCoins() - _doubleRisk);
+          _doubleRisk = 0;
+          if (msgEl) { msgEl.style.color = '#E0115F'; msgEl.textContent = 'Verloren! 😅'; }
+          if (btn) btn.remove();
+        }
+        _doubling = false;
+        refreshUI();
+      }, 700);
+    };
+  })();
+
+  // ── Verlauf-UI ───────────────────────────────────────────────────────────────
+  (function() {
+    let _confirmAction = null;
+
+    function fmtNum(n) {
+      return n.toFixed(2).replace('.', ',');
+    }
+
+    function summaryLine(sum) {
+      return sum.count + ' Getränke · ' + fmtNum(sum.liters) + ' l Bier · ' + fmtNum(sum.score) + ' Punkte';
+    }
+
+    function dayCardHTML(labelHtml, sum, type, idx) {
+      return '<div onclick="openVerlaufDay(\'' + type + '\',' + idx + ')" ' +
+        'style="background:#173404;border:0.5px solid #3B6D11;border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">' +
+            '<div style="color:#EFC93D;font-weight:700;font-size:15px;">' + labelHtml + '</div>' +
+            '<button onclick="event.stopPropagation(); deleteVerlaufDay(\'' + type + '\',' + idx + ')" ' +
+              'style="background:none;border:none;color:#E0115F;font-size:16px;cursor:pointer;padding:2px 6px;opacity:0.85;flex-shrink:0;">🗑️</button>' +
+          '</div>' +
+          '<div style="color:#97C459;font-size:12px;margin-top:4px;">' + summaryLine(sum) + '</div>' +
+        '</div>';
+    }
+
+    function renderVerlaufList() {
+      const listEl = document.getElementById('verlauf-list');
+      const hist = loadHistory();
+      let html = '';
+
+      if (drinkLog.length > 0) {
+        const sum   = summarizeEntries(drinkLog);
+        const label = dayLabel(localDateStr(drinkLog[0].ts)) +
+          ' <span style="color:#50C878;font-weight:400;font-size:11px;">(läuft)</span>';
+        html += dayCardHTML(label, sum, 'current', -1);
+      }
+
+      hist.forEach((day, idx) => {
+        const sum = summarizeEntries(day.entries);
+        html += dayCardHTML(dayLabel(day.date), sum, 'hist', idx);
+      });
+
+      if (!html) {
+        html = '<div style="color:#97C459;font-size:13px;text-align:center;opacity:0.7;margin-top:30px;">Noch keine Einträge vorhanden.</div>';
+      }
+      listEl.innerHTML = html;
+    }
+
+    function renderDetailEntries(entries) {
+      const listEl = document.getElementById('verlauf-detail-list');
+      if (entries.length === 0) {
+        listEl.innerHTML = '<div style="color:#97C459;font-size:13px;text-align:center;opacity:0.7;margin-top:20px;">Keine Einträge.</div>';
+        return;
+      }
+      let html = '';
+      entries.forEach(e => {
+        const info  = DRINK_INFO[e.key] || { label: e.key, emoji: '•' };
+        const t     = new Date(e.ts);
+        const time  = String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
+        const sign  = e.dir > 0 ? '+1' : '−1';
+        const color = e.dir > 0 ? '#C0DD97' : '#E0115F';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid #1f3d0a;">' +
+          '<span style="color:' + color + ';font-size:13px;">' + info.emoji + ' ' + info.label + ' (' + sign + ')</span>' +
+          '<span style="color:#97C459;font-size:12px;">' + time + '</span>' +
+        '</div>';
+      });
+      listEl.innerHTML = html;
+    }
+
+    window.openVerlauf = function() {
+      document.getElementById('verlauf-detail-view').style.display = 'none';
+      document.getElementById('verlauf-list-view').style.display = 'block';
+      renderVerlaufList();
+      document.getElementById('verlauf-overlay').style.display = 'block';
+    };
+
+    window.closeVerlauf = function() {
+      document.getElementById('verlauf-overlay').style.display = 'none';
+    };
+
+    window.openVerlaufDay = function(type, idx) {
+      let entries, label;
+      if (type === 'current') {
+        entries = drinkLog;
+        if (entries.length === 0) return;
+        label = dayLabel(localDateStr(entries[0].ts)) + ' (läuft)';
+      } else {
+        const hist = loadHistory();
+        const day  = hist[idx];
+        if (!day) return;
+        entries = day.entries;
+        label   = dayLabel(day.date);
+      }
+      const sum = summarizeEntries(entries);
+      document.getElementById('verlauf-detail-header').textContent  = label;
+      document.getElementById('verlauf-detail-summary').textContent = summaryLine(sum);
+      renderDetailEntries(entries);
+      document.getElementById('verlauf-list-view').style.display   = 'none';
+      document.getElementById('verlauf-detail-view').style.display = 'block';
+    };
+
+    window.closeVerlaufDetail = function() {
+      document.getElementById('verlauf-detail-view').style.display = 'none';
+      document.getElementById('verlauf-list-view').style.display   = 'block';
+      renderVerlaufList();
+    };
+
+    window.deleteVerlaufDay = function(type, idx) {
+      if (type === 'current') {
+        showConfirm('Den heutigen Verlauf löschen? Dabei werden auch alle aktuellen Zähler und Orden zurückgesetzt.', function() {
+          drinkLog = [];
+          performReset();
+          renderVerlaufList();
+        });
+      } else {
+        showConfirm('Diesen Tag wirklich aus dem Verlauf löschen?', function() {
+          const hist = loadHistory();
+          hist.splice(idx, 1);
+          saveHistory(hist);
+          renderVerlaufList();
+        });
+      }
+    };
+
+    // ── Bestätigungs-Dialog ──────────────────────────────────────────────────
+    function showConfirm(text, onConfirm) {
+      document.getElementById('confirm-text').textContent = text;
+      _confirmAction = onConfirm;
+      document.getElementById('confirm-overlay').style.display = 'flex';
+    }
+
+    window.hideConfirm = function() {
+      document.getElementById('confirm-overlay').style.display = 'none';
+      _confirmAction = null;
+    };
+
+    window.confirmOkClicked = function() {
+      const action = _confirmAction;
+      window.hideConfirm();
+      if (action) action();
+    };
   })();
 
 })();
@@ -1683,6 +1927,67 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
     <!-- No-coins hint -->
     <div id="slots-no-coins-msg" style="display:none;color:#97C459;font-size:12px;opacity:0.75;margin-top:6px;">
       Keine Coins mehr – neue gibt es morgen! ☀️
+    </div>
+  </div>
+</div>
+
+<!-- ── Verlauf Overlay ──────────────────────────────────────────────── -->
+<div id="verlauf-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,15,2,0.97); z-index:11000; font-family:-apple-system,BlinkMacSystemFont,sans-serif; overflow-y:auto;">
+  <button onclick="closeVerlauf()" style="position:absolute;top:18px;right:18px;background:none;border:none;color:#97C459;font-size:22px;cursor:pointer;z-index:2;padding:4px 8px;">✕</button>
+
+  <!-- List view -->
+  <div id="verlauf-list-view" style="padding:60px 20px 40px; max-width:420px; margin:0 auto;">
+    <div style="color:#EFC93D;font-size:22px;font-weight:700;margin-bottom:16px;text-align:center;">📖 Verlauf</div>
+    <div id="verlauf-list"></div>
+  </div>
+
+  <!-- Detail view -->
+  <div id="verlauf-detail-view" style="display:none; padding:60px 20px 40px; max-width:420px; margin:0 auto;">
+    <button onclick="closeVerlaufDetail()" style="background:none;border:1.5px solid #3B6D11;color:#97C459;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;margin-bottom:14px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">← Zurück</button>
+    <div id="verlauf-detail-header" style="color:#EFC93D;font-size:18px;font-weight:700;margin-bottom:4px;"></div>
+    <div id="verlauf-detail-summary" style="color:#97C459;font-size:12px;margin-bottom:14px;"></div>
+    <div id="verlauf-detail-list"></div>
+  </div>
+</div>
+
+<!-- ── Einstellungen Overlay ────────────────────────────────────────── -->
+<div id="settings-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,15,2,0.97); z-index:11000; font-family:-apple-system,BlinkMacSystemFont,sans-serif; overflow-y:auto;">
+  <button onclick="closeSettings()" style="position:absolute;top:18px;right:18px;background:none;border:none;color:#97C459;font-size:22px;cursor:pointer;z-index:2;padding:4px 8px;">✕</button>
+  <div style="padding:60px 20px 40px; max-width:420px; margin:0 auto;">
+    <div style="color:#EFC93D;font-size:22px;font-weight:700;margin-bottom:16px;text-align:center;">⚙️ Einstellungen</div>
+    <label style="color:#97C459; font-size:12px; display:block; margin-bottom:4px;">Eintrittsjahr</label>
+    <input type="number" id="entry-year-input" placeholder="z.B. 2010"
+      min="1900" max="2099"
+      oninput="saveEntryYear()"
+      style="background:#0f2204; border:0.5px solid #3B6D11; color:#C0DD97; padding:6px 10px;
+             border-radius:8px; font-size:15px; width:100%; box-sizing:border-box; outline:none;
+             font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+    <div style="margin-top:10px;">
+      <button id="sound-toggle-btn" onclick="toggleSound()"
+        style="width:100%; padding:8px; background:transparent; border:0.5px solid #3B6D11;
+               color:#97C459; border-radius:8px; font-size:13px; cursor:pointer;
+               font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+        🔊 Ton an
+      </button>
+    </div>
+    <div style="margin-top:8px; border-top:0.5px solid #3B6D11; padding-top:10px;">
+      <button onclick="location.reload()"
+        style="width:100%; padding:8px; background:transparent; border:0.5px solid #3B6D11;
+               color:#97C459; border-radius:8px; font-size:13px; cursor:pointer;
+               font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+        🔄 App aktualisieren
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Bestätigungs-Dialog ──────────────────────────────────────────── -->
+<div id="confirm-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:12000; font-family:-apple-system,BlinkMacSystemFont,sans-serif; align-items:center; justify-content:center;">
+  <div style="background:#173404;border:0.5px solid #3B6D11;border-radius:12px;padding:20px;max-width:300px;width:85%;text-align:center;">
+    <div id="confirm-text" style="color:#C0DD97;font-size:14px;margin-bottom:18px;line-height:1.4;"></div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="hideConfirm()" style="flex:1;padding:10px 0;border-radius:8px;border:1.5px solid #3B6D11;background:transparent;color:#97C459;font-size:14px;font-weight:600;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">Abbrechen</button>
+      <button onclick="confirmOkClicked()" style="flex:1;padding:10px 0;border-radius:8px;border:1.5px solid #E0115F;background:transparent;color:#E0115F;font-size:14px;font-weight:600;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">Löschen</button>
     </div>
   </div>
 </div>
