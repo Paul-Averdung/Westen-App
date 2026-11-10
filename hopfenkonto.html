@@ -345,6 +345,7 @@
 <script src="js/sounds.js"></script>
 <script src="js/orden.js"></script>
 <script src="js/spiele.js"></script>
+<script src="js/gutschein.js"></script>
 <script src="js/verlauf.js"></script>
 </script>
 
@@ -390,6 +391,20 @@
 
     <div id="slots-result"></div>
     <div id="slots-no-coins-msg" style="display:none;">Keine Coins mehr – neue gibt es morgen! ☀️</div>
+    <button class="sm-redeem-btn" onclick="openRedeem()">🎁 Gutschein-Code einlösen</button>
+  </div>
+  <!-- Gutschein einlösen -->
+  <div id="redeem-overlay" onclick="if(event.target===this) closeRedeem()">
+    <div class="rd-panel">
+      <button class="mg-close" onclick="closeRedeem()" aria-label="Schließen">✕</button>
+      <div class="rd-title">🎁 Gutschein einlösen</div>
+      <div class="rd-label">Deine Mitgliedsnummer</div>
+      <div class="rd-id"><span class="member-id-val">—</span><button onclick="copyMemberId(this)">Kopieren</button></div>
+      <div class="rd-hint">Schick diese Nummer an Paul, wenn du einen Gutschein bekommst.</div>
+      <textarea id="redeem-input" rows="3" placeholder="Code hier einfügen (die ganze Nachricht geht auch)"></textarea>
+      <button id="redeem-btn" onclick="redeemCode()">Einlösen</button>
+      <div id="redeem-msg"></div>
+    </div>
   </div>
   <div id="sm-coinrain"></div>
 </div>
@@ -429,6 +444,8 @@
   <button onclick="closeSettings()" style="position:absolute;top:18px;right:18px;background:none;border:none;color:#97C459;font-size:22px;cursor:pointer;z-index:2;padding:4px 8px;">✕</button>
   <div style="padding:60px 20px 40px; max-width:420px; margin:0 auto;">
     <div style="color:#EFC93D;font-size:22px;font-weight:700;margin-bottom:16px;text-align:center;">⚙️ Einstellungen</div>
+    <label style="color:#97C459; font-size:12px; display:block; margin-bottom:4px;">Mitgliedsnummer (für Gutscheine)</label>
+    <div class="rd-id" style="margin-bottom:14px;"><span class="member-id-val">—</span><button onclick="copyMemberId(this)">Kopieren</button></div>
     <label style="color:#97C459; font-size:12px; display:block; margin-bottom:4px;">Eintrittsjahr</label>
     <input type="number" id="entry-year-input" placeholder="z.B. 2010"
       min="1900" max="2099"

@@ -361,6 +361,16 @@ window.startReactionTest = function() {
   }
 
   window.updateSlotsbet = function() { refreshUI(); };
+  // Gutschrift von außen (Gutschein-Codes): mit Hochzählen, Münzregen und Sound
+  window.slotsAddCoins = function(n) {
+    checkDailyCoins();
+    const before = Math.max(0, getCoins());
+    setCoins(before + n);
+    countCoins(before, before + n);
+    coinRain(Math.min(30, 10 + Math.round(n / 3)));
+    slotSound('win', { gain: n, small: n < 20 });
+    refreshUI(true);
+  };
   window.stepSlotsBet = function(d) {
     const inp = document.getElementById('slots-bet-input');
     inp.value = Math.max(1, Math.min(Math.max(1, getCoins()), currentBet() + d));
