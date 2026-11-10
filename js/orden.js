@@ -105,6 +105,7 @@ function showMedalAnimation(milestone) {
   const allDropped = 220 + count * dropDelay;
   setTimeout(() => subtitleEl.classList.add('show'), allDropped + 120);
   setTimeout(() => titleEl.classList.add('show'),    allDropped + 320);
+  playMedalSound(milestone, count, dropDelay, allDropped + 320);
   setTimeout(() => hintEl.classList.add('show'),     allDropped + 1400);
 
   const t = setTimeout(closeMedalAnim, allDropped + 5000);

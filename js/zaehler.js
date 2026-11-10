@@ -412,7 +412,9 @@ window.addEventListener('load', function() {
 function getAmount(key) {
   let v = NaN;
   try { v = parseFloat(localStorage.getItem('hopfenkonto_amt_' + key)); } catch(e) {}
-  return isNaN(v) ? AMT_DEFAULT[key] : v;
+  if (isNaN(v)) return AMT_DEFAULT[key];
+  const el = document.getElementById(key + '-amt');   // auf den erlaubten Bereich begrenzen
+  return el ? Math.min(+el.max, Math.max(+el.min, v)) : v;
 }
 // Füllung der Leiste und Stufenstriche an den aktuellen Wert anpassen
 function paintSlider(key) {
