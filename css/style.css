@@ -12,7 +12,7 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 .header > .wappen-wz {
   position: absolute; left: 50%; top: 50%;
   height: 150%; transform: translate(-50%, -50%);
-  opacity: 0.13; pointer-events: none; user-select: none;
+  opacity: 0.22; pointer-events: none; user-select: none;
 }
 .badge {
   display: inline-block; background: #BA7517; color: #FFF8EE;
