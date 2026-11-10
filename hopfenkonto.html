@@ -214,6 +214,14 @@
         <circle cx="22" cy="16.5" r="2" fill="currentColor" stroke="none"/>
       </svg>
     </button>
+    <button id="shop-btn" onclick="openShop()"
+      style="background:none; border:none; color:var(--icon); cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
+      title="Shop" aria-label="Shop">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 8h14l-1.2 12.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8z"/>
+        <path d="M9 10V6.5a3 3 0 0 1 6 0V10"/>
+      </svg>
+    </button>
     <button id="verlauf-btn" onclick="openVerlauf()"
       style="background:none; border:none; color:var(--icon); cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
       title="Verlauf">
@@ -349,6 +357,7 @@
 <script src="js/orden.js"></script>
 <script src="js/spiele.js"></script>
 <script src="js/gutschein.js"></script>
+<script src="js/shop.js"></script>
 <script src="js/verlauf.js"></script>
 </script>
 
@@ -395,6 +404,7 @@
     <div id="slots-result"></div>
     <div id="slots-no-coins-msg" style="display:none;">Keine Coins mehr – neue gibt es morgen! ☀️</div>
     <button class="sm-redeem-btn" onclick="openRedeem()">🎁 Gutschein-Code einlösen</button>
+    <button class="sm-redeem-btn sm-shop-btn" onclick="closeSlotsGame(); openShop()">🛍️ Zum Shop</button>
   </div>
   <!-- Gutschein einlösen -->
   <div id="redeem-overlay" onclick="if(event.target===this) closeRedeem()">
@@ -413,6 +423,26 @@
 </div>
 
 <!-- ── Verlauf Overlay ──────────────────────────────────────────────── -->
+<!-- ── Shop ─────────────────────────────────────────────────────────── -->
+<div id="shop-overlay">
+  <div class="sh-head">
+    <div class="sh-title">🛍️ Shop</div>
+    <div class="sh-coins">🪙 <span id="shop-coins">0</span></div>
+    <button class="sh-close" onclick="closeShop()" aria-label="Schließen">✕</button>
+  </div>
+  <div class="sh-tabs">
+    <button class="sh-tab" data-tab="themes" onclick="shopTab('themes')">🎨 Themes</button>
+    <button class="sh-tab" data-tab="skins" onclick="shopTab('skins')">🎰 Automaten</button>
+  </div>
+  <div id="shop-list"></div>
+  <div class="sh-foot">Coins gibt es täglich beim Öffnen der App, an den Automaten und per Gutschein.</div>
+  <div id="shop-toast"></div>
+</div>
+<div id="shop-trybar">
+  <span class="st-info">👁 <b class="st-name"></b> · <span class="st-sec">10</span> s</span>
+  <span class="st-actions"><button class="st-buy"></button><button class="st-end" onclick="shopEndTry()">Zurück</button></span>
+</div>
+
 <!-- ── Orden-Übersicht ─────────────────────────────────────────────── -->
 <div id="medal-gallery" onclick="if(event.target===this) closeMedalGallery()">
   <div class="mg-panel">

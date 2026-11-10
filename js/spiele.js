@@ -285,6 +285,9 @@ window.startReactionTest = function() {
   const SYMBOLS = ['🍺','🎩','🦅','🌭','🪶','🍟','🥃'];
   const REEL_TIMES = [1500, 2000, 2550];   // Dauer bis zum Stopp je Walze (ms, ab Walzenstart)
   const LEVER_MS = 300;                    // Walzen starten, wenn der Hebel unten ist
+  const MAX_BET = 50;                      // höchster Einsatz pro Dreh (schützt die Shop-Preise)
+  const MAX_DOUBLE = 3;                    // höchstens so oft hintereinander "Doppel oder Nichts"
+  let _doubleCount = 0;
   let _spinning = false;
   let _doubleRisk = 0;
   let _doubling = false;
@@ -337,7 +340,7 @@ window.startReactionTest = function() {
   function currentBet() {
     const inp = document.getElementById('slots-bet-input');
     const val = inp ? parseInt(inp.value) : 1;
-    return (isNaN(val) || val < 1) ? 1 : val;
+    return (isNaN(val) || val < 1) ? 1 : Math.min(MAX_BET, val);
   }
 
   function updateSpinBtn() {
@@ -354,13 +357,20 @@ window.startReactionTest = function() {
     const maxEl = document.getElementById('slots-bet-max');
     const inp   = document.getElementById('slots-bet-input');
     const coins = getCoins();
-    if (maxEl) maxEl.textContent = 'Max: ' + coins;
-    if (inp)   inp.max = coins;
+    const maxBet = Math.max(1, Math.min(MAX_BET, coins));
+    if (maxEl) maxEl.textContent = 'Max: ' + maxBet;
+    if (inp)   { inp.max = maxBet; if (parseInt(inp.value) > maxBet) inp.value = maxBet; }
     const nc = document.getElementById('slots-no-coins-msg');
     if (nc) nc.style.display = (coins === 0 && !_spinning) ? 'block' : 'none';
   }
 
   window.updateSlotsbet = function() { refreshUI(); };
+  // Coin-Konto für andere Teile der App (Shop, später weitere Spiele)
+  window.Coins = {
+    get: () => { checkDailyCoins(); return Math.max(0, getCoins()); },
+    spend: n => { checkDailyCoins(); const c = getCoins(); if (n > c) return false; setCoins(c - n); refreshUI(); return true; },
+    add: n => window.slotsAddCoins(n),
+  };
   // Gutschrift von außen (Gutschein-Codes): mit Hochzählen, Münzregen und Sound
   window.slotsAddCoins = function(n) {
     checkDailyCoins();
@@ -373,7 +383,7 @@ window.startReactionTest = function() {
   };
   window.stepSlotsBet = function(d) {
     const inp = document.getElementById('slots-bet-input');
-    inp.value = Math.max(1, Math.min(Math.max(1, getCoins()), currentBet() + d));
+    inp.value = Math.max(1, Math.min(MAX_BET, Math.max(1, getCoins()), currentBet() + d));
     refreshUI();
   };
 
@@ -453,6 +463,7 @@ window.startReactionTest = function() {
     _spinning = true;
     _doubleRisk = 0;
     _doubling = false;
+    _doubleCount = 0;
     setCoins(getCoins() - bet);
     refreshUI();
     document.getElementById('slots-result').innerHTML = '';
@@ -554,8 +565,9 @@ window.startReactionTest = function() {
   }
 
   window.doubleOrNothing = function() {
-    if (_doubleRisk <= 0 || _doubling) return;
+    if (_doubleRisk <= 0 || _doubling || _doubleCount >= MAX_DOUBLE) return;
     _doubling = true;
+    _doubleCount++;
     const btn   = document.getElementById('double-btn');
     const msgEl = document.getElementById('double-msg');
     if (btn) {
@@ -573,10 +585,13 @@ window.startReactionTest = function() {
         countCoins(before, before + _doubleRisk);
         _doubleRisk *= 2;
         if (msgEl) { msgEl.style.color = '#6fe08d'; msgEl.textContent = 'Verdoppelt'; }
-        if (btn) {
+        if (btn && _doubleCount < MAX_DOUBLE) {
           btn.disabled = false;
           btn.style.opacity = '1';
           btn.textContent = '🎲 Doppel oder Nichts (' + _doubleRisk + ' 🪙)';
+        } else if (btn) {
+          btn.remove();
+          if (msgEl) msgEl.textContent = 'Verdoppelt – maximal ' + MAX_DOUBLE + '× hintereinander';
         }
         slotSound('win', { gain: _doubleRisk, small: true });
         coinRain(12);

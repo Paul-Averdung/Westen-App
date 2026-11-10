@@ -235,14 +235,14 @@
                   vars: { bg: '#1a1007', surface: 'rgba(78,50,24,0.92)', 'surface-2': 'rgba(52,32,14,0.9)', line: '#a8783f', text: '#fff1d6', 'text-soft': '#e9c58e', label: '#f3e2c2', icon: '#e9c58e', accent: '#FFD54A', 'chart-fade': 'rgba(30,18,8,0.45)', 'card-bg': '#fbf1dc', 'card-border': '#d9c39a', 'card-title': '#3a2410', 'card-muted': '#8a7350', 'card-accent': '#2f6b2a', 'btn-bg': '#2f6b2a', 'btn-fg': '#f6ecd2', 'btn-line': '#245520' } },
     kneipe:     { name: 'Kneipe', tier: 'episch', scene: kneipeScene,
                   vars: { bg: '#2a190f', surface: '#202723', 'surface-2': '#2b332e', line: '#7a5532', text: '#efefe6', 'text-soft': '#c4cbbd', label: '#e2c9a6', icon: '#d8b27a', accent: '#f2d27a', 'chart-fade': 'rgba(10,14,12,0.35)', 'card-bg': '#f3ead7', 'card-border': '#c9b48e', 'card-title': '#2a1a0e', 'card-muted': '#7d6a52', 'card-accent': '#6b3a12', 'btn-bg': '#6b4526', 'btn-fg': '#f7e6c8', 'btn-line': '#4e301a' } },
-    herbst:     { name: 'Herbstabend', tier: 'episch', scene: herbstScene, init: herbstInit,
+    herbst:     { name: 'Herbstabend', tier: 'episch', season: { months: [9, 10, 11], label: 'September – November' }, scene: herbstScene, init: herbstInit,
                   vars: { bg: '#241326', surface: 'rgba(42,18,24,0.8)', 'surface-2': 'rgba(110,47,40,0.65)', line: 'rgba(242,178,90,0.45)', text: '#ffe6cc', 'text-soft': '#f2b27a', label: '#ffd9b5', icon: '#f2b27a', accent: '#FFC94A', 'chart-fade': 'rgba(36,19,38,0.4)', 'card-bg': '#fff3e6', 'card-border': '#f0c9a0', 'card-title': '#3d1a0c', 'card-muted': '#9a6a4a', 'card-accent': '#b9461f', 'btn-bg': '#b9461f', 'btn-fg': '#fff1e0', 'btn-line': '#8f3215' } },
-    winter:     { name: 'Winternacht', tier: 'episch', scene: winterScene, init: snowInit,
+    winter:     { name: 'Winternacht', tier: 'episch', season: { months: [12, 1, 2], label: 'Dezember – Februar' }, scene: winterScene, init: snowInit,
                   vars: { bg: '#040a1c', surface: 'rgba(14,34,72,0.66)', 'surface-2': 'rgba(60,100,160,0.38)', line: 'rgba(190,220,255,0.4)', text: '#f0f7ff', 'text-soft': '#a9c8f0', label: '#dbe9ff', icon: '#a9c8f0', accent: '#FFE08A', 'chart-fade': 'rgba(4,10,28,0.3)', 'card-bg': 'rgba(248,251,255,0.8)', 'card-border': '#c9dcf2', 'card-title': '#0e2248', 'card-muted': '#5a6f90', 'card-accent': '#2c5a9c', 'btn-bg': '#2c5a9c', 'btn-fg': '#eaf3ff', 'btn-line': '#1f467e' } },
     // Legendär
     gold:       { name: 'Gold-Edition', tier: 'legendaer', scene: goldScene, init: goldInit,
                   vars: { bg: '#070604', surface: 'rgba(18,14,6,0.92)', 'surface-2': 'rgba(60,45,12,0.7)', line: '#b8902e', text: '#fbe7a6', 'text-soft': '#d4b060', label: '#d4b060', icon: '#d4af37', accent: '#FFD54A', 'chart-fade': 'rgba(7,6,4,0.4)', 'card-bg': '#fffaf0', 'card-border': '#d4af37', 'card-title': '#2a2106', 'card-muted': '#8a7440', 'card-accent': '#9a7412', 'btn-bg': '#1a150a', 'btn-fg': '#FFD54A', 'btn-line': '#b8902e' } },
-    feuerwerk:  { name: 'Silvester-Feuerwerk', tier: 'legendaer', scene: feuerwerkScene, init: feuerwerkInit,
+    feuerwerk:  { name: 'Silvester-Feuerwerk', tier: 'legendaer', season: { from: [12, 27], to: [1, 6], label: '27. Dezember – 6. Januar' }, scene: feuerwerkScene, init: feuerwerkInit,
                   vars: { bg: '#02030b', surface: 'rgba(8,10,34,0.78)', 'surface-2': 'rgba(42,26,85,0.62)', line: 'rgba(160,140,255,0.4)', text: '#eef0ff', 'text-soft': '#b4b6f0', label: '#d6d8ff', icon: '#b4b6f0', accent: '#FFD54A', 'chart-fade': 'rgba(2,3,11,0.3)', 'card-bg': 'rgba(14,12,48,0.5)', 'card-border': 'rgba(170,160,255,0.35)', 'card-title': '#f2f0ff', 'card-muted': '#b4b0e8', 'card-accent': '#FFD54A', 'btn-bg': '#2a1a6e', 'btn-fg': '#FFD54A', 'btn-line': '#5a3fd0' } },
   };
   window.THEMES = T;
@@ -250,12 +250,13 @@
 
   // ── Automaten-Skins (Optik in css/themes.css, Abschnitt "Automaten-Skins") ──
   const SKINS = {
-    standard: { name: 'Casino Rot',     tier: 'standard' },
-    holz:     { name: 'Holz-Retro',     tier: 'selten' },
-    bierfass: { name: 'Bierfass',       tier: 'episch' },
-    eis:      { name: 'Eispalast',      tier: 'episch' },
-    neon:     { name: 'Neon-Vegas',     tier: 'legendaer' },
-    gold:     { name: 'Goldener Automat', tier: 'legendaer' },
+    // thumb: Farben für das kleine Vorschaubild im Shop
+    standard: { name: 'Casino Rot',       tier: 'standard',  thumb: { cab: 'linear-gradient(#7a0f1d,#4e0912)', frame: '#E8B923', marq: '#2a0a0e', glow: 'none' } },
+    holz:     { name: 'Holz-Retro',       tier: 'selten',    thumb: { cab: 'linear-gradient(#7a4a24,#4a2a12)', frame: '#c9a24a', marq: '#1f3b26', glow: 'none' } },
+    bierfass: { name: 'Bierfass',         tier: 'episch',    thumb: { cab: 'radial-gradient(ellipse,#a0622a,#4a2508)', frame: '#2b2b2b', marq: '#f3e6c4', glow: 'none' } },
+    eis:      { name: 'Eispalast',        tier: 'episch',    thumb: { cab: 'linear-gradient(#5aa2d8,#1f5a96)', frame: '#e6f2ff', marq: '#0e2b55', glow: '0 0 10px rgba(150,210,255,0.6)' } },
+    neon:     { name: 'Neon-Vegas',       tier: 'legendaer', thumb: { cab: 'linear-gradient(#120018,#05000a)', frame: '#ff2fa0', marq: '#05000a', glow: '0 0 10px #ff2fa0' } },
+    gold:     { name: 'Goldener Automat', tier: 'legendaer', thumb: { cab: 'linear-gradient(135deg,#7a5a12,#ffe08a 30%,#c99a2e 55%,#fff1b8 75%,#7a5a12)', frame: '#fff1b8', marq: '#000', glow: '0 0 10px rgba(255,200,60,0.5)' } },
   };
   window.SLOT_SKINS = SKINS;
   window.applySlotSkin = function(id) {
@@ -277,12 +278,21 @@
     if (meta) meta.setAttribute('content', th.vars.bg || '#0f2204');
   };
 
-  // Gespeichertes Theme bzw. Vorschau per ?theme=<id>
-  let id = null;
-  try { id = new URLSearchParams(location.search).get('theme') || localStorage.getItem('hopfenkonto_theme'); } catch(e) {}
+  // Aktives Theme/Skin laden – nur wenn gekauft (Besitz-Liste aus dem Shop).
+  // Vorschau per ?theme=<id> / ?skin=<id> funktioniert nur lokal beim Entwickeln.
+  const dev = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  let own = {};
+  try { own = JSON.parse(localStorage.getItem('hopfenkonto_owned') || '{}') || {}; } catch(e) {}
+  const has = (kind, x) => x === 'standard' || (own[kind] || []).includes(x);
+  let id = null, sk = null;
+  try {
+    const q = new URLSearchParams(location.search);
+    id = (dev && q.get('theme')) || localStorage.getItem('hopfenkonto_theme');
+    sk = (dev && q.get('skin'))  || localStorage.getItem('hopfenkonto_slot_skin');
+    if (!(dev && q.get('theme')) && !has('themes', id)) id = null;
+    if (!(dev && q.get('skin'))  && !has('skins', sk))  sk = null;
+  } catch(e) {}
   if (id && T[id]) window.applyTheme(id);
-  let sk = null;
-  try { sk = new URLSearchParams(location.search).get('skin') || localStorage.getItem('hopfenkonto_slot_skin'); } catch(e) {}
   // Das Slots-Fenster steht im HTML hinter den Skripten -> erst nach dem Laden anwenden
   if (sk) document.addEventListener('DOMContentLoaded', () => window.applySlotSkin(sk));
 })();
