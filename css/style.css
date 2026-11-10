@@ -79,7 +79,8 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #97C459; }
 .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 .totals-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; margin-top: 10px; }
-.total-cell { background: #27500A; border-radius: 8px; padding: 6px 8px; text-align: center; }
+.total-cell { background: #27500A; border-radius: 8px; padding: 6px 4px; text-align: center;
+  display: flex; flex-direction: column; justify-content: space-between; } /* Werte bleiben auf einer Höhe, auch wenn ein Text umbricht */
 .total-label { font-size: 10px; color: #97C459; margin-bottom: 2px; }
 .total-val { font-size: 16px; font-weight: 500; color: #C0DD97; }
 .grand-total { background: #27500A; border-radius: 8px; padding: 8px 10px; text-align: center; margin-top: 6px; }
