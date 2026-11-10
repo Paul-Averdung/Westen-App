@@ -450,7 +450,7 @@ window.addEventListener('load', function() {
       datasets: [
         ds('Bier',    '#FFD54A', '#E0950A'),
         ds('Shots',   '#FF9A6A', '#D4532A'),
-        ds('Misch',   '#7FE3D3', '#2E9C8C'),
+        ds('Mischen', '#7FE3D3', '#2E9C8C'),
         ds('Weitere', '#C9D8B0', '#7E9562'),
       ]
     },
