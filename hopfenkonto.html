@@ -50,12 +50,25 @@
         </div>
         <span class="size-count" id="b05-count">0</span>
       </div>
+      <div class="size-btn-wrap">
+        <span class="size-label">Andere</span>
+        <div class="btn-row">
+          <button class="btn minus" onclick="addDrink('bfree',-1,this)">−</button>
+          <button class="btn plus" onclick="openBeerOther(this)">+</button>
+        </div>
+        <span class="size-count" id="bfree-count">0</span>
+      </div>
     </div>
   </div>
 
   <p class="section-label">🥃 Shots</p>
   <div class="drink-card">
     <div class="drink-header"><div class="drink-name">Shots</div><div class="drink-total" id="shots-total">0</div></div>
+    <div class="amount-row">
+      <span class="amount-lbl">Menge</span>
+      <input type="range" class="amount-slider" id="shots-amt" min="1" max="6" step="1" value="2" oninput="setAmount('shots',this.value)" aria-label="Menge pro Shot in cl">
+      <span class="amount-val" id="shots-amt-val">2 cl</span>
+    </div>
     <div class="btn-row" style="justify-content:center; gap:16px;">
       <button class="btn minus" onclick="addDrink('shots',-1,this)">−</button>
       <button class="btn plus" onclick="addDrink('shots',1,this)" style="width:52px;height:52px;font-size:24px;">+</button>
@@ -65,6 +78,11 @@
   <p class="section-label">🍹 Mischgetränke</p>
   <div class="drink-card">
     <div class="drink-header"><div class="drink-name">Mischgetränke</div><div class="drink-total" id="misch-total">0</div></div>
+    <div class="amount-row">
+      <span class="amount-lbl">Schnaps im Glas</span>
+      <input type="range" class="amount-slider" id="misch-amt" min="1" max="8" step="1" value="4" oninput="setAmount('misch',this.value)" aria-label="Schnaps pro Mischgetränk in cl">
+      <span class="amount-val" id="misch-amt-val">4 cl</span>
+    </div>
     <div class="btn-row" style="justify-content:center; gap:16px;">
       <button class="btn minus" onclick="addDrink('misch',-1,this)">−</button>
       <button class="btn plus" onclick="addDrink('misch',1,this)" style="width:52px;height:52px;font-size:24px;">+</button>
@@ -411,6 +429,20 @@
         🔄 App aktualisieren
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ── Bier: andere Größe ───────────────────────────────────────────── -->
+<div id="beer-other-overlay" onclick="if(event.target===this) closeBeerOther()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:12000; font-family:-apple-system,BlinkMacSystemFont,sans-serif; align-items:center; justify-content:center;">
+  <div style="background:#173404;border:0.5px solid #3B6D11;border-radius:12px;padding:20px;max-width:300px;width:85%;text-align:center;">
+    <div style="color:#C0DD97;font-size:15px;font-weight:600;margin-bottom:14px;">🍺 Welche Größe?</div>
+    <div class="beer-other-grid">
+      <button onclick="addBeerOther(0.3)">0,3 l</button>
+      <button onclick="addBeerOther(0.35)">0,35 l</button>
+      <button onclick="addBeerOther(0.4)">0,4 l</button>
+      <button onclick="addBeerOther(1.0)">1,0 l</button>
+    </div>
+    <button onclick="closeBeerOther()" style="margin-top:12px;width:100%;padding:10px 0;border-radius:8px;border:1px solid #3B6D11;background:transparent;color:#97C459;font-size:14px;cursor:pointer;">Abbrechen</button>
   </div>
 </div>
 

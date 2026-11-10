@@ -61,9 +61,11 @@
       const t     = new Date(e.ts);
       const time  = String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
       const sign  = e.dir > 0 ? '+1' : '−1';
+      const a     = entryAmt(e);
+      const amtTx = e.key === 'bfree' ? ' ' + fmtL(a || 0) : (a !== undefined ? ' · ' + fmtCl(a) : '');
       const color = e.dir > 0 ? '#C0DD97' : '#E0115F';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid #1f3d0a;">' +
-        '<span style="color:' + color + ';font-size:13px;">' + info.emoji + ' ' + info.label + ' (' + sign + ')</span>' +
+        '<span style="color:' + color + ';font-size:13px;">' + info.emoji + ' ' + info.label + amtTx + ' (' + sign + ')</span>' +
         '<span style="color:#97C459;font-size:12px;">' + time + '</span>' +
       '</div>';
     });

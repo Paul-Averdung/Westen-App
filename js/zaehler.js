@@ -2,11 +2,19 @@
 // Hinweis: Alle Dateien in js/ teilen sich einen Gültigkeitsbereich;
 // die Reihenfolge der <script>-Tags in hopfenkonto.html ist wichtig.
 
-const state = {b02:0, b033:0, b05:0, shots:0, misch:0, manta:0};
+// Zähler pro Getränk. shotsCl/mischCl = cl Schnaps, bfreeL = Liter "Andere"-Bier
+const state = {b02:0, b033:0, b05:0, bfree:0, shots:0, misch:0, manta:0,
+               bfreeL:0, shotsCl:0, mischCl:0};
 let hourlyCount = {};
 let milestonesShown = new Set();
-let drinkLog = []; // current session: [{ts, key, dir}]
+let drinkLog = []; // current session: [{ts, key, dir, amt?}]
 let chart = null;
+
+// Getränke mit einstellbarer Menge und wo ihre Summe in state steht
+const AMT_KEY = { shots: 'shotsCl', misch: 'mischCl', bfree: 'bfreeL' };
+// Menge für Einträge von vor dem Mengen-Update (alte Punkte: Shot 1, Misch 1,65)
+const LEGACY_AMT = { shots: 2, misch: 3.3 };
+const AMT_DEFAULT = { shots: 2, misch: 4 };
 
 // ── Restore saved state ───────────────────────────────────────────────────
 (function restoreSaved() {
@@ -15,7 +23,12 @@ let chart = null;
     const raw = localStorage.getItem('hopfenkonto_v2') || localStorage.getItem('hopfenkonto_v1');
     if (!raw) return;
     const d = JSON.parse(raw);
-    if (d.state) Object.assign(state, d.state);
+    if (d.state) {
+      Object.assign(state, d.state);
+      // Daten von vor dem Mengen-Update: Mengen aus der Anzahl ableiten
+      if (d.state.shotsCl === undefined) state.shotsCl = (state.shots || 0) * LEGACY_AMT.shots;
+      if (d.state.mischCl === undefined) state.mischCl = (state.misch || 0) * LEGACY_AMT.misch;
+    }
     // Only restore hourlyCount if it was saved with v2 (keys are large numbers, not 0-23)
     if (d.hourlyCount) {
       const keys = Object.keys(d.hourlyCount).map(Number);
@@ -30,12 +43,31 @@ const LEVEL_MAX = 50;
 let bubbleTimer = null;
 
 // ── Punkte-Score für Orden & Bierpegel ──────────────────────────────────────
-// 0,2 l Bier = 1 | 0,33 l Bier = 1,65 | 0,5 l Bier = 2,5 | Shot = 1 | Mischgetränk = 1,65
-const DRINK_POINTS = { b02: 1, b033: 1.65, b05: 2.5, shots: 1, misch: 1.65 };
+// 1 Punkt ≈ 1 Standardgetränk:
+// Bier: 0,2 l = 1 Punkt (also Liter ÷ 0,2) | Shots & Mischgetränke: 2 cl Schnaps = 1 Punkt
+const DRINK_POINTS = { b02: 1, b033: 1.65, b05: 2.5 };
+
+function entryAmt(e) {
+  if (e.amt !== undefined) return e.amt;
+  return LEGACY_AMT[e.key];
+}
+function drinkPoints(key, amt) {
+  if (key in DRINK_POINTS) return DRINK_POINTS[key];
+  if (key === 'bfree') return (amt || 0) / 0.2;
+  if (key === 'shots' || key === 'misch') return (amt || 0) / 2;
+  return 0; // Mantaplatte
+}
 function calcScore() {
   let s = 0;
   for (const k in DRINK_POINTS) s += state[k] * DRINK_POINTS[k];
+  s += state.bfreeL / 0.2 + state.shotsCl / 2 + state.mischCl / 2;
   return Math.round(s * 100) / 100;
+}
+function fmtCl(cl) {
+  return String(Math.round(cl * 10) / 10).replace('.', ',') + ' cl';
+}
+function fmtL(l) {
+  return l.toFixed(2).replace(/0$/, '').replace('.', ',') + ' l';
 }
 
 // ── Verlauf / Historie ───────────────────────────────────────────────────────
@@ -43,6 +75,7 @@ const DRINK_INFO = {
   b02:   { label: '0,2 l Bier',   emoji: '🍺' },
   b033:  { label: '0,33 l Bier',  emoji: '🍺' },
   b05:   { label: '0,5 l Bier',   emoji: '🍺' },
+  bfree: { label: 'Bier',         emoji: '🍺' },
   shots: { label: 'Shot',         emoji: '🥃' },
   misch: { label: 'Mischgetränk', emoji: '🍹' },
   manta: { label: 'Mantaplatte',  emoji: '🍽️' },
@@ -69,12 +102,15 @@ function saveHistory(hist) {
 }
 
 function summarizeEntries(entries) {
-  const totals = {};
-  entries.forEach(e => { totals[e.key] = (totals[e.key]||0) + e.dir; });
-  const count = (totals.b02||0)+(totals.b033||0)+(totals.b05||0)+(totals.shots||0)+(totals.misch||0);
-  const liters = (totals.b02||0)*0.2 + (totals.b033||0)*0.33 + (totals.b05||0)*0.5;
-  let score = 0;
-  for (const k in DRINK_POINTS) score += (totals[k]||0) * DRINK_POINTS[k];
+  let count = 0, liters = 0, score = 0;
+  const L = { b02: 0.2, b033: 0.33, b05: 0.5 };
+  entries.forEach(e => {
+    if (e.key === 'manta') return;
+    count += e.dir;
+    if (L[e.key]) liters += e.dir * L[e.key];
+    if (e.key === 'bfree') liters += e.dir * (e.amt || 0);
+    score += e.dir * drinkPoints(e.key, entryAmt(e));
+  });
   return {
     count: Math.max(0, count),
     liters: Math.round(liters*100)/100,
@@ -160,13 +196,11 @@ function updateChart() {
     chart.update('none');
   }
 
-  const totalBierL  = (state.b02 * 0.2) + (state.b033 * 0.33) + (state.b05 * 0.5);
-  const totalShotsCl = state.shots * 2;
-  const totalMischCl = state.misch * 20;
+  const totalBierL  = (state.b02 * 0.2) + (state.b033 * 0.33) + (state.b05 * 0.5) + state.bfreeL;
   document.getElementById('total-bier').textContent  = totalBierL.toFixed(2).replace('.',',') + ' l';
-  document.getElementById('total-shots').textContent = totalShotsCl + ' cl';
-  document.getElementById('total-misch').textContent = totalMischCl + ' cl';
-  document.getElementById('grand-total').textContent = state.b02 + state.b033 + state.b05 + state.shots + state.misch;
+  document.getElementById('total-shots').textContent = fmtCl(state.shotsCl);
+  document.getElementById('total-misch').textContent = fmtCl(state.mischCl);
+  document.getElementById('grand-total').textContent = state.b02 + state.b033 + state.b05 + state.bfree + state.shots + state.misch;
 }
 
 function triggerAnim(btn, dir) {
@@ -254,20 +288,50 @@ window.toggleSound = function() {
   if (nowOn) playClick();
 };
 
-window.addDrink = function(key, dir, btn) {
-  if (dir < 0 && state[key] <= 0) return;
-  if (btn) triggerAnim(btn, dir);
-  state[key] = Math.max(0, state[key] + dir);
-  drinkLog.push({ts: Date.now(), key, dir});
-  const h = currentHour();
-  if (key !== 'manta') hourlyCount[h] = Math.max(0, (hourlyCount[h] || 0) + dir);
-  document.getElementById('b02-count').textContent  = state.b02;
-  document.getElementById('b033-count').textContent = state.b033;
-  document.getElementById('b05-count').textContent  = state.b05;
-  document.getElementById('beer-total').textContent  = state.b02 + state.b033 + state.b05;
+function refreshCounts() {
+  document.getElementById('b02-count').textContent   = state.b02;
+  document.getElementById('b033-count').textContent  = state.b033;
+  document.getElementById('b05-count').textContent   = state.b05;
+  document.getElementById('bfree-count').textContent = state.bfree;
+  document.getElementById('beer-total').textContent  = state.b02 + state.b033 + state.b05 + state.bfree;
   document.getElementById('shots-total').textContent = state.shots;
   document.getElementById('misch-total').textContent = state.misch;
   document.getElementById('manta-total').textContent = state.manta;
+}
+
+// Menge des zuletzt gezählten (und noch nicht zurückgenommenen) Getränks dieser Art
+function lastAmount(key) {
+  let skip = 0;
+  for (let i = drinkLog.length - 1; i >= 0; i--) {
+    const e = drinkLog[i];
+    if (e.key !== key) continue;
+    if (e.dir < 0) { skip++; continue; }
+    if (skip > 0) { skip--; continue; }
+    const a = entryAmt(e);
+    if (a !== undefined) return a;
+    break;
+  }
+  // Fallback (z.B. Zählerstand ohne passenden Verlauf): Durchschnitt
+  return state[key] > 0 ? state[AMT_KEY[key]] / state[key] : 0;
+}
+
+window.addDrink = function(key, dir, btn, amt) {
+  if (dir < 0 && state[key] <= 0) return;
+  if (btn) triggerAnim(btn, dir);
+  const entry = {ts: Date.now(), key, dir};
+  if (AMT_KEY[key]) {
+    if (dir > 0 && amt === undefined) amt = getAmount(key);
+    if (dir < 0) amt = lastAmount(key);
+    const sk = AMT_KEY[key];
+    state[sk] = Math.max(0, Math.round((state[sk] + dir * amt) * 1000) / 1000);
+    entry.amt = amt;
+  }
+  state[key] = Math.max(0, state[key] + dir);
+  if (AMT_KEY[key] && state[key] === 0) state[AMT_KEY[key]] = 0;
+  drinkLog.push(entry);
+  const h = currentHour();
+  if (key !== 'manta') hourlyCount[h] = Math.max(0, (hourlyCount[h] || 0) + dir);
+  refreshCounts();
   updateChart();
   updateBeerLevel();
   if (dir > 0) { checkMilestone(); }
@@ -277,7 +341,7 @@ window.addDrink = function(key, dir, btn) {
 function performReset() {
   Object.keys(state).forEach(k => state[k] = 0);
   hourlyCount = {};
-  ['b02-count','b033-count','b05-count'].forEach(id => document.getElementById(id).textContent = '0');
+  ['b02-count','b033-count','b05-count','bfree-count'].forEach(id => document.getElementById(id).textContent = '0');
   ['beer-total','shots-total','misch-total','manta-total'].forEach(id => document.getElementById(id).textContent = '0');
   ['total-bier','total-shots','total-misch'].forEach(id => document.getElementById(id).textContent = id === 'total-bier' ? '0,00 l' : '0 cl');
   document.getElementById('grand-total').textContent = '0';
@@ -335,15 +399,43 @@ window.addEventListener('load', function() {
   });
 
   // Update DOM with any restored state
-  document.getElementById('b02-count').textContent  = state.b02;
-  document.getElementById('b033-count').textContent = state.b033;
-  document.getElementById('b05-count').textContent  = state.b05;
-  document.getElementById('beer-total').textContent  = state.b02 + state.b033 + state.b05;
-  document.getElementById('shots-total').textContent = state.shots;
-  document.getElementById('misch-total').textContent = state.misch;
-  document.getElementById('manta-total').textContent = state.manta;
+  refreshCounts();
+  initAmountSliders();
   updateChart();
   updateBeerLevel();
   updateMedalsDisplay();
   updateCountdown();
 });
+
+// ── Mengen-Slider (Shots & Mischgetränke) ───────────────────────────────────
+function getAmount(key) {
+  let v = NaN;
+  try { v = parseFloat(localStorage.getItem('hopfenkonto_amt_' + key)); } catch(e) {}
+  return isNaN(v) ? AMT_DEFAULT[key] : v;
+}
+window.setAmount = function(key, val) {
+  const v = parseFloat(val);
+  try { localStorage.setItem('hopfenkonto_amt_' + key, String(v)); } catch(e) {}
+  document.getElementById(key + '-amt-val').textContent = fmtCl(v);
+};
+function initAmountSliders() {
+  ['shots', 'misch'].forEach(key => {
+    const v = getAmount(key);
+    document.getElementById(key + '-amt').value = v;
+    document.getElementById(key + '-amt-val').textContent = fmtCl(v);
+  });
+}
+
+// ── Bier "Andere" (freie Größe) ─────────────────────────────────────────────
+let _beerOtherBtn = null;
+window.openBeerOther = function(btn) {
+  _beerOtherBtn = btn;
+  document.getElementById('beer-other-overlay').style.display = 'flex';
+};
+window.closeBeerOther = function() {
+  document.getElementById('beer-other-overlay').style.display = 'none';
+};
+window.addBeerOther = function(liters) {
+  window.closeBeerOther();
+  addDrink('bfree', 1, _beerOtherBtn, liters);
+};
