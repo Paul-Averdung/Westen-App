@@ -963,6 +963,18 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 
   let countdownTimer = null;
 
+  // ── Vereinstermine ─────────────────────────────────────────────────────────
+  // Werden am jeweiligen Tag in der Countdown-Karte unten angezeigt.
+  // Neue Termine einfach hier ergänzen (Format: 'JJJJ-MM-TT').
+  const EVENTS = [
+    { date: '2026-11-14', title: 'Herbstfest',      emoji: '🍂' },
+    { date: '2026-12-18', title: 'Weihnachtsmarkt', emoji: '🎄' },
+  ];
+  function eventToday(today) {
+    const key = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    return EVENTS.find(e => e.date === key) || null;
+  }
+
   function getFestDates(y) {
     const thu = dateOnly(fronleichnam(y));
     const fri = new Date(thu); fri.setDate(thu.getDate()+1);
@@ -1034,6 +1046,17 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
       }
       sub.textContent = 'Horrido!';
       if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+    } else if (eventToday(today)) {
+      const ev = eventToday(today);
+      clock.style.display   = 'none';
+      festday.style.display = 'block';
+      title.textContent   = '📅 HEUTE BEIM GEMÜTLICHEN WESTEN';
+      festday.textContent = ev.emoji + ' ' + ev.title;
+      label.textContent   = ev.title + ' · ' + today.getDate() + '. ' + MO[today.getMonth()] + ' ' + today.getFullYear();
+      const daysLeft = Math.round((thu - today) / 86400000);
+      sub.textContent = 'Noch ' + daysLeft + ' Tage bis zum Schützenfest ' + y;
+      // Timer weiterlaufen lassen, damit um Mitternacht zurückgeschaltet wird
+      if (!countdownTimer) countdownTimer = setInterval(updateCountdown, 1000);
     } else {
       clock.style.display   = 'flex';
       festday.style.display = 'none';
