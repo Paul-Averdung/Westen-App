@@ -1,10 +1,32 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 12px; }
+:root {
+  /* Farben des Hauptbildschirms – Themes überschreiben diese Werte (js/themes.js) */
+  --bg: #0f2204;          /* Seitenhintergrund */
+  --surface: #173404;     /* Kopfbereich, Diagramm-Karte, Countdown */
+  --surface-2: #27500A;   /* Summenkästchen */
+  --line: #3B6D11;        /* Ränder */
+  --text: #C0DD97;        /* Haupttext auf dunklen Flächen */
+  --text-soft: #97C459;   /* Nebentext */
+  --accent: #EFC93D;      /* Gold-Akzent */
+  --label: #888;          /* Abschnittsüberschriften (Bier, Shots …) */
+  --icon: #3B6D11;        /* Symbolleiste unten */
+  --chart-fade: rgba(15,34,4,0.55);
+  /* Getränkekarten */
+  --card-bg: #fff;
+  --card-border: #ddd;
+  --card-title: #111;
+  --card-muted: #666;
+  --card-accent: #3B6D11; /* Zahlen auf den Karten, Slider-Striche */
+  --btn-bg: #27500A;      /* Plus-Knöpfe, Slider */
+  --btn-fg: #C0DD97;
+  --btn-line: #3B6D11;
+}
+body { background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 12px; }
 .app { max-width: 400px; margin: 0 auto; }
 .header {
   text-align: center; padding: 16px 12px 12px;
-  border-radius: 12px; border: 0.5px solid #3B6D11;
-  background: #173404; margin-bottom: 14px; position: relative;
+  border-radius: 12px; border: 0.5px solid var(--line);
+  background: var(--surface); margin-bottom: 14px; position: relative;
 }
 /* Wappen als angedeutetes Wasserzeichen hinter der Überschrift */
 .header { overflow: hidden; }
@@ -19,24 +41,24 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   font-size: 11px; font-weight: 500; padding: 2px 10px;
   border-radius: 20px; margin-bottom: 6px; letter-spacing: 0.5px;
 }
-.header h1 { font-size: 17px; font-weight: 500; color: #C0DD97; margin-bottom: 2px; }
-.header p { font-size: 12px; color: #97C459; opacity: 0.85; }
+.header h1 { font-size: 17px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+.header p { font-size: 12px; color: var(--text-soft); opacity: 0.85; }
 .section-label {
-  font-size: 12px; font-weight: 500; color: #888;
+  font-size: 12px; font-weight: 500; color: var(--label);
   text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;
 }
 .drink-card {
-  background: #fff; border: 0.5px solid #ddd;
+  background: var(--card-bg); border: 0.5px solid var(--card-border);
   border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
 }
 .drink-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.drink-name { font-size: 15px; font-weight: 500; color: #111; }
-.drink-total { font-size: 22px; font-weight: 500; color: #3B6D11; min-width: 32px; text-align: right; }
+.drink-name { font-size: 15px; font-weight: 500; color: var(--card-title); }
+.drink-total { font-size: 22px; font-weight: 500; color: var(--card-accent); min-width: 32px; text-align: right; }
 .size-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 @media (max-width: 360px) { .size-grid .btn { width: 28px; height: 28px; } .size-grid .btn-row { gap: 3px; } }
 /* Mengen-Slider bei Shots und Mischgetränken */
 .amount-row { display: flex; align-items: center; gap: 10px; margin: -2px 0 10px; }
-.amount-lbl { font-size: 11px; color: #666; white-space: nowrap; }
+.amount-lbl { font-size: 11px; color: var(--card-muted); white-space: nowrap; }
 .amount-track { position: relative; flex: 1; min-width: 0; padding-bottom: 8px; }
 /* Eigener Slider-Stil: überall gleich, damit die Stufenstriche unter den Raststellen sitzen.
    Daumen 22px breit -> Mittelpunkt läuft von 11px bis (Breite - 11px). */
@@ -48,26 +70,26 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 .amount-slider:focus { outline: none; }
 .amount-slider::-webkit-slider-runnable-track {
   height: 6px; border-radius: 3px;
-  background: linear-gradient(to right, #27500A var(--fill), #e2e2e2 var(--fill));
+  background: linear-gradient(to right, var(--btn-bg) var(--fill), #e2e2e2 var(--fill));
 }
 .amount-slider::-moz-range-track { height: 6px; border-radius: 3px; background: #e2e2e2; }
-.amount-slider::-moz-range-progress { height: 6px; border-radius: 3px; background: #27500A; }
+.amount-slider::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--btn-bg); }
 .amount-slider::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
   width: 22px; height: 22px; margin-top: -8px; border-radius: 50%;
-  background: #27500A; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  background: var(--btn-bg); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.35);
 }
 .amount-slider::-moz-range-thumb {
   width: 18px; height: 18px; border-radius: 50%;
-  background: #27500A; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  background: var(--btn-bg); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.35);
 }
 .amount-ticks { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; pointer-events: none; }
 .amount-ticks span {
   position: absolute; top: 0; width: 2px; height: 6px; margin-left: -1px;
   border-radius: 1px; background: #cfcfcf;
 }
-.amount-ticks span.on { background: #3B6D11; }
-.amount-val { font-size: 13px; font-weight: 600; color: #3B6D11; min-width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+.amount-ticks span.on { background: var(--card-accent); }
+.amount-val { font-size: 13px; font-weight: 600; color: var(--card-accent); min-width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
 /* Auswahl "Andere" beim Bier */
 .beer-other-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .beer-other-grid button {
@@ -76,8 +98,8 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 }
 .beer-other-grid button:active { background: #3B6D11; }
 .size-btn-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.size-label { font-size: 11px; color: #666; }
-.size-count { font-size: 13px; font-weight: 500; color: #3B6D11; }
+.size-label { font-size: 11px; color: var(--card-muted); }
+.size-count { font-size: 13px; font-weight: 500; color: var(--card-accent); }
 .btn-row { display: flex; gap: 4px; align-items: center; }
 .btn {
   border: 0.5px solid #ccc; background: #fff; border-radius: 8px;
@@ -87,8 +109,8 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 }
 .btn { transition: transform 0.1s ease, background 0.1s ease; }
 .btn:active { transform: scale(0.92); background: #f0f0f0; }
-.btn.plus { background: #27500A; color: #C0DD97; border-color: #3B6D11; font-size: 18px; }
-.btn.plus:active { background: #3B6D11; }
+.btn.plus { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-line); font-size: 18px; }
+.btn.plus:active { background: var(--btn-line); }
 .btn.minus { color: #999; }
 @keyframes btnPop {
   0%   { transform: scale(1); }
@@ -112,41 +134,41 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
   animation: horrido 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 .graph-card {
-  background: #173404; border: 0.5px solid #3B6D11;
+  background: var(--surface); border: 0.5px solid var(--line);
   border-radius: 12px; padding: 14px; margin-top: 14px; margin-bottom: 4px;
 }
-.graph-title { font-size: 12px; color: #97C459; margin-bottom: 10px; font-weight: 500; letter-spacing: 0.5px; }
+.graph-title { font-size: 12px; color: var(--text-soft); margin-bottom: 10px; font-weight: 500; letter-spacing: 0.5px; }
 .graph-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .graph-head .graph-title { margin-bottom: 6px; }
-.graph-stat { font-size: 11px; color: #EFC93D; opacity: 0.9; white-space: nowrap; }
+.graph-stat { font-size: 11px; color: var(--accent); opacity: 0.9; white-space: nowrap; }
 .chart-legend { display: flex; gap: 12px; margin-bottom: 8px; }
-.chart-legend span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #97C459; }
+.chart-legend span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-soft); }
 .chart-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 .chart-wrap {
   position: relative; width: 100%; height: 190px;
-  background: linear-gradient(180deg, rgba(15,34,4,0) 0%, rgba(15,34,4,0.55) 100%);
+  background: linear-gradient(180deg, transparent 0%, var(--chart-fade) 100%);
   border-radius: 8px;
 }
 .chart-empty {
   position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
-  color: #97C459; font-size: 13px; opacity: 0.75; pointer-events: none;
+  color: var(--text-soft); font-size: 13px; opacity: 0.75; pointer-events: none;
 }
 .chart-empty.show { display: flex; }
 .legend { display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #97C459; }
 .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 .totals-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; margin-top: 10px; }
-.total-cell { background: #27500A; border-radius: 8px; padding: 6px 4px; text-align: center;
+.total-cell { background: var(--surface-2); border-radius: 8px; padding: 6px 4px; text-align: center;
   display: flex; flex-direction: column; justify-content: space-between; } /* Werte bleiben auf einer Höhe, auch wenn ein Text umbricht */
-.total-label { font-size: 10px; color: #97C459; margin-bottom: 2px; }
-.total-val { font-size: 16px; font-weight: 500; color: #C0DD97; }
-.grand-total { background: #27500A; border-radius: 8px; padding: 8px 10px; text-align: center; margin-top: 6px; }
-.grand-label { font-size: 10px; color: #97C459; margin-bottom: 1px; }
-.grand-val { font-size: 20px; font-weight: 500; color: #C0DD97; }
+.total-label { font-size: 10px; color: var(--text-soft); margin-bottom: 2px; }
+.total-val { font-size: 16px; font-weight: 500; color: var(--text); }
+.grand-total { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; text-align: center; margin-top: 6px; }
+.grand-label { font-size: 10px; color: var(--text-soft); margin-bottom: 1px; }
+.grand-val { font-size: 20px; font-weight: 500; color: var(--text); }
 .reset-btn {
   position: relative; overflow: hidden;
-  width: 100%; border: 0.5px solid #3B6D11; background: transparent;
-  color: #97C459; border-radius: 8px; padding: 8px; font-size: 13px;
+  width: 100%; border: 0.5px solid var(--line); background: transparent;
+  color: var(--text-soft); border-radius: 8px; padding: 8px; font-size: 13px;
   cursor: pointer; margin-top: 10px;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   user-select: none; -webkit-user-select: none;
@@ -226,9 +248,9 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 .app { position: relative; z-index: 1; }
 /* ── Countdown clock ──────────────────────────────────────────────── */
 .cd-unit { display:flex; flex-direction:column; align-items:center; min-width:38px; }
-.cd-val  { font-size:28px; font-weight:700; color:#C0DD97; line-height:1; font-variant-numeric:tabular-nums; }
-.cd-lbl  { font-size:9px; color:#97C459; margin-top:2px; letter-spacing:0.5px; }
-.cd-sep  { font-size:26px; font-weight:700; color:#3B6D11; align-self:flex-start; margin-top:2px; }
+.cd-val  { font-size:28px; font-weight:700; color:var(--text); line-height:1; font-variant-numeric:tabular-nums; }
+.cd-lbl  { font-size:9px; color:var(--text-soft); margin-top:2px; letter-spacing:0.5px; }
+.cd-sep  { font-size:26px; font-weight:700; color:var(--line); align-self:flex-start; margin-top:2px; }
 
 /* ── Orden / Medal Milestone Animations ────────────────────────────────── */
 #medal-overlay {
@@ -638,3 +660,6 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 #redeem-msg { min-height: 20px; margin-top: 12px; font-size: 14px; font-weight: 600; }
 #redeem-msg.ok { color: #6fe08d; }
 #redeem-msg.err { color: #ff8fae; }
+/* ── Themes: Hintergrund-Szene (hinter Pegel und Inhalt) ─────────────── */
+#theme-scene { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+#theme-scene:empty { display: none; }

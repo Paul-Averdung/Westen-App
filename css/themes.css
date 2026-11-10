@@ -1,0 +1,204 @@
+/* ── Themes: Szenen und Feinschliff (Logik und Farben in js/themes.js) ───── */
+.scene-svg, .scene-grad { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Verlaufs-Themes: Karten leicht durchscheinend */
+body[data-theme] .header, body[data-theme] .graph-card { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+body[data-theme="standard"] .header, body[data-theme="standard"] .graph-card { -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* Polarlicht: weiche, wandernde Lichtbänder */
+.aurora {
+  position: absolute; left: -30%; width: 160%; height: 45%; border-radius: 50%;
+  filter: blur(40px); opacity: 0.55; mix-blend-mode: screen;
+  animation: aurora 18s ease-in-out infinite alternate;
+}
+.aurora.a1 { top: 2%;  background: radial-gradient(ellipse at center, #2bff9e 0%, transparent 65%); }
+.aurora.a2 { top: 14%; background: radial-gradient(ellipse at center, #1fd0ff 0%, transparent 60%); animation-duration: 23s; animation-delay: -6s; }
+.aurora.a3 { top: 24%; background: radial-gradient(ellipse at center, #b45cff 0%, transparent 60%); animation-duration: 27s; animation-delay: -12s; opacity: 0.4; }
+@keyframes aurora {
+  0%   { transform: translateX(-8%) skewX(-10deg) scaleY(0.9); }
+  50%  { transform: translateX(6%)  skewX(8deg)   scaleY(1.15); }
+  100% { transform: translateX(-4%) skewX(-4deg)  scaleY(1); }
+}
+
+/* Bierzelt: schwingende Wimpel, flackernde Lichterkette, Holzkarten */
+.sway { transform-origin: 200px 0; animation: sway 4.5s ease-in-out infinite alternate; }
+.sway.s2 { animation-duration: 5.5s; animation-delay: -2s; }
+@keyframes sway { from { transform: rotate(-0.8deg); } to { transform: rotate(0.8deg); } }
+.bulb { animation: bulb 2.2s ease-in-out infinite; }
+@keyframes bulb { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+body[data-theme="bierzelt"] .header,
+body[data-theme="bierzelt"] .graph-card {
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 26px, rgba(0,0,0,0.28) 26px 28px),
+    linear-gradient(90deg, rgba(255,220,160,0.05), rgba(0,0,0,0.12)),
+    var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,230,180,0.15);
+}
+
+/* Kneipe: Kreidetafeln mit Holzrahmen, Neon-Schild */
+.neon { filter: drop-shadow(0 0 4px #ff7a59) drop-shadow(0 0 12px #ff5a3a); animation: neon 6s infinite; }
+@keyframes neon { 0%, 92%, 96%, 100% { opacity: 1; } 94% { opacity: 0.35; } 95% { opacity: 0.85; } }
+body[data-theme="kneipe"] .graph-card,
+body[data-theme="kneipe"] .header {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.06), transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(255,255,255,0.04), transparent 50%),
+    var(--surface);
+  border: 5px solid #6b4526; border-radius: 10px;
+  box-shadow: inset 0 0 0 1px #3e2615, 0 6px 16px rgba(0,0,0,0.5);
+}
+body[data-theme="kneipe"] .total-cell, body[data-theme="kneipe"] .grand-total { border: 1px dashed rgba(239,239,230,0.25); }
+body[data-theme="kneipe"] .total-val, body[data-theme="kneipe"] .grand-val, body[data-theme="kneipe"] .cd-val {
+  text-shadow: 0 0 1px rgba(255,255,255,0.6); letter-spacing: 0.5px;
+}
+
+/* Herbst: fallendes Laub */
+.leaf {
+  position: absolute; top: -30px; width: var(--s); height: var(--s);
+  animation: leafFall var(--dur) linear var(--delay) infinite;
+}
+.leaf svg { width: 100%; height: 100%; display: block; animation: leafSpin calc(var(--dur) / 3) ease-in-out infinite alternate; }
+@keyframes leafFall {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(var(--sway), 27vh); }
+  50%  { transform: translate(0, 55vh); }
+  75%  { transform: translate(calc(var(--sway) * -1), 82vh); }
+  100% { transform: translate(0, 110vh); }
+}
+@keyframes leafSpin { from { transform: rotate(-40deg) rotateX(0); } to { transform: rotate(60deg) rotateX(60deg); } }
+
+/* Winter: Sterne, Rauch, Schneefall, Milchglas-Karten */
+.star { animation: twinkle 3.5s ease-in-out infinite; }
+@keyframes twinkle { 0%,100% { opacity: 0.9; } 50% { opacity: 0.25; } }
+.smoke { animation: smoke 4s ease-out infinite; }
+@keyframes smoke { from { transform: translate(0,0) scale(0.6); opacity: 0.55; } to { transform: translate(8px,-40px) scale(2.2); opacity: 0; } }
+.flake {
+  position: absolute; top: -10px; width: var(--s); height: var(--s); border-radius: 50%; background: #fff;
+  box-shadow: 0 0 4px rgba(255,255,255,0.8);
+  animation: flakeFall var(--dur) linear var(--delay) infinite;
+}
+@keyframes flakeFall {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(var(--sway), 55vh); }
+  100% { transform: translate(0, 110vh); }
+}
+body[data-theme="winter"] .header, body[data-theme="winter"] .graph-card {
+  -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 24px rgba(0,0,0,0.35);
+}
+
+/* Gold-Edition: goldene Ränder, Glanz-Wisch, funkelnde Sterne */
+.gold-spark {
+  position: absolute; width: var(--s); height: var(--s);
+  background: radial-gradient(circle, #fff6c8 0%, #ffd54a 40%, transparent 70%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  animation: goldSpark var(--dur) ease-in-out var(--delay) infinite;
+}
+@keyframes goldSpark { 0%,100% { opacity: 0; transform: scale(0.4) rotate(0); } 50% { opacity: 1; transform: scale(1) rotate(45deg); } }
+body[data-theme="gold"] .header, body[data-theme="gold"] .graph-card {
+  position: relative; overflow: hidden;
+  border: 1.5px solid transparent;
+  background: linear-gradient(var(--surface), var(--surface)) padding-box,
+              linear-gradient(135deg, #7a5a12, #ffe08a 30%, #b8902e 55%, #fff1b8 75%, #7a5a12) border-box;
+  box-shadow: 0 0 24px rgba(212,175,55,0.18);
+}
+body[data-theme="gold"] .graph-card::after, body[data-theme="gold"] .header::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; pointer-events: none;
+  background: linear-gradient(105deg, transparent, rgba(255,230,150,0.16), transparent);
+  animation: goldShine 6s ease-in-out infinite;
+}
+@keyframes goldShine { 0%, 60% { left: -60%; } 100% { left: 130%; } }
+body[data-theme="gold"] .header h1 {
+  background: linear-gradient(180deg, #fff6c8, #ffd54a 50%, #c98f12);
+  -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; letter-spacing: 1px;
+}
+body[data-theme="gold"] .drink-card { border-color: #d4af37; box-shadow: 0 0 0 1px rgba(212,175,55,0.35); }
+
+/* Feuerwerk */
+.fw-canvas { position: absolute; inset: 0; }
+
+/* Ruhige Variante bei "Bewegung reduzieren" */
+@media (prefers-reduced-motion: reduce) {
+  .leaf, .flake, .gold-spark, .aurora, .sway, .bulb, .neon, .star, .smoke { animation: none !important; }
+  .fw-canvas { display: none; }
+}
+
+/* Milchglas-Karten (Feuerwerk dunkel, Winter hell) – die Szene scheint durch */
+body[data-theme="feuerwerk"] .drink-card,
+body[data-theme="winter"] .drink-card { -webkit-backdrop-filter: blur(8px) saturate(1.3); backdrop-filter: blur(8px) saturate(1.3); }
+body[data-theme="feuerwerk"] .btn.minus { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); color: #d6d4ff; }
+body[data-theme="feuerwerk"] .section-label { text-shadow: 0 1px 4px #000; }
+
+/* ── Automaten-Skins ───────────────────────────────────────────────────── */
+/* Holz-Retro: Nussbaum, Messing, grünes Schild mit cremefarbener Schrift */
+#slots-overlay[data-skin="holz"] .sm-cabinet {
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0 2px, transparent 2px 34px),
+              linear-gradient(180deg, #7a4a24, #4a2a12);
+  border-color: #c9a24a; box-shadow: inset 0 0 0 3px #5a3a12, inset 0 2px 10px rgba(255,220,160,0.15), 0 10px 30px rgba(0,0,0,0.6);
+}
+#slots-overlay[data-skin="holz"] .sm-marquee { background: linear-gradient(180deg, #1f3b26, #12261a); border-color: #c9a24a; }
+#slots-overlay[data-skin="holz"] .sm-title-text { background: linear-gradient(180deg, #fff8e6, #e9d3a0); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 2px 0 #3a2410); }
+#slots-overlay[data-skin="holz"] .sm-window { border-color: #c9a24a; background: #2a1a0c; }
+#slots-overlay[data-skin="holz"] .sm-bulbs span.on { background: #ffe6a8; box-shadow: 0 0 5px 2px rgba(255,200,120,0.7); }
+#slots-overlay[data-skin="holz"] .sm-lever-knob { background: radial-gradient(circle at 35% 30%, #fff1c0, #c9a24a 55%, #6a4a12); }
+
+/* Bierfass: Holzdauben mit Eisenringen, Schaumkrone oben */
+#slots-overlay[data-skin="bierfass"] .sm-cabinet {
+  border-radius: 40px / 22px; border-color: #3a3a3a;
+  background:
+    linear-gradient(180deg, transparent 18%, #2b2b2b 18% 21%, transparent 21% 79%, #2b2b2b 79% 82%, transparent 82%),
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.25) 0 2px, transparent 2px 30px),
+    radial-gradient(ellipse at 50% 50%, #a0622a 0%, #6b3a14 70%, #4a2508 100%);
+  box-shadow: inset 0 0 0 3px #1c1c1c, inset 0 0 30px rgba(0,0,0,0.45), 0 10px 30px rgba(0,0,0,0.6);
+}
+#slots-overlay[data-skin="bierfass"] .sm-marquee {
+  background: linear-gradient(180deg, #fffdf2 0%, #f3e6c4 100%); border-color: #3a3a3a; border-radius: 28px 28px 12px 12px;
+}
+#slots-overlay[data-skin="bierfass"] .sm-title-text { background: linear-gradient(180deg, #c98f12, #8a5a00); -webkit-background-clip: text; background-clip: text; filter: none; }
+#slots-overlay[data-skin="bierfass"] .sm-bulbs span { background: #e8dcc0; }
+#slots-overlay[data-skin="bierfass"] .sm-bulbs span.on { background: #ffd54a; box-shadow: 0 0 6px 2px rgba(255,200,60,0.8); }
+#slots-overlay[data-skin="bierfass"] .sm-coins { color: #fff3d6; text-shadow: 0 1px 2px #000; }
+#slots-overlay[data-skin="bierfass"] .sm-window { border-color: #3a3a3a; background: #1c1208; }
+#slots-overlay[data-skin="bierfass"] .sm-lever-knob { background: radial-gradient(circle at 35% 30%, #fff, #e8dcc0 50%, #8a7a5a); }
+
+/* Eispalast: frostiges Blau, Silberrahmen, Eiskristall-Glanz */
+#slots-overlay[data-skin="eis"] .sm-cabinet {
+  background: linear-gradient(160deg, rgba(255,255,255,0.35) 0%, transparent 30%),
+              linear-gradient(180deg, #5aa2d8 0%, #1f5a96 100%);
+  border-color: #e6f2ff; box-shadow: inset 0 0 0 3px #9cc8f0, inset 0 0 25px rgba(255,255,255,0.35), 0 0 30px rgba(150,210,255,0.35);
+}
+#slots-overlay[data-skin="eis"] .sm-marquee { background: linear-gradient(180deg, #0e2b55, #071a38); border-color: #e6f2ff; }
+#slots-overlay[data-skin="eis"] .sm-title-text { background: linear-gradient(180deg, #ffffff, #bfe3ff 60%, #7cc0f5); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 0 8px rgba(160,220,255,0.8)); }
+#slots-overlay[data-skin="eis"] .sm-window { border-color: #e6f2ff; background: #0a2240; }
+#slots-overlay[data-skin="eis"] .sm-bulbs span.on { background: #e8f6ff; box-shadow: 0 0 7px 2px rgba(160,220,255,0.9); }
+#slots-overlay[data-skin="eis"] .sm-lever-knob { background: radial-gradient(circle at 35% 30%, #fff, #bfe3ff 50%, #3a7ac0); }
+#slots-overlay[data-skin="eis"] #slots-spin-btn { background: linear-gradient(180deg, #e8f6ff, #8ccaf5 60%, #3a8ad0); color: #072a52; box-shadow: 0 5px 0 #1f5a96, 0 8px 18px rgba(0,0,0,0.4); }
+
+/* Neon-Vegas: schwarzes Gehäuse, leuchtende Neonränder in Pink und Cyan */
+#slots-overlay[data-skin="neon"] .sm-cabinet {
+  background: linear-gradient(180deg, #120018, #05000a); border-color: #ff2fa0;
+  box-shadow: 0 0 12px #ff2fa0, 0 0 30px rgba(255,47,160,0.45), inset 0 0 14px rgba(255,47,160,0.35);
+  animation: neonPulse 2.4s ease-in-out infinite;
+}
+@keyframes neonPulse { 50% { box-shadow: 0 0 18px #ff2fa0, 0 0 42px rgba(255,47,160,0.6), inset 0 0 18px rgba(255,47,160,0.45); } }
+#slots-overlay[data-skin="neon"] .sm-marquee { background: #05000a; border-color: #22e6ff; box-shadow: 0 0 10px #22e6ff, inset 0 0 10px rgba(34,230,255,0.35); }
+#slots-overlay[data-skin="neon"] .sm-title-text { background: none; color: #bff8ff; -webkit-text-fill-color: #bff8ff; filter: drop-shadow(0 0 4px #22e6ff) drop-shadow(0 0 12px #22e6ff); }
+#slots-overlay[data-skin="neon"] .sm-coins { color: #ffb8e2; text-shadow: 0 0 8px #ff2fa0; }
+#slots-overlay[data-skin="neon"] .sm-window { border-color: #22e6ff; background: #05000a; box-shadow: 0 0 10px rgba(34,230,255,0.6); }
+#slots-overlay[data-skin="neon"] .sm-bulbs span { background: #3a0a2a; }
+#slots-overlay[data-skin="neon"] .sm-bulbs span.on { background: #ff7ad0; box-shadow: 0 0 8px 3px rgba(255,47,160,0.9); }
+#slots-overlay[data-skin="neon"] .sm-lever-knob { background: radial-gradient(circle at 35% 30%, #fff, #22e6ff 55%, #0a6a80); box-shadow: 0 0 10px #22e6ff; }
+#slots-overlay[data-skin="neon"] #slots-spin-btn { background: #05000a; color: #ff7ad0; border: 2px solid #ff2fa0; box-shadow: 0 0 12px rgba(255,47,160,0.7), inset 0 0 10px rgba(255,47,160,0.3); text-shadow: 0 0 8px #ff2fa0; }
+
+/* Goldener Automat: Gehäuse aus poliertem Gold, schwarzes Schild */
+#slots-overlay[data-skin="gold"] .sm-cabinet {
+  background: linear-gradient(135deg, #7a5a12 0%, #ffe08a 22%, #c99a2e 45%, #fff1b8 62%, #a87a1c 85%, #6b4a0a 100%);
+  border-color: #fff1b8; box-shadow: inset 0 0 0 3px #6b4a0a, inset 0 2px 14px rgba(255,255,255,0.35), 0 0 34px rgba(255,200,60,0.35);
+}
+#slots-overlay[data-skin="gold"] .sm-marquee { background: linear-gradient(180deg, #111, #000); border-color: #ffe08a; }
+#slots-overlay[data-skin="gold"] .sm-coins { color: #3a2400; text-shadow: 0 1px 0 rgba(255,255,255,0.5); }
+#slots-overlay[data-skin="gold"] #slots-daily-msg { color: #1f4a12; }
+#slots-overlay[data-skin="gold"] .sm-window { border-color: #2a1a00; background: #0e0a02; box-shadow: inset 0 0 0 2px #ffe08a; }
+#slots-overlay[data-skin="gold"] .sm-lever-knob { background: radial-gradient(circle at 35% 30%, #555, #111 60%, #000); box-shadow: 0 0 0 2px #ffe08a; }
+#slots-overlay[data-skin="gold"] .sm-lever-arm { background: linear-gradient(90deg, #8a6a10, #ffe08a 50%, #8a6a10); }
