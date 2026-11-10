@@ -37,7 +37,36 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 /* Mengen-Slider bei Shots und Mischgetränken */
 .amount-row { display: flex; align-items: center; gap: 10px; margin: -2px 0 10px; }
 .amount-lbl { font-size: 11px; color: #666; white-space: nowrap; }
-.amount-slider { flex: 1; min-width: 0; accent-color: #27500A; height: 24px; }
+.amount-track { position: relative; flex: 1; min-width: 0; padding-bottom: 8px; }
+/* Eigener Slider-Stil: überall gleich, damit die Stufenstriche unter den Raststellen sitzen.
+   Daumen 22px breit -> Mittelpunkt läuft von 11px bis (Breite - 11px). */
+.amount-slider {
+  -webkit-appearance: none; appearance: none; display: block;
+  width: 100%; height: 26px; margin: 0; background: transparent; cursor: pointer;
+  --fill: 0%;
+}
+.amount-slider:focus { outline: none; }
+.amount-slider::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 3px;
+  background: linear-gradient(to right, #27500A var(--fill), #e2e2e2 var(--fill));
+}
+.amount-slider::-moz-range-track { height: 6px; border-radius: 3px; background: #e2e2e2; }
+.amount-slider::-moz-range-progress { height: 6px; border-radius: 3px; background: #27500A; }
+.amount-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px; margin-top: -8px; border-radius: 50%;
+  background: #27500A; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+}
+.amount-slider::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #27500A; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+}
+.amount-ticks { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; pointer-events: none; }
+.amount-ticks span {
+  position: absolute; top: 0; width: 2px; height: 6px; margin-left: -1px;
+  border-radius: 1px; background: #cfcfcf;
+}
+.amount-ticks span.on { background: #3B6D11; }
 .amount-val { font-size: 13px; font-weight: 600; color: #3B6D11; min-width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
 /* Auswahl "Andere" beim Bier */
 .beer-other-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

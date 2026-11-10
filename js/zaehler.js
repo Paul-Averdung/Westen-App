@@ -240,8 +240,9 @@ var _audioCtx      = null;
   } catch(e) {}
 })();
 
-function playClick() {
+function playClick(volume) {
   if (!isSoundOn() || !_clickArrayBuf) return;
+  const vol = volume === undefined ? 0.9 : volume;
   try {
     if (!_audioCtx) {
       var AC = window.AudioContext || window.webkitAudioContext;
@@ -251,7 +252,7 @@ function playClick() {
     function doPlay() {
       var src = _audioCtx.createBufferSource();
       src.buffer = _clickBuffer;
-      var g = _audioCtx.createGain(); g.gain.value = 0.9;
+      var g = _audioCtx.createGain(); g.gain.value = vol;
       src.connect(g); g.connect(_audioCtx.destination);
       src.start(0);
     }
@@ -413,16 +414,36 @@ function getAmount(key) {
   try { v = parseFloat(localStorage.getItem('hopfenkonto_amt_' + key)); } catch(e) {}
   return isNaN(v) ? AMT_DEFAULT[key] : v;
 }
+// Füllung der Leiste und Stufenstriche an den aktuellen Wert anpassen
+function paintSlider(key) {
+  const el  = document.getElementById(key + '-amt');
+  const min = +el.min, max = +el.max, v = +el.value;
+  const pos = i => 'calc(11px + (100% - 22px) * ' + ((i - min) / (max - min)) + ')';
+  el.style.setProperty('--fill', pos(v));
+  const ticks = document.getElementById(key + '-ticks');
+  if (ticks.childElementCount !== max - min + 1) {
+    ticks.innerHTML = '';
+    for (let i = min; i <= max; i++) {
+      const t = document.createElement('span');
+      t.style.left = pos(i);
+      ticks.appendChild(t);
+    }
+  }
+  [...ticks.children].forEach((t, idx) => t.classList.toggle('on', min + idx <= v));
+}
 window.setAmount = function(key, val) {
   const v = parseFloat(val);
+  if (v !== getAmount(key)) playClick(0.45); // leiser Klick pro Raststufe
   try { localStorage.setItem('hopfenkonto_amt_' + key, String(v)); } catch(e) {}
   document.getElementById(key + '-amt-val').textContent = fmtCl(v);
+  paintSlider(key);
 };
 function initAmountSliders() {
   ['shots', 'misch'].forEach(key => {
     const v = getAmount(key);
     document.getElementById(key + '-amt').value = v;
     document.getElementById(key + '-amt-val').textContent = fmtCl(v);
+    paintSlider(key);
   });
 }
 

@@ -66,7 +66,10 @@
     <div class="drink-header"><div class="drink-name">Shots</div><div class="drink-total" id="shots-total">0</div></div>
     <div class="amount-row">
       <span class="amount-lbl">Menge</span>
-      <input type="range" class="amount-slider" id="shots-amt" min="1" max="6" step="1" value="2" oninput="setAmount('shots',this.value)" aria-label="Menge pro Shot in cl">
+      <div class="amount-track">
+        <input type="range" class="amount-slider" id="shots-amt" min="1" max="6" step="1" value="2" oninput="setAmount('shots',this.value)" aria-label="Menge pro Shot in cl">
+        <div class="amount-ticks" id="shots-ticks"></div>
+      </div>
       <span class="amount-val" id="shots-amt-val">2 cl</span>
     </div>
     <div class="btn-row" style="justify-content:center; gap:16px;">
@@ -80,7 +83,10 @@
     <div class="drink-header"><div class="drink-name">Mischgetränke</div><div class="drink-total" id="misch-total">0</div></div>
     <div class="amount-row">
       <span class="amount-lbl">Schnaps im Glas</span>
-      <input type="range" class="amount-slider" id="misch-amt" min="1" max="8" step="1" value="4" oninput="setAmount('misch',this.value)" aria-label="Schnaps pro Mischgetränk in cl">
+      <div class="amount-track">
+        <input type="range" class="amount-slider" id="misch-amt" min="1" max="8" step="1" value="4" oninput="setAmount('misch',this.value)" aria-label="Schnaps pro Mischgetränk in cl">
+        <div class="amount-ticks" id="misch-ticks"></div>
+      </div>
       <span class="amount-val" id="misch-amt-val">4 cl</span>
     </div>
     <div class="btn-row" style="justify-content:center; gap:16px;">
