@@ -331,7 +331,7 @@ window.startReactionTest = function() {
     const t0 = performance.now(), dur = Math.min(1400, 300 + (to - from) * 25);
     box.classList.remove('bump'); void box.offsetWidth; box.classList.add('bump');
     (function step(now) {
-      const k = Math.min(1, (now - t0) / dur);
+      const k = Math.max(0, Math.min(1, (now - t0) / dur));
       el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
       if (k < 1) requestAnimationFrame(step);
     })(t0);
@@ -370,7 +370,8 @@ window.startReactionTest = function() {
     get: () => { checkDailyCoins(); return Math.max(0, getCoins()); },
     daily: () => checkDailyCoins(),   // 'start' | 'daily' | false
     spend: n => { checkDailyCoins(); const c = getCoins(); if (n > c) return false; setCoins(c - n); refreshUI(); return true; },
-    add: n => window.slotsAddCoins(n),
+    add: n => window.slotsAddCoins(n),                                   // mit Münzregen + Sound
+    credit: n => { checkDailyCoins(); setCoins(Math.max(0, getCoins()) + n); refreshUI(); },   // still
   };
   // Gutschrift von außen (Gutschein-Codes): mit Hochzählen, Münzregen und Sound
   window.slotsAddCoins = function(n) {

@@ -12,6 +12,7 @@
 <title>Hopfenkonto</title>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/themes.css">
+<link rel="stylesheet" href="css/spiele.css">
 </head>
 <body>
 <div id="theme-scene" aria-hidden="true"></div>
@@ -358,6 +359,11 @@
 <script src="js/spiele.js"></script>
 <script src="js/gutschein.js"></script>
 <script src="js/shop.js"></script>
+<script src="js/spiele/rahmen.js"></script>
+<script src="js/spiele/hochtief.js"></script>
+<script src="js/spiele/pferderennen.js"></script>
+<script src="js/spiele/blackjack.js"></script>
+<script src="js/spiele/roulette.js"></script>
 <script src="js/casino.js"></script>
 <script src="js/verlauf.js"></script>
 </script>
@@ -438,6 +444,19 @@
       <button onclick="closeCasino(); openShop()">🛍️ Shop</button>
     </div>
   </div>
+</div>
+
+<!-- ── Spiel-Fenster (Hoch oder Tief, Pferderennen, Blackjack, Roulette) ── -->
+<div id="game-overlay">
+  <div class="gm-wrap">
+    <div class="gm-head">
+      <button class="gm-back" onclick="GameShell.close()" aria-label="Zurück ins Casino">‹ Casino</button>
+      <div class="gm-title"></div>
+      <div class="sh-coins">🪙 <span id="game-coins">0</span></div>
+    </div>
+    <div id="game-root"></div>
+  </div>
+  <div id="game-toast"></div>
 </div>
 
 <!-- ── Shop ─────────────────────────────────────────────────────────── -->

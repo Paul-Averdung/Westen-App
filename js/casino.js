@@ -18,15 +18,22 @@
     <g transform="rotate(-12 26 34)"><rect x="10" y="12" width="30" height="42" rx="4" fill="#fff" stroke="#333" stroke-width="1"/><text x="15" y="25" font-size="11" font-weight="700" fill="#111" font-family="Georgia,serif">A</text><text x="25" y="44" font-size="16" fill="#111">♠</text></g>
     <g transform="rotate(10 38 34)"><rect x="24" y="10" width="30" height="42" rx="4" fill="#fff" stroke="#333" stroke-width="1"/><text x="29" y="23" font-size="11" font-weight="700" fill="#c0182b" font-family="Georgia,serif">K</text><text x="38" y="42" font-size="16" fill="#c0182b">♥</text></g></svg>`;
 
+  const hiLo = `<svg viewBox="0 0 64 64" width="56" height="56">
+    <g transform="rotate(-8 22 34)"><rect x="6" y="14" width="30" height="42" rx="4" fill="#fff" stroke="#333"/><text x="11" y="27" font-size="11" font-weight="700" fill="#c0182b" font-family="Georgia,serif">7</text><text x="19" y="46" font-size="15" fill="#c0182b">♦</text></g>
+    <path d="M48 10 l10 12 h-6 v10 h-8 v-10 h-6 z" fill="#3cbf6a" stroke="#0b3018" stroke-width="1.5"/>
+    <path d="M48 58 l10 -12 h-6 v-10 h-8 v10 h-6 z" fill="#e0536a" stroke="#3a1015" stroke-width="1.5"/></svg>`;
+
   const GAMES = [
     { id: 'slots',     name: 'Hopfen-Slots', desc: 'Drei Gleiche = dreifacher Einsatz', icon: '🎰', ready: true,
       bg: 'linear-gradient(160deg, #8a1424 0%, #4e0912 100%)', open: () => openSlotsGame() },
-    { id: 'gluecksrad', name: 'Glücksrad',   desc: 'Dreh am Rad, Multiplikator gewinnen', icon: wheel, ready: false,
-      bg: 'linear-gradient(160deg, #1f5a96 0%, #0b2a4a 100%)' },
-    { id: 'blackjack', name: 'Blackjack',    desc: 'Komm näher an 21 als die Bank', icon: cards, ready: false,
-      bg: 'linear-gradient(160deg, #1f6a3a 0%, #0b3018 100%)' },
-    { id: 'roulette',  name: 'Roulette',     desc: 'Rot, Schwarz oder volle Zahl', icon: roulette, ready: false,
-      bg: 'linear-gradient(160deg, #3a2a6e 0%, #150c32 100%)' },
+    { id: 'hochtief',  name: 'Hoch oder Tief', desc: 'Je riskanter der Tipp, desto höher der Gewinn', icon: hiLo, ready: true,
+      bg: 'linear-gradient(160deg, #6a3a0a 0%, #2a1604 100%)', open: () => openHochTief() },
+    { id: 'pferde',    name: 'Pferderennen', desc: '8 Pferde – Geld für Platz 1, 2 und 3', icon: '🏇', ready: true,
+      bg: 'linear-gradient(160deg, #3d8a2e 0%, #173a10 100%)', open: () => openPferderennen() },
+    { id: 'blackjack', name: 'Blackjack',    desc: 'Komm näher an 21 als die Bank', icon: cards, ready: true,
+      bg: 'linear-gradient(160deg, #1f6a3a 0%, #0b3018 100%)', open: () => openBlackjack() },
+    { id: 'roulette',  name: 'Roulette',     desc: 'Rot, Schwarz oder volle Zahl', icon: roulette, ready: true,
+      bg: 'linear-gradient(160deg, #3a2a6e 0%, #150c32 100%)', open: () => openRoulette() },
   ];
   window.CASINO_GAMES = GAMES;
 

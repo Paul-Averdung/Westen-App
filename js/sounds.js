@@ -292,12 +292,58 @@ const { medalSound, playMedalSound, slotSound, slotSoundRender, gameSound, gameS
   function gameSoundRender(ctx, kind, opts, at) {
     opts = opts || {};
     const t = (at || 0) + 0.005;
-    const bus = _fxGraph(ctx, ctx.destination, kind === 'shot');
+    const bus = _fxGraph(ctx, ctx.destination, kind === 'shot' || kind === 'startShot' || kind === 'bell');
     if (kind === 'shot') shot(ctx, bus, t);
     else if (kind === 'clack') clack(ctx, bus, t, opts.strength, opts.final);
     else if (kind === 'watchClick') watchClick(ctx, bus, t);
     else if (kind === 'watchTick') watchTick(ctx, bus, t, opts.i || 0);
+    else if (kind === 'card') cardSound(ctx, bus, t);
+    else if (kind === 'chip') chipSound(ctx, bus, t);
+    else if (kind === 'roulette') rouletteSpin(ctx, bus, t, opts.dur || 5);
+    else if (kind === 'gallop') gallop(ctx, bus, t, opts.dur || 6);
+    else if (kind === 'bell') ding(ctx, bus, t, 1318, 0.12);
+    else if (kind === 'startShot') shot(ctx, bus, t);
   }
+  // Karte austeilen/umdrehen: kurzes Wischen + leiser Tisch-Klopfer
+  function cardSound(ctx, out, t) {
+    const n = ctx.createBufferSource(); n.buffer = _noise(ctx, 0.12);
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.setValueAtTime(5000, t); f.frequency.exponentialRampToValueAtTime(1800, t + 0.08); f.Q.value = 0.9;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    n.connect(f); f.connect(g); g.connect(out); n.start(t); n.stop(t + 0.12);
+    tick(ctx, out, t + 0.07, { freq: 900, gain: 0.25, dur: 0.03 });
+  }
+  // Spielchip auf den Tisch
+  function chipSound(ctx, out, t) {
+    tick(ctx, out, t, { freq: 3400, gain: 0.5, dur: 0.02 });
+    tick(ctx, out, t + 0.045, { freq: 2900, gain: 0.3, dur: 0.02 });
+    voice(ctx, out, { freq: 2300, t, dur: 0.06, type: 'sine', gain: 0.05, attack: 0.001 });
+  }
+  // Roulette: Kugel rattert über die Fächer, wird langsamer, fällt mit Klacken ins Fach
+  function rouletteSpin(ctx, out, t, dur) {
+    let x = t + 0.05, k = 0;
+    while (x < t + dur - 0.05) {
+      const p = (x - t) / dur;
+      tick(ctx, out, x, { freq: 2600 + Math.random() * 900, gain: 0.12 + 0.1 * p, dur: 0.012, pan: Math.sin(k * 0.7) * 0.5 });
+      x += 0.035 + Math.pow(p, 2.2) * 0.28; k++;
+    }
+    tick(ctx, out, t + dur, { freq: 1500, gain: 0.5, dur: 0.04 });
+    tick(ctx, out, t + dur + 0.09, { freq: 2200, gain: 0.25, dur: 0.03 });
+    tick(ctx, out, t + dur + 0.16, { freq: 2600, gain: 0.12, dur: 0.02 });
+  }
+  // Galopp: Dreiertakt dumpfer Hufschläge (viele Pferde -> leicht versetzt)
+  function gallop(ctx, out, t, dur) {
+    for (let h = 0; h < 3; h++) {
+      let x = t + h * 0.09;
+      while (x < t + dur) {
+        [0, 0.07, 0.14].forEach((o, i) => {
+          voice(ctx, out, { freq: 120 + h * 25 + i * 10, t: x + o, dur: 0.07, type: 'sine', gain: 0.16, attack: 0.002, glide: 0.6, pan: (h - 1) * 0.4 });
+          tick(ctx, out, x + o, { freq: 700, gain: 0.06, dur: 0.02, pan: (h - 1) * 0.4 });
+        });
+        x += 0.36 + h * 0.013;
+      }
+    }
+  }
+
   // Ticken der Stoppuhr: wird im Audio-Takt vorausgeplant, damit es gleichmäßig bleibt
   let _tickTimer = null, _tickNext = 0, _tickI = 0, _tickBus = null;
   function gameSound(kind, opts) {
