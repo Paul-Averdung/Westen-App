@@ -199,9 +199,9 @@
         <circle cx="16" cy="16" r="1.3" fill="currentColor" stroke="none"/>
       </svg>
     </button>
-    <button id="slots-btn" onclick="openSlotsGame()"
+    <button id="slots-btn" onclick="openCasino()"
       style="background:none; border:none; color:var(--icon); cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
-      title="Hopfen-Slots">
+      title="Casino">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <!-- machine body -->
         <rect x="1" y="4" width="19" height="16" rx="2"/>
@@ -358,13 +358,14 @@
 <script src="js/spiele.js"></script>
 <script src="js/gutschein.js"></script>
 <script src="js/shop.js"></script>
+<script src="js/casino.js"></script>
 <script src="js/verlauf.js"></script>
 </script>
 
 
 <!-- ── Hopfen-Slots Overlay ─────────────────────────────────────────── -->
 <div id="slots-overlay" style="display:none;">
-  <button class="sm-close" onclick="closeSlotsGame()" aria-label="Schließen">✕</button>
+  <button class="sm-close" onclick="closeSlotsGame(); openCasino()" aria-label="Zurück zum Casino">✕</button>
   <div class="sm-wrap">
     <div class="sm-cabinet" id="sm-cabinet">
       <!-- Schild mit Lauflichtern -->
@@ -403,26 +404,42 @@
 
     <div id="slots-result"></div>
     <div id="slots-no-coins-msg" style="display:none;">Keine Coins mehr – neue gibt es morgen! ☀️</div>
-    <button class="sm-redeem-btn" onclick="openRedeem()">🎁 Gutschein-Code einlösen</button>
-    <button class="sm-redeem-btn sm-shop-btn" onclick="closeSlotsGame(); openShop()">🛍️ Zum Shop</button>
   </div>
+</div>
+<div id="sm-coinrain"></div>
   <!-- Gutschein einlösen -->
-  <div id="redeem-overlay" onclick="if(event.target===this) closeRedeem()">
-    <div class="rd-panel">
-      <button class="mg-close" onclick="closeRedeem()" aria-label="Schließen">✕</button>
-      <div class="rd-title">🎁 Gutschein einlösen</div>
-      <div class="rd-label">Deine Mitgliedsnummer</div>
-      <div class="rd-id"><span class="member-id-val">—</span><button onclick="copyMemberId(this)">Kopieren</button></div>
-      <div class="rd-hint">Schick diese Nummer an Paul, wenn du einen Gutschein bekommst.</div>
-      <textarea id="redeem-input" rows="3" placeholder="Code hier einfügen (die ganze Nachricht geht auch)"></textarea>
-      <button id="redeem-btn" onclick="redeemCode()">Einlösen</button>
-      <div id="redeem-msg"></div>
-    </div>
+<div id="redeem-overlay" onclick="if(event.target===this) closeRedeem()">
+  <div class="rd-panel">
+    <button class="mg-close" onclick="closeRedeem()" aria-label="Schließen">✕</button>
+    <div class="rd-title">🎁 Gutschein einlösen</div>
+    <div class="rd-label">Deine Mitgliedsnummer</div>
+    <div class="rd-id"><span class="member-id-val">—</span><button onclick="copyMemberId(this)">Kopieren</button></div>
+    <div class="rd-hint">Schick diese Nummer an Paul, wenn du einen Gutschein bekommst.</div>
+    <textarea id="redeem-input" rows="3" placeholder="Code hier einfügen (die ganze Nachricht geht auch)"></textarea>
+    <button id="redeem-btn" onclick="redeemCode()">Einlösen</button>
+    <div id="redeem-msg"></div>
   </div>
-  <div id="sm-coinrain"></div>
 </div>
 
+
 <!-- ── Verlauf Overlay ──────────────────────────────────────────────── -->
+<!-- ── Casino (Spiele-Menü) ─────────────────────────────────────────── -->
+<div id="casino-overlay">
+  <div class="cs-wrap">
+    <div class="cs-head">
+      <div class="cs-title"><span class="cs-title-emoji">🎰</span><span class="cs-title-text">Casino</span></div>
+      <div class="sh-coins">🪙 <span id="casino-coins">0</span></div>
+      <button class="sh-close" onclick="closeCasino()" aria-label="Schließen">✕</button>
+    </div>
+    <div id="casino-daily"></div>
+    <div class="cs-grid" id="casino-grid"></div>
+    <div class="cs-actions">
+      <button onclick="openRedeem()">🎁 Gutschein einlösen</button>
+      <button onclick="closeCasino(); openShop()">🛍️ Shop</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Shop ─────────────────────────────────────────────────────────── -->
 <div id="shop-overlay">
   <div class="sh-head">

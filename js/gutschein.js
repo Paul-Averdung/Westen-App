@@ -83,6 +83,7 @@
     const list = redeemed(); list.push(p.i);
     try { localStorage.setItem(KEY_REDEEMED, JSON.stringify(list)); } catch(e) {}
     window.slotsAddCoins(p.c);
+    if (window.refreshCasino) window.refreshCasino();
     msg.className = 'ok';
     msg.textContent = '🎁 +' + p.c + ' Coins gutgeschrieben!' + (p.r ? ' (' + p.r + ')' : '');
     document.getElementById('redeem-input').value = '';

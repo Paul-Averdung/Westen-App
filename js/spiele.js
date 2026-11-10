@@ -368,6 +368,7 @@ window.startReactionTest = function() {
   // Coin-Konto für andere Teile der App (Shop, später weitere Spiele)
   window.Coins = {
     get: () => { checkDailyCoins(); return Math.max(0, getCoins()); },
+    daily: () => checkDailyCoins(),   // 'start' | 'daily' | false
     spend: n => { checkDailyCoins(); const c = getCoins(); if (n > c) return false; setCoins(c - n); refreshUI(); return true; },
     add: n => window.slotsAddCoins(n),
   };
