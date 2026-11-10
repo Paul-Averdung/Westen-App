@@ -512,11 +512,8 @@ window.startReactionTest = function() {
       const before = getCoins();
       setCoins(before + gain);
       _doubleRisk = gain;
-      const msgs = ['Jackpot! 🎉', 'Volltreffer! 🏆', 'Dreifach! 💰', 'Glückspilz! 🍀'];
-      const msg  = msgs[Math.floor(Math.random() * msgs.length)];
       resultEl.innerHTML =
-        '<div class="sm-msg-win">' + msg + '</div>' +
-        '<div class="sm-msg-gain">+' + gain + ' Coins gewonnen! 🪙</div>' +
+        '<div class="sm-msg-win">+' + gain + ' Coins 🪙</div>' +
         '<button id="double-btn" onclick="doubleOrNothing()">🎲 Doppel oder Nichts (' + gain + ' 🪙)</button>' +
         '<div id="double-msg"></div>';
       windowEl.classList.add('won');
@@ -528,9 +525,7 @@ window.startReactionTest = function() {
       refreshUI(true);
     } else {
       _doubleRisk = 0;
-      const msgs = ['Nicht heute… 😅','Knapp vorbei! 🍺','Nächstes Mal! 🎲','Das Glück kommt noch! 🤞'];
-      const msg  = msgs[Math.floor(Math.random() * msgs.length)];
-      resultEl.innerHTML = '<div class="sm-msg-lose">' + msg + '</div>';
+      resultEl.innerHTML = '<div class="sm-msg-lose">Kein Gewinn</div>';
       windowEl.classList.add('dim');
       document.getElementById('sm-cabinet').classList.add('lose');
       bulbs('idle');
@@ -558,7 +553,7 @@ window.startReactionTest = function() {
         setCoins(before + _doubleRisk);
         countCoins(before, before + _doubleRisk);
         _doubleRisk *= 2;
-        if (msgEl) { msgEl.style.color = '#6fe08d'; msgEl.textContent = 'Verdoppelt! 🎉'; }
+        if (msgEl) { msgEl.style.color = '#6fe08d'; msgEl.textContent = 'Verdoppelt'; }
         if (btn) {
           btn.disabled = false;
           btn.style.opacity = '1';
@@ -572,7 +567,7 @@ window.startReactionTest = function() {
       } else {
         setCoins(getCoins() - _doubleRisk);
         _doubleRisk = 0;
-        if (msgEl) { msgEl.style.color = '#ff6f9a'; msgEl.textContent = 'Verloren! 😅'; }
+        if (msgEl) { msgEl.style.color = '#ff6f9a'; msgEl.textContent = 'Verloren'; }
         if (btn) btn.remove();
         slotSound('lose');
       }

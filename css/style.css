@@ -580,9 +580,9 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 #slots-spin-btn:disabled { cursor: default; }
 #slots-result { min-height: 54px; }
 #slots-no-coins-msg { color: #97C459; font-size: 12px; opacity: 0.75; margin-top: 6px; }
-.sm-msg-win  { color: #FFD54A; font-size: 22px; font-weight: 900; margin-bottom: 2px; animation: titlePop 0.5s cubic-bezier(.2,1.6,.4,1) both; }
+.sm-msg-win  { color: #FFD54A; font-size: 24px; font-weight: 900; margin-bottom: 10px; animation: titlePop 0.5s cubic-bezier(.2,1.6,.4,1) both; }
 .sm-msg-gain { color: #6fe08d; font-size: 15px; font-weight: 700; margin-bottom: 10px; }
-.sm-msg-lose { color: #ff6f9a; font-size: 17px; font-weight: 700; }
+.sm-msg-lose { color: #b58a96; font-size: 15px; font-weight: 600; }
 #double-btn {
   padding: 10px 0; width: 100%; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer;
   background: transparent; border: 2px solid #EFC93D; color: #EFC93D; border-radius: 10px; font-family: inherit;

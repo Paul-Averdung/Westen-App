@@ -192,8 +192,10 @@ function hourOf(ts) {
   const d = new Date(ts);
   return Math.floor((d - new Date(new Date().getFullYear(), 0, 1)) / 3600000);
 }
+const CHART_MIN_HOURS = 6;   // von Anfang an mehrere Stunden ab der ersten Stunde zeigen
 function chartSeries() {
   const hours = allHours();
+  while (hours.length < CHART_MIN_HOURS) hours.push(hours[hours.length - 1] + 1);
   const per = {};
   drinkLog.forEach(e => {
     const kind = Object.keys(CHART_KINDS).find(k => CHART_KINDS[k].includes(e.key));
@@ -383,8 +385,8 @@ function performReset() {
   ['total-bier','total-shots','total-misch'].forEach(id => document.getElementById(id).textContent = id === 'total-bier' ? '0,00 l' : '0 cl');
   document.getElementById('grand-total').textContent = '0';
   if (chart) {
-    chart.data.labels = [hourLabel(currentHour())];
-    chart.data.datasets.forEach(ds => ds.data = [0]);
+    chart.data.labels = chartSeries().labels;
+    chart.data.datasets.forEach(ds => ds.data = chart.data.labels.map(() => 0));
     chart.update();
   }
   document.getElementById('chart-empty').classList.add('show');
@@ -439,12 +441,12 @@ window.addEventListener('load', function() {
   };
   const ds = (label, top, bottom) => ({
     label, data: [0], backgroundColor: grad(top, bottom), borderRadius: topRadius, borderSkipped: false,
-    maxBarThickness: 34, categoryPercentage: 0.72, barPercentage: 0.9
+    maxBarThickness: 22, categoryPercentage: 0.7, barPercentage: 0.9
   });
   chart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: [hourLabel(currentHour())],
+      labels: chartSeries().labels,
       datasets: [
         ds('Bier',    '#FFD54A', '#E0950A'),
         ds('Shots',   '#FF9A6A', '#D4532A'),

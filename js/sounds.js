@@ -150,30 +150,35 @@ const { medalSound, playMedalSound, slotSound, slotSoundRender } = (function() {
     g.gain.setValueAtTime(0.0001, t + 0.3); g.gain.exponentialRampToValueAtTime(0.06, t + 0.31); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.75);
     o.connect(g); g.connect(out); o.start(t + 0.3); o.stop(t + 0.8); lfo.start(t + 0.3); lfo.stop(t + 0.8);
   }
-  // Rotierende Walzen: Rasterklicks, die schneller werden und vor dem Stopp ausbremsen,
-  // dazu ein leises mechanisches Surren. Jede Walze rastet mit "Klonk" ein.
+  // Rotierende Walzen wie im Online-Casino: helles, melodisches Klimpern, solange sich
+  // die Walzen drehen. Es wird zum Ende hin langsamer; jede Walze rastet mit einem
+  // weichen "Tock" und einem hellen Glöckchen ein (Ton steigt von Walze zu Walze).
+  function plink(ctx, out, t, n, gain = 0.045, pan = 0) {
+    voice(ctx, out, { freq: NOTE(n),      t, dur: 0.16, type: 'sine',     gain,         attack: 0.002, pan });
+    voice(ctx, out, { freq: NOTE(n + 12), t, dur: 0.07, type: 'triangle', gain: gain * 0.35, attack: 0.001, pan });
+  }
   function spinSound(ctx, out, t, leverMs, reelTimes) {
     leverSound(ctx, out, t);
-    const t0 = t + leverMs / 1000, pans = [-0.45, 0, 0.45];
-    reelTimes.forEach((ms, i) => {
-      const end = t0 + ms / 1000;
-      let x = t0 + 0.04;
-      while (x < end - 0.03) {
-        const k = (x - t0) / (end - t0);                       // 0..1 Fortschritt
-        const speed = k < 0.12 ? 0.07 - k * 0.3 : k < 0.75 ? 0.034 : 0.034 + Math.pow((k - 0.75) / 0.25, 2) * 0.11;
-        tick(ctx, out, x, { freq: 2300 + i * 250, gain: 0.07, dur: 0.014, pan: pans[i] });
-        x += speed;
-      }
-      clunk(ctx, out, end, pans[i]);
+    const t0 = t + leverMs / 1000;
+    const scale = [76, 79, 81, 84, 86, 88, 91, 93];        // Pentatonik -> klingt immer "nett"
+    const first = t0 + 0.05, last = t0 + Math.max(...reelTimes) / 1000;
+    const stops = reelTimes.map(ms => t0 + ms / 1000);
+    let x = first, i = 0;
+    while (x < last - 0.06) {
+      const running = stops.filter(s => s > x + 0.02).length;   // wie viele Walzen drehen noch
+      if (!running) break;
+      const k = (x - first) / (last - first);
+      const step = 0.075 + (running === 1 ? 0.03 : 0) + Math.max(0, k - 0.8) * 0.25;
+      const n = scale[(i * 3 + (i >> 2)) % scale.length];      // wandernde Tonfolge
+      plink(ctx, out, x, n, 0.03 + 0.008 * running, Math.sin(i * 1.3) * 0.35);
+      x += step; i++;
+    }
+    const pans = [-0.45, 0, 0.45], stopNotes = [84, 88, 91];
+    stops.forEach((ts, r) => {
+      voice(ctx, out, { freq: 160, t: ts, dur: 0.12, type: 'sine', gain: 0.22, attack: 0.002, glide: 0.6, pan: pans[r] });
+      tick(ctx, out, ts, { freq: 1800, gain: 0.08, dur: 0.03, pan: pans[r] });
+      ding(ctx, out, ts + 0.01, NOTE(stopNotes[r]), 0.06, pans[r]);
     });
-    // Surren über die ganze Drehzeit
-    const last = t0 + Math.max(...reelTimes) / 1000;
-    const n = ctx.createBufferSource(); n.buffer = _noise(ctx, last - t0 + 0.1);
-    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 0.8;
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.05, t0 + 0.2);
-    g.gain.setValueAtTime(0.05, last - 0.5); g.gain.exponentialRampToValueAtTime(0.0001, last);
-    n.connect(f); f.connect(g); g.connect(out); n.start(t0); n.stop(last + 0.1);
   }
   // Glocke "Ding"
   function ding(ctx, out, t, f0, gain = 0.07, pan = 0) {
