@@ -4,7 +4,7 @@
 
 // Alles in einer Kapsel, damit Hilfsnamen (z.B. pad) nicht mit anderen Dateien kollidieren.
 // Nach außen sichtbar sind nur medalSound(), playMedalSound() und die Slots-Sounds.
-const { medalSound, playMedalSound, slotSound, slotSoundRender } = (function() {
+const { medalSound, playMedalSound, slotSound, slotSoundRender, gameSound, gameSoundRender } = (function() {
   const NOTE = n => 440 * Math.pow(2, (n - 69) / 12);   // MIDI-Nummer -> Hz (60 = C4)
 
   // ── Grundbausteine ──────────────────────────────────────────────────────────
@@ -242,6 +242,91 @@ const { medalSound, playMedalSound, slotSound, slotSoundRender } = (function() {
     } catch(e) {}
   }
 
+
+  // ── Minispiel-Sounds ──────────────────────────────────────────────────────
+  // Gewehrschuss: scharfer Knall, kurzer Körper, tiefer Druck, Nachhall wie im Freien
+  function shot(ctx, out, t) {
+    const v = 0.9 + Math.random() * 0.2;                         // jede Kugel klingt minimal anders
+    const crack = ctx.createBufferSource(); crack.buffer = _noise(ctx, 0.05);
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800;
+    const cg = ctx.createGain(); cg.gain.setValueAtTime(1.0, t); cg.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+    crack.connect(hp); hp.connect(cg); cg.connect(out); crack.start(t); crack.stop(t + 0.05);
+    const body = ctx.createBufferSource(); body.buffer = _noise(ctx, 0.3);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(2600 * v, t); lp.frequency.exponentialRampToValueAtTime(300, t + 0.2);
+    const bg = ctx.createGain(); bg.gain.setValueAtTime(0.75, t); bg.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    body.connect(lp); lp.connect(bg); bg.connect(out); body.start(t); body.stop(t + 0.3);
+    voice(ctx, out, { freq: 95 * v, t, dur: 0.18, type: 'sine', gain: 0.6, attack: 0.001, glide: 0.45 });
+    const tail = ctx.createBufferSource(); tail.buffer = _noise(ctx, 1.0);
+    const tl = ctx.createBiquadFilter(); tl.type = 'lowpass'; tl.frequency.value = 900;
+    const tg = ctx.createGain(); tg.gain.setValueAtTime(0.0001, t + 0.03); tg.gain.exponentialRampToValueAtTime(0.09, t + 0.07); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+    tail.connect(tl); tl.connect(tg); tg.connect(out); tail.start(t + 0.03); tail.stop(t + 1.0);
+  }
+  // Würfel klackert auf dem Tisch (Holz/Kunststoff): kurzer Klick + hölzerne Resonanz
+  function clack(ctx, out, t, strength = 1, final = false) {
+    const g = (final ? 1.0 : 0.6) * strength;
+    tick(ctx, out, t, { freq: 2600 + Math.random() * 1400, gain: g * 0.6, dur: 0.02, pan: Math.random() * 0.6 - 0.3 });
+    voice(ctx, out, { freq: 700 + Math.random() * 500, t, dur: final ? 0.09 : 0.05, type: 'triangle', gain: g * 0.5, attack: 0.001, glide: 0.8 });
+    if (final) voice(ctx, out, { freq: 180, t, dur: 0.12, type: 'sine', gain: 0.25, attack: 0.002, glide: 0.6 });
+  }
+  // Stoppuhr: Knopf-Klick und mechanisches Ticken (5 Ticks pro Sekunde, abwechselnd hell/dunkel)
+  function watchClick(ctx, out, t) {
+    tick(ctx, out, t, { freq: 3200, gain: 1.0, dur: 0.016 });
+    tick(ctx, out, t + 0.035, { freq: 2000, gain: 0.8, dur: 0.02 });
+    voice(ctx, out, { freq: 1800, t, dur: 0.06, type: 'sine', gain: 0.18, attack: 0.001 });
+  }
+  function watchTick(ctx, out, t, i) {
+    const hi = i % 2 === 0;
+    tick(ctx, out, t, { freq: hi ? 3800 : 3000, gain: hi ? 0.9 : 0.7, dur: 0.012 });
+    voice(ctx, out, { freq: hi ? 2900 : 2400, t, dur: 0.03, type: 'sine', gain: hi ? 0.14 : 0.11, attack: 0.001 });
+  }
+
+  function _fxGraph(ctx, dest, wet) {
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -10; comp.knee.value = 6; comp.ratio.value = 4; comp.attack.value = 0.002; comp.release.value = 0.15;
+    comp.connect(dest);
+    const master = ctx.createGain(); master.gain.value = 1.8; master.connect(comp);
+    const bus = ctx.createGain(); bus.connect(master);
+    if (wet) bus.connect(_reverbIn(ctx, master));
+    return bus;
+  }
+  function gameSoundRender(ctx, kind, opts, at) {
+    opts = opts || {};
+    const t = (at || 0) + 0.005;
+    const bus = _fxGraph(ctx, ctx.destination, kind === 'shot');
+    if (kind === 'shot') shot(ctx, bus, t);
+    else if (kind === 'clack') clack(ctx, bus, t, opts.strength, opts.final);
+    else if (kind === 'watchClick') watchClick(ctx, bus, t);
+    else if (kind === 'watchTick') watchTick(ctx, bus, t, opts.i || 0);
+  }
+  // Ticken der Stoppuhr: wird im Audio-Takt vorausgeplant, damit es gleichmäßig bleibt
+  let _tickTimer = null, _tickNext = 0, _tickI = 0, _tickBus = null;
+  function gameSound(kind, opts) {
+    if (kind === 'tickStop') { clearInterval(_tickTimer); _tickTimer = null; return; }
+    if (!isSoundOn()) return;
+    try {
+      if (!_audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        _audioCtx = new AC();
+      }
+      const go = () => {
+        const ctx = _audioCtx;
+        if (kind === 'tickStart') {
+          clearInterval(_tickTimer);
+          _tickBus = _tickBus && _tickBus.context === ctx ? _tickBus : _fxGraph(ctx, ctx.destination, false);
+          _tickNext = ctx.currentTime + 0.2; _tickI = 0;
+          _tickTimer = setInterval(() => {
+            while (_tickNext < ctx.currentTime + 0.25) { watchTick(ctx, _tickBus, _tickNext, _tickI++); _tickNext += 0.2; }
+          }, 60);
+          return;
+        }
+        gameSoundRender(ctx, kind, opts, ctx.currentTime);
+      };
+      if (_audioCtx.state === 'suspended') _audioCtx.resume().then(go).catch(function(){});
+      else go();
+    } catch(e) {}
+  }
+
   // Komplette Klangfolge zur Orden-Animation: ein "Pling" pro fallendem Orden, dann die Fanfare,
   // genau dann, wenn der Titel erscheint. ctx/out sind optional (für die Hörprobe).
   function medalSound(milestone, drops, dropDelay, titleAt, ctx, out) {
@@ -273,5 +358,5 @@ const { medalSound, playMedalSound, slotSound, slotSoundRender } = (function() {
     } catch(e) {}
   }
 
-  return { medalSound, playMedalSound, slotSound, slotSoundRender };
+  return { medalSound, playMedalSound, slotSound, slotSoundRender, gameSound, gameSoundRender };
 })();

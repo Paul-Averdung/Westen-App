@@ -78,6 +78,7 @@ window.startReactionTest = function() {
       e.preventDefault();
       div.removeEventListener('pointerdown', onHit);
       times.push(Date.now() - shownAt);
+      gameSound('shot');
       div.style.transition = 'opacity 0.13s, transform 0.13s';
       div.style.opacity = '0';
       div.style.transform = 'scale(1.5)';
@@ -145,6 +146,7 @@ window.startReactionTest = function() {
     document.getElementById('timer-overlay').style.display = 'none';
     if (_interval) clearInterval(_interval);
     _running = false;
+    gameSound('tickStop');
   };
 
   window.timerStartStop = function() {
@@ -158,6 +160,8 @@ window.startReactionTest = function() {
       _start    = Date.now() - _elapsed;
       _interval = setInterval(tick, 10);
       _running  = true;
+      gameSound('watchClick');
+      gameSound('tickStart');
       btn.textContent   = 'STOP';
       btn.style.borderColor = '#CC2200';
       btn.style.color       = '#FF6666';
@@ -172,6 +176,8 @@ window.startReactionTest = function() {
       _elapsed  = Date.now() - _start;
       _running  = false;
       _stopped  = true;
+      gameSound('tickStop');
+      gameSound('watchClick');
       const r   = rating(_elapsed);
       const dispEl = document.getElementById('timer-display');
       if (dispEl) dispEl.textContent = fmt(_elapsed);
@@ -187,6 +193,7 @@ window.startReactionTest = function() {
 
   window.timerReset = function() {
     if (_interval) clearInterval(_interval);
+    gameSound('tickStop');
     _interval = null; _start = null; _elapsed = 0; _running = false; _stopped = false;
     const dispEl   = document.getElementById('timer-display');
     const stateEl  = document.getElementById('timer-state');
@@ -244,12 +251,14 @@ window.startReactionTest = function() {
     let step = 0, total = 22;
     function tick() {
       face.textContent = 1 + Math.floor(Math.random() * _playerCount);
+      gameSound('clack', { strength: 1 - step / total * 0.5 });
       step++;
       if (step < total) {
         // exponential slowdown
         setTimeout(tick, 55 + Math.pow(step, 1.7));
       } else {
         face.textContent = result;
+        gameSound('clack', { final: true });
         setTimeout(() => showDiceResult(result), 280);
       }
     }
