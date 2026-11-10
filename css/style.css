@@ -218,62 +218,146 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 /* ── Orden / Medal Milestone Animations ────────────────────────────────── */
 #medal-overlay {
   position: fixed; top:0; left:0; width:100%; height:100%;
-  background: rgba(0,0,0,0); z-index: 10000;
-  display: none; align-items: center; justify-content: center;
+  z-index: 10000; display: none; overflow: hidden;
+  --glow: #FFD700;
 }
-#medal-overlay.active {
-  display: flex;
-  animation: medalOverlayIn 0.5s ease forwards;
+#medal-overlay.active { display: block; }
+/* abgedunkelter, leicht unscharfer Hintergrund */
+#medal-overlay::before {
+  content: ''; position: absolute; inset: 0; opacity: 0;
+  background: radial-gradient(circle at 50% 42%, rgba(26,38,12,0.94) 0%, rgba(0,0,0,0.97) 75%);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
 }
-@keyframes medalOverlayIn {
-  from { background: rgba(0,0,0,0); }
-  to   { background: rgba(0,0,0,0.88); }
-}
+#medal-overlay.active::before { animation: medalOverlayIn 0.35s ease forwards; }
+@keyframes medalOverlayIn { to { opacity: 1; } }
 #medal-scene {
   position: relative; width: 100%; height: 100%;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
+#medal-scene.shake { animation: medalShake 0.45s cubic-bezier(.36,.07,.19,.97); }
+@keyframes medalShake {
+  10%, 90% { transform: translate(calc(var(--shake) * -0.3), calc(var(--shake) * 0.2)); }
+  20%, 80% { transform: translate(calc(var(--shake) * 0.6), calc(var(--shake) * -0.4)); }
+  30%, 50%, 70% { transform: translate(calc(var(--shake) * -1), calc(var(--shake) * 0.5)); }
+  40%, 60% { transform: translate(var(--shake), calc(var(--shake) * -0.6)); }
+}
+/* Titel: springt beim Einschlag ins Bild */
 #medal-title {
-  position: absolute; top: 10%; left: 0; right: 0; text-align: center;
-  font-size: 24px; font-weight: 900; color: #EFC93D;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.8), 0 0 30px rgba(239,201,61,0.5);
-  letter-spacing: 1px; opacity: 0; transition: opacity 0.5s;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  padding: 0 16px;
+  margin-top: 11vh; min-height: 40px; text-align: center; padding: 0 16px;
+  font-size: 30px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;
+  opacity: 0; transform: scale(0.3);
 }
-#medal-title.show { opacity: 1; }
+#medal-title span {
+  background: linear-gradient(180deg, #FFF6C8 0%, #FFD54A 45%, #E09B12 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 0 #6b3f00) drop-shadow(0 0 14px rgba(255,200,60,0.55));
+}
+#medal-title.show { animation: titlePop 0.5s cubic-bezier(.2,1.6,.4,1) forwards; }
+@keyframes titlePop {
+  0%   { opacity: 0; transform: scale(0.3); }
+  60%  { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+/* Bühne für den neuen Orden */
+#medal-stage {
+  position: relative; width: 100%; height: 46vh; max-height: 340px;
+  display: flex; align-items: center; justify-content: center;
+}
+#medal-stage > * { position: absolute; left: 50%; top: 50%; }
+.stage-medal { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+.stage-medal .medal-svg { display: block; filter: drop-shadow(0 10px 18px rgba(0,0,0,0.6)); }
+#medal-stage.slam .stage-medal {
+  animation: medalSlam 0.55s cubic-bezier(.2,.9,.3,1.25) forwards, medalFloat 3s ease-in-out 0.8s infinite;
+}
+@keyframes medalSlam {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(2.6) rotate(-14deg); }
+  45%  { opacity: 1; transform: translate(-50%, -50%) scale(0.86) rotate(3deg); }
+  70%  { transform: translate(-50%, -50%) scale(1.07) rotate(-1deg); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+}
+@keyframes medalFloat {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50%      { transform: translate(-50%, -50%) translateY(-6px); }
+}
+/* Glanz, der über den Orden wischt */
+.medal-shine { opacity: 0; }
+#medal-stage.slam .medal-shine { animation: medalShine 2.6s ease-in-out 0.5s infinite; }
+@keyframes medalShine {
+  0%   { transform: rotate(20deg) translateX(0);     opacity: 0; }
+  10%  { opacity: 0.55; }
+  35%  { transform: rotate(20deg) translateX(150px); opacity: 0.55; }
+  36%, 100% { transform: rotate(20deg) translateX(150px); opacity: 0; }
+}
+/* Lichtstrahlen hinter dem Orden */
+.stage-rays { width: 130vmax; height: 130vmax; transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+.stage-rays svg { display: block; width: 100%; height: 100%; }
+#medal-stage.slam .stage-rays { animation: raysIn 0.6s ease-out forwards; }
+/* Drehung auf dem inneren SVG, damit die Zentrierung des Containers unberührt bleibt */
+#medal-stage.slam .stage-rays svg { animation: raysSpin 14s linear infinite; }
+@keyframes raysIn { to { opacity: var(--rays); transform: translate(-50%, -50%) scale(1); } }
+@keyframes raysSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+/* Aufladen vor großen Orden (passt zum "Woosh") */
+.stage-charge {
+  width: 40px; height: 40px; border-radius: 50%; transform: translate(-50%, -50%) scale(0); opacity: 0;
+  background: radial-gradient(circle, #fff 0%, var(--glow) 40%, transparent 70%);
+}
+#medal-stage.charging .stage-charge { animation: charge 0.45s ease-in forwards; }
+@keyframes charge { to { opacity: 0.9; transform: translate(-50%, -50%) scale(4); } }
+/* Schockwelle */
+.stage-ring {
+  width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--glow);
+  transform: translate(-50%, -50%) scale(0.3); opacity: 0;
+}
+#medal-stage.slam .stage-ring    { animation: ring 0.7s ease-out 0.12s forwards; }
+#medal-stage.slam .stage-ring.r2 { animation: ring 0.9s ease-out 0.24s forwards; border-color: #fff; border-width: 2px; }
+@keyframes ring {
+  0%   { opacity: 0.9; transform: translate(-50%, -50%) scale(0.3); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(3.2); }
+}
+/* Weißer Blitz beim Einschlag */
+.stage-flash {
+  position: fixed !important; inset: 0; left: 0 !important; top: 0 !important;
+  background: #fff; opacity: 0; pointer-events: none;
+}
+#medal-stage.slam .stage-flash { animation: flash 0.35s ease-out 0.15s; }
+@keyframes flash { 0% { opacity: 0.55; } 100% { opacity: 0; } }
+/* Partikel */
+.particle {
+  position: absolute; left: 0; top: 0; width: 6px; height: 10px; border-radius: 2px;
+  opacity: 0; animation: particle var(--d) cubic-bezier(.1,.7,.3,1) 0.15s forwards;
+}
+.particle.star {
+  width: 14px; height: 14px; border-radius: 0;
+  clip-path: polygon(50% 0, 61% 38%, 100% 50%, 61% 62%, 50% 100%, 39% 62%, 0 50%, 39% 38%);
+}
+@keyframes particle {
+  0%   { opacity: 1; transform: translate(-50%, -50%) rotate(0) scale(1); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 40px)) rotate(var(--rot)) scale(0.6); }
+}
 #medal-subtitle {
-  position: absolute; top: 19%; left: 0; right: 0; text-align: center;
-  color: rgba(192,221,151,0.75); font-size: 14px; opacity: 0;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  transition: opacity 0.5s;
+  text-align: center; color: rgba(192,221,151,0.85); font-size: 15px;
+  opacity: 0; transform: translateY(8px); transition: opacity 0.4s, transform 0.4s;
 }
-#medal-subtitle.show { opacity: 1; }
+#medal-subtitle.show { opacity: 1; transform: none; }
+/* Reihe der bisher gesammelten Orden */
 #medals-wrap {
-  display: flex; flex-direction: row; align-items: flex-end;
-  justify-content: center; gap: 10px;
-  flex-wrap: wrap; max-width: min(92vw, 460px);
+  display: flex; flex-direction: row; align-items: flex-end; justify-content: center;
+  gap: 6px; flex-wrap: wrap; max-width: min(92vw, 460px); margin-top: 4vh;
 }
-.medal-item {
-  opacity: 0;
-  transform: translateY(-90px);
-  transition: transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.35s;
-}
-.medal-item.dropped {
-  opacity: 1;
-  transform: translateY(0);
-}
-.medal-item.new-medal {
-  filter: drop-shadow(0 0 18px rgba(255,240,120,0.9));
-}
+.medal-item { opacity: 0; transform: translateY(-50px) scale(0.6); }
+.medal-item.dropped { animation: itemDrop 0.35s cubic-bezier(.2,1.5,.4,1) forwards; }
+@keyframes itemDrop { to { opacity: 1; transform: none; } }
 #medal-tap-hint {
-  position: absolute; bottom: 9%; left: 0; right: 0; text-align: center;
-  color: rgba(192,221,151,0.6); font-size: 14px; opacity: 0;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  transition: opacity 0.6s;
+  position: absolute; bottom: 7%; left: 0; right: 0; text-align: center;
+  color: rgba(192,221,151,0.6); font-size: 14px; opacity: 0; transition: opacity 0.6s;
 }
 #medal-tap-hint.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  #medal-stage.slam .stage-rays svg { animation: none; }
+  .stage-flash, .particle { display: none; }
+}
 /* Persistent medals display */
 #medals-display {
   display: flex; flex-direction: row; justify-content: center;

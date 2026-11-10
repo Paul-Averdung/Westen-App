@@ -2,33 +2,91 @@
 // Hinweis: Alle Dateien in js/ teilen sich einen Gültigkeitsbereich;
 // die Reihenfolge der <script>-Tags in hopfenkonto.html ist wichtig.
 
-// ── Orden (Medal) Milestone Animations ──────────────────────────────────────
+// ── Orden-Stufen ─────────────────────────────────────────────────────────────
+// fill/shade/dark/star: Grundfarben. gem: Edelstein in der Mitte statt Stern.
+// fx: Stärke der Animation (Partikel, Wackeln, Strahlen) – steigt mit der Stufe.
 const MEDAL_TIERS = {
-  5:  { name:'Bronze',            fill:'#CD7F32', shade:'#9A5E20', dark:'#5C2F08', star:'#5C2F08' },
-  10: { name:'Silber',            fill:'#C0C0C0', shade:'#909090', dark:'#484848', star:'#484848' },
-  15: { name:'Gold',              fill:'#FFD700', shade:'#C8A200', dark:'#7A5800', star:'#7A5800' },
-  20: { name:'Platin',            fill:'#E5E4E2', shade:'#AEADAB', dark:'#585858', star:'#585858' },
-  25: { name:'Diamant',           fill:'#B9F2FF', shade:'#60C0D8', dark:'#107888', star:'#107888' },
-  30: { name:'Rubin',             fill:'#E0115F', shade:'#A80040', dark:'#600020', star:'#FFD0DA' },
-  35: { name:'Saphir',            fill:'#0F52BA', shade:'#0A3A88', dark:'#061A50', star:'#C8DAFF' },
-  40: { name:'Smaragd',           fill:'#50C878', shade:'#2A9850', dark:'#0E4820', star:'#0E4820' },
-  45: { name:'Amethyst',          fill:'#9966CC', shade:'#6A3A9A', dark:'#3C1868', star:'#F0DEFF' },
-  50: { name:'Schwarzer Diamant', fill:'#2B2B2B', shade:'#181818', dark:'#060606', star:'#E0E0E0' },
+  5:  { name:'Bronze',            fill:'#CD7F32', shade:'#9A5E20', dark:'#5C2F08', star:'#5C2F08', ribbon:'#8B2E1F', fx:1 },
+  10: { name:'Silber',            fill:'#C0C0C0', shade:'#909090', dark:'#484848', star:'#484848', ribbon:'#1F4E8B', fx:2 },
+  15: { name:'Gold',              fill:'#FFD700', shade:'#C8A200', dark:'#7A5800', star:'#7A5800', ribbon:'#B3122E', fx:3 },
+  20: { name:'Platin',            fill:'#E5E4E2', shade:'#AEADAB', dark:'#585858', star:'#585858', ribbon:'#3B2A7A', fx:4 },
+  25: { name:'Diamant',           fill:'#B9F2FF', shade:'#60C0D8', dark:'#107888', star:'#107888', ribbon:'#0F5E73', fx:5, gem:true },
+  30: { name:'Rubin',             fill:'#E0115F', shade:'#A80040', dark:'#600020', star:'#FFD0DA', ribbon:'#6E0A2A', fx:6, gem:true },
+  35: { name:'Saphir',            fill:'#0F52BA', shade:'#0A3A88', dark:'#061A50', star:'#C8DAFF', ribbon:'#0A2A66', fx:7, gem:true },
+  40: { name:'Smaragd',           fill:'#50C878', shade:'#2A9850', dark:'#0E4820', star:'#0E4820', ribbon:'#0E4A26', fx:8, gem:true },
+  45: { name:'Amethyst',          fill:'#9966CC', shade:'#6A3A9A', dark:'#3C1868', star:'#F0DEFF', ribbon:'#3A1766', fx:9, gem:true },
+  50: { name:'Schwarzer Diamant', fill:'#2B2B2B', shade:'#181818', dark:'#060606', star:'#E0E0E0', ribbon:'#111111', fx:10, gem:true, gemColor:'#D8E4F2' },
 };
+const MEDAL_STEPS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+const LOCKED_TIER = { fill:'#3a3a3a', shade:'#2a2a2a', dark:'#151515', star:'#4a4a4a', ribbon:'#2a2a2a' };
 
-function buildMedalSVG(size, fill, shade, dark, star) {
-  star = star || dark;
-  const h = Math.round(size * 100 / 58);
-  return `<svg viewBox="0 0 58 100" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${h}">
-    <rect x="17" y="2" width="24" height="32" rx="2" fill="${fill}" stroke="${dark}" stroke-width="1.8"/>
-    <line x1="23" y1="2"  x2="23" y2="34" stroke="${dark}" stroke-width="1.3" stroke-opacity="0.5"/>
-    <line x1="29" y1="2"  x2="29" y2="34" stroke="${dark}" stroke-width="1.3" stroke-opacity="0.5"/>
-    <line x1="35" y1="2"  x2="35" y2="34" stroke="${dark}" stroke-width="1.3" stroke-opacity="0.5"/>
-    <polygon points="17,34 29,43 41,34" fill="${shade}" stroke="${dark}" stroke-width="1.8" stroke-linejoin="round"/>
-    <circle cx="29" cy="72" r="26" fill="${fill}" stroke="${dark}" stroke-width="2.5"/>
-    <circle cx="29" cy="72" r="20" fill="none" stroke="${dark}" stroke-width="1.3"/>
-    <polygon points="29,56 33.1,66.3 44.2,67.1 35.7,74.2 38.4,84.9 29,79 19.6,84.9 22.3,74.2 13.8,67.1 24.9,66.3"
-             fill="${star}"/>
+// Farbe aufhellen (amt > 0) oder abdunkeln (amt < 0)
+function _mix(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = s => { const c = (n >> s) & 255; return Math.round(amt > 0 ? c + (255 - c) * amt : c * (1 + amt)); };
+  return '#' + [16, 8, 0].map(s => ch(s).toString(16).padStart(2, '0')).join('');
+}
+
+let _medalUid = 0;
+// Orden als SVG: Band, gezackter Metallrand mit Verlauf, Glanzlicht und Stern bzw. Edelstein.
+// Aufruf wie bisher: buildMedalSVG(size, tier) – size = Breite in px.
+function buildMedalSVG(size, tier, opts) {
+  tier = tier || LOCKED_TIER;
+  const id = 'md' + (++_medalUid);
+  const h = Math.round(size * 132 / 100);
+  const gemTier = tier.gem;
+  // Rand: bei Edelstein-Stufen Gold (Schwarzer Diamant: dunkles Metall), sonst Stufenfarbe
+  const rim  = gemTier ? (tier === MEDAL_TIERS[50] ? '#55585e' : '#E8B923') : tier.fill;
+  const gc   = tier.gemColor || tier.fill;
+  const rimL = _mix(rim, 0.55), rimD = _mix(rim, -0.45);
+  const disc = gemTier ? _mix(tier.fill, -0.55) : tier.fill;
+  // gezackter Rand (wie geprägte Medaille)
+  let teeth = '';
+  for (let i = 0; i < 32; i++) {
+    const a = i / 32 * Math.PI * 2, r = i % 2 ? 41 : 44;
+    teeth += (50 + Math.sin(a) * r).toFixed(1) + ',' + (88 - Math.cos(a) * r).toFixed(1) + ' ';
+  }
+  const star = '50,64 56.5,79 72,80.5 60,90.8 63.8,106 50,97.6 36.2,106 40,90.8 28,80.5 43.5,79';
+  const emblem = gemTier ? `
+      <g transform="translate(50 86) scale(1.3) translate(-50 -86)">
+        <polygon points="50,66 68,80 62,104 38,104 32,80" fill="${gc}" stroke="${_mix(gc,-0.5)}" stroke-width="1.2" stroke-linejoin="round"/>
+        <polygon points="50,66 59,80 41,80" fill="${_mix(gc,0.6)}"/>
+        <polygon points="32,80 41,80 38,104" fill="${_mix(gc,-0.25)}"/>
+        <polygon points="68,80 59,80 62,104" fill="${_mix(gc,-0.4)}"/>
+        <polygon points="41,80 59,80 50,104" fill="${_mix(gc,0.25)}"/>
+        <polygon points="41,80 50,104 38,104" fill="${_mix(gc,0.05)}"/>
+        <polygon points="59,80 62,104 50,104" fill="${_mix(gc,-0.12)}"/>
+        <polygon points="45,70 50,66 52,72" fill="#fff" opacity="0.85"/>
+      </g>` : `
+      <polygon points="${star}" fill="${_mix(tier.fill,-0.35)}" transform="translate(0,1.6)" opacity="0.6"/>
+      <polygon points="${star}" fill="url(#${id}e)" stroke="${_mix(tier.fill,-0.4)}" stroke-width="0.8" stroke-linejoin="round"/>`;
+  return `<svg class="medal-svg" viewBox="0 0 100 132" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${h}">
+    <defs>
+      <linearGradient id="${id}r" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="${rimL}"/><stop offset="0.45" stop-color="${rim}"/><stop offset="1" stop-color="${rimD}"/>
+      </linearGradient>
+      <radialGradient id="${id}d" cx="0.38" cy="0.3" r="0.8">
+        <stop offset="0" stop-color="${_mix(disc,0.45)}"/><stop offset="0.55" stop-color="${disc}"/><stop offset="1" stop-color="${_mix(disc,-0.4)}"/>
+      </radialGradient>
+      <linearGradient id="${id}e" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${_mix(tier.fill,0.6)}"/><stop offset="1" stop-color="${_mix(tier.fill,-0.15)}"/>
+      </linearGradient>
+      <clipPath id="${id}c"><circle cx="50" cy="88" r="40"/></clipPath>
+    </defs>
+    <!-- Band -->
+    <polygon points="22,0 44,0 58,52 36,52" fill="${_mix(tier.ribbon,-0.25)}"/>
+    <polygon points="78,0 56,0 42,52 64,52" fill="${tier.ribbon}"/>
+    <polygon points="62,0 66,0 52,52 48,52" fill="${_mix(tier.ribbon,0.45)}" opacity="0.8"/>
+    <!-- Medaille -->
+    <circle cx="50" cy="90" r="43" fill="#000" opacity="0.28"/>
+    <polygon points="${teeth}" fill="url(#${id}r)"/>
+    <circle cx="50" cy="88" r="36" fill="url(#${id}d)" stroke="${rimD}" stroke-width="1.5"/>
+    <circle cx="50" cy="88" r="31" fill="none" stroke="${_mix(disc,0.35)}" stroke-width="0.8" opacity="0.7"/>
+    ${emblem}
+    <g clip-path="url(#${id}c)">
+      <ellipse cx="36" cy="66" rx="22" ry="10" fill="#fff" opacity="0.22" transform="rotate(-28 36 66)"/>
+      ${opts && opts.shine ? '<rect class="medal-shine" x="-40" y="40" width="18" height="100" fill="#fff" opacity="0.55" transform="rotate(20 50 88)"/>' : ''}
+    </g>
   </svg>`;
 }
 
@@ -37,23 +95,18 @@ function updateMedalsDisplay() {
   if (!el) return;
   el.innerHTML = '';
   const newest = [...milestonesShown].pop();
-  [5, 10, 15, 20, 25, 30, 35, 40, 45, 50].forEach(m => {
-    const tier = MEDAL_TIERS[m];
+  MEDAL_STEPS.forEach(m => {
     const unlocked = milestonesShown.has(m);
     const div = document.createElement('div');
     div.className = 'medal-badge' + (unlocked ? ' unlocked' : '') + (m === newest ? ' newest' : '');
-    if (unlocked) {
-      div.innerHTML = buildMedalSVG(26, tier.fill, tier.shade, tier.dark, tier.star);
-    } else {
-      div.innerHTML = buildMedalSVG(26, '#303030', '#202020', '#101010', '#484848');
-    }
+    div.innerHTML = buildMedalSVG(26, unlocked ? MEDAL_TIERS[m] : null);
     el.appendChild(div);
   });
 }
 
 function checkMilestone() {
   const score = calcScore();
-  for (const m of [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]) {
+  for (const m of MEDAL_STEPS) {
     if (score >= m && !milestonesShown.has(m)) {
       milestonesShown.add(m);
       saveState();
@@ -63,59 +116,115 @@ function checkMilestone() {
   }
 }
 
+// ── Orden-Animation ─────────────────────────────────────────────────────────
+// Ablauf: Bisherige Orden fallen unten in die Reihe (je ein "Pling"), dann schlägt
+// der neue Orden groß in der Mitte ein – genau auf die Fanfare. Dazu Blitz,
+// Schockwelle, Lichtstrahlen, Partikel und Wackeln, umso stärker je höher die Stufe.
+let _medalTimers = [];
+function _later(fn, ms) { _medalTimers.push(setTimeout(fn, ms)); }
+
 function showMedalAnimation(milestone) {
   const tier = MEDAL_TIERS[milestone];
   if (!tier) return;
-  const count = milestonesShown.size;
+  _medalTimers.forEach(clearTimeout); _medalTimers = [];
 
-  const overlay    = document.getElementById('medal-overlay');
-  const wrap       = document.getElementById('medals-wrap');
-  const titleEl    = document.getElementById('medal-title');
-  const subtitleEl = document.getElementById('medal-subtitle');
-  const hintEl     = document.getElementById('medal-tap-hint');
+  const overlay  = document.getElementById('medal-overlay');
+  const scene    = document.getElementById('medal-scene');
+  const wrap     = document.getElementById('medals-wrap');
+  const stage    = document.getElementById('medal-stage');
+  const titleEl  = document.getElementById('medal-title');
+  const subEl    = document.getElementById('medal-subtitle');
+  const hintEl   = document.getElementById('medal-tap-hint');
+  const fx       = tier.fx;
+  const calm     = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Zurücksetzen
   overlay.classList.remove('active');
-  titleEl.classList.remove('show');
-  subtitleEl.classList.remove('show');
-  hintEl.classList.remove('show');
-  wrap.innerHTML = '';
+  [titleEl, subEl, hintEl].forEach(e => e.classList.remove('show'));
+  scene.classList.remove('shake');
+  wrap.innerHTML = ''; stage.innerHTML = '';
+  overlay.style.setProperty('--glow', tier.fill);
+  void overlay.offsetWidth;
 
-  const medalSize = count <= 2 ? 82 : count <= 4 ? 68 : count <= 6 ? 56 : count <= 8 ? 48 : 42;
-  const allTiers  = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
-  const shown     = allTiers.filter(m => milestonesShown.has(m));
-
-  shown.forEach((m, idx) => {
-    const t = MEDAL_TIERS[m];
-    const div = document.createElement('div');
-    div.className = 'medal-item' + (m === milestone ? ' new-medal' : '');
-    div.innerHTML = buildMedalSVG(medalSize, t.fill, t.shade, t.dark, t.star);
-    wrap.appendChild(div);
+  // Reihe der bisherigen Orden
+  const earlier   = MEDAL_STEPS.filter(m => milestonesShown.has(m) && m !== milestone);
+  const dropDelay = earlier.length <= 5 ? 130 : 95;
+  earlier.forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'medal-item';
+    d.innerHTML = buildMedalSVG(34, MEDAL_TIERS[m]);
+    wrap.appendChild(d);
   });
 
-  titleEl.textContent    = tier.name + '-Orden!';
-  subtitleEl.textContent = milestone + ' Punkte erreicht — Glückwunsch!';
+  // Bühne für den neuen Orden
+  stage.innerHTML = `
+    <div class="stage-rays" style="--rays:${0.22 + fx * 0.035}">${raysSVG(tier, 12 + fx)}</div>
+    <div class="stage-charge"></div>
+    <div class="stage-ring"></div><div class="stage-ring r2"></div>
+    <div class="stage-medal">${buildMedalSVG(Math.min(170, window.innerWidth * 0.42), tier, { shine: true })}</div>
+    <div class="stage-flash"></div>
+    <div class="stage-particles"></div>`;
+
+  titleEl.innerHTML = `<span>${tier.name}-Orden!</span>`;
+  subEl.textContent = milestone + ' Punkte erreicht — Glückwunsch!';
   overlay.classList.add('active');
 
-  const dropDelay = count <= 5 ? 155 : 110;
-  const items = wrap.querySelectorAll('.medal-item');
-  items.forEach((item, idx) => {
-    setTimeout(() => item.classList.add('dropped'), 220 + idx * dropDelay);
-  });
+  // Zeitplan (ms): Orden der Reihe fallen, dann Einschlag des neuen Ordens
+  const items  = wrap.querySelectorAll('.medal-item');
+  items.forEach((it, i) => _later(() => it.classList.add('dropped'), 220 + i * dropDelay));
+  const slamAt = Math.max(fx >= 5 ? 1000 : 750, 220 + items.length * dropDelay + 300);
+  playMedalSound(milestone, items.length, dropDelay, slamAt);
 
-  const allDropped = 220 + count * dropDelay;
-  setTimeout(() => subtitleEl.classList.add('show'), allDropped + 120);
-  setTimeout(() => titleEl.classList.add('show'),    allDropped + 320);
-  playMedalSound(milestone, count, dropDelay, allDropped + 320);
-  setTimeout(() => hintEl.classList.add('show'),     allDropped + 1400);
+  if (fx >= 5) _later(() => stage.classList.add('charging'), slamAt - 450);
+  _later(() => {
+    stage.classList.remove('charging');
+    stage.classList.add('slam');
+    if (!calm) { scene.style.setProperty('--shake', (2 + fx * 0.9) + 'px'); scene.classList.add('shake'); }
+    burstParticles(stage.querySelector('.stage-particles'), tier, 14 + fx * 6);
+  }, slamAt);
+  _later(() => titleEl.classList.add('show'), slamAt + 120);
+  _later(() => subEl.classList.add('show'),   slamAt + 450);
+  _later(() => hintEl.classList.add('show'),  slamAt + 1600);
+  _later(closeMedalAnim, slamAt + 6000);
+}
 
-  const t = setTimeout(closeMedalAnim, allDropped + 5000);
-  overlay._closeTimer = t;
+// Lichtstrahlen als SVG (Fächer aus Keilen, nach außen ausblendend)
+function raysSVG(tier, count) {
+  let wedges = '';
+  for (let i = 0; i < count; i++) {
+    const a = i / count * Math.PI * 2, w = Math.PI / count * 0.55;
+    const p = (ang) => (Math.cos(ang) * 100).toFixed(1) + ',' + (Math.sin(ang) * 100).toFixed(1);
+    wedges += `<polygon points="0,0 ${p(a - w)} ${p(a + w)}"/>`;
+  }
+  const c = _mix(tier.fill, 0.35);
+  return `<svg viewBox="-100 -100 200 200" xmlns="http://www.w3.org/2000/svg">
+    <defs><radialGradient id="raysG" cx="0" cy="0" r="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="${c}" stop-opacity="0.9"/><stop offset="0.3" stop-color="${c}" stop-opacity="0.3"/><stop offset="0.6" stop-color="${c}" stop-opacity="0"/>
+    </radialGradient></defs>
+    <g fill="url(#raysG)">${wedges}</g>
+  </svg>`;
+}
+
+// Partikel: Sterne und Funken fliegen in alle Richtungen
+function burstParticles(box, tier, count) {
+  const cols = [tier.fill, _mix(tier.fill, 0.6), '#FFE27A', '#FFFFFF'];
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('span');
+    const a = Math.random() * Math.PI * 2, dist = 90 + Math.random() * 150;
+    const big = Math.random() < 0.35;
+    p.className = 'particle' + (big ? ' star' : '');
+    p.style.cssText = `--dx:${(Math.cos(a) * dist).toFixed(0)}px;--dy:${(Math.sin(a) * dist).toFixed(0)}px;` +
+      `--rot:${(Math.random() * 540 - 270).toFixed(0)}deg;--d:${(0.7 + Math.random() * 0.7).toFixed(2)}s;` +
+      `background:${cols[i % cols.length]};`;
+    box.appendChild(p);
+  }
 }
 
 window.closeMedalAnim = function() {
+  _medalTimers.forEach(clearTimeout); _medalTimers = [];
   const overlay = document.getElementById('medal-overlay');
-  if (overlay._closeTimer) clearTimeout(overlay._closeTimer);
   overlay.classList.remove('active');
+  document.getElementById('medal-stage').className = '';
   updateMedalsDisplay();
 };
 
