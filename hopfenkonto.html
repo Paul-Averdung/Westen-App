@@ -105,9 +105,18 @@
   </div>
 
   <div class="graph-card">
-    <p class="graph-title">📊 GETRÄNKE PRO STUNDE</p>
+    <div class="graph-head">
+      <p class="graph-title">📊 GETRÄNKE PRO STUNDE</p>
+      <span class="graph-stat" id="chart-stat"></span>
+    </div>
+    <div class="chart-legend">
+      <span><i style="background:linear-gradient(#FFD54A,#E0950A)"></i>Bier</span>
+      <span><i style="background:linear-gradient(#FF9A6A,#D4532A)"></i>Shots</span>
+      <span><i style="background:linear-gradient(#7FE3D3,#2E9C8C)"></i>Misch</span>
+    </div>
     <div class="chart-wrap">
       <canvas id="barChart" aria-label="Gestapeltes Balkendiagramm der Getränke pro Stunde"></canvas>
+      <div class="chart-empty" id="chart-empty">Noch nichts gezählt – Prost! 🍺</div>
     </div>
     <div class="totals-row">
       <div class="total-cell">
@@ -341,53 +350,48 @@
 
 
 <!-- ── Hopfen-Slots Overlay ─────────────────────────────────────────── -->
-<div id="slots-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,15,2,0.97); z-index:11000; font-family:-apple-system,BlinkMacSystemFont,sans-serif; overflow-y:auto;">
-  <button onclick="closeSlotsGame()" style="position:absolute;top:18px;right:18px;background:none;border:none;color:#97C459;font-size:22px;cursor:pointer;z-index:2;padding:4px 8px;">✕</button>
-  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:90vw;max-width:360px;">
-    <!-- Title + Coins -->
-    <div style="color:#EFC93D;font-size:22px;font-weight:700;margin-bottom:6px;">🎰 Hopfen-Slots</div>
-    <div style="color:#C0DD97;font-size:16px;font-weight:600;margin-bottom:3px;">🪙 <span id="slots-coins-val">0</span> Coins</div>
-    <div id="slots-daily-msg" style="color:#50C878;font-size:12px;min-height:16px;margin-bottom:14px;"></div>
-
-    <!-- Reels -->
-    <div style="background:#0a1c04;padding:14px 10px;border-radius:14px;border:2px solid #3B6D11;margin-bottom:14px;">
-      <!-- Payline label -->
-      <div style="color:#EFC93D;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;opacity:0.7;">— Gewinnlinie —</div>
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <div class="slots-reel" id="reel-0"><span class="reel-inner" id="reel-sym-0">🍺</span></div>
-        <div class="slots-reel" id="reel-1"><span class="reel-inner" id="reel-sym-1">🍺</span></div>
-        <div class="slots-reel" id="reel-2"><span class="reel-inner" id="reel-sym-2">🍺</span></div>
+<div id="slots-overlay" style="display:none;">
+  <button class="sm-close" onclick="closeSlotsGame()" aria-label="Schließen">✕</button>
+  <div class="sm-wrap">
+    <div class="sm-cabinet" id="sm-cabinet">
+      <!-- Schild mit Lauflichtern -->
+      <div class="sm-marquee">
+        <div class="sm-bulbs" id="sm-bulbs"></div>
+        <div class="sm-title"><span class="sm-title-emoji">🎰</span><span class="sm-title-text">HOPFEN-SLOTS</span></div>
+      </div>
+      <div class="sm-coins">🪙 <span id="slots-coins-val">0</span> Coins</div>
+      <div id="slots-daily-msg"></div>
+      <!-- Walzenfenster: 3 Walzen, je 3 Reihen sichtbar, Mitte = Gewinnlinie -->
+      <div class="sm-window" id="sm-window">
+        <div class="sm-reel" id="reel-0"><div class="sm-strip" id="strip-0"></div></div>
+        <div class="sm-reel" id="reel-1"><div class="sm-strip" id="strip-1"></div></div>
+        <div class="sm-reel" id="reel-2"><div class="sm-strip" id="strip-2"></div></div>
+        <div class="sm-payline"></div>
+        <div class="sm-glass"></div>
+      </div>
+      <!-- Hebel -->
+      <div class="sm-lever" id="sm-lever" onclick="spinSlots()" role="button" aria-label="Hebel ziehen">
+        <div class="sm-lever-base"></div>
+        <div class="sm-lever-arm"></div>
+        <div class="sm-lever-knob"></div>
       </div>
     </div>
 
-    <!-- Bet buttons -->
-    <div style="margin-bottom:14px;">
-      <span style="color:#97C459;font-size:13px;margin-right:8px;">Einsatz:</span>
-      <input id="slots-bet-input" type="number" min="1" value="1"
-        oninput="updateSlotsbet()"
-        style="width:80px;padding:6px 10px;font-size:16px;font-weight:700;text-align:center;
-               background:#0f2204;border:1.5px solid #3B6D11;color:#EFC93D;border-radius:8px;
-               outline:none;font-family:-apple-system,BlinkMacSystemFont,sans-serif;"/>
-      <span id="slots-bet-max" style="color:#97C459;font-size:12px;margin-left:6px;opacity:0.65;"></span>
+    <!-- Einsatz -->
+    <div class="sm-bet">
+      <span class="sm-bet-lbl">Einsatz</span>
+      <button class="sm-bet-step" onclick="stepSlotsBet(-1)" aria-label="Einsatz verringern">−</button>
+      <input id="slots-bet-input" type="number" min="1" value="1" oninput="updateSlotsbet()" inputmode="numeric"/>
+      <button class="sm-bet-step" onclick="stepSlotsBet(1)" aria-label="Einsatz erhöhen">+</button>
+      <span id="slots-bet-max"></span>
     </div>
 
-    <!-- Lever / Spin button -->
-    <button id="slots-spin-btn" onclick="spinSlots()"
-      style="padding:13px 0;font-size:17px;font-weight:700;letter-spacing:1px;
-             background:transparent;border:2px solid #3B6D11;color:#97C459;
-             border-radius:10px;cursor:pointer;width:100%;margin-bottom:14px;
-             font-family:-apple-system,BlinkMacSystemFont,sans-serif;transition:opacity 0.2s;">
-      🎰 Hebel ziehen!
-    </button>
+    <button id="slots-spin-btn" onclick="spinSlots()">Hebel ziehen!</button>
 
-    <!-- Result -->
-    <div id="slots-result" style="min-height:54px;"></div>
-
-    <!-- No-coins hint -->
-    <div id="slots-no-coins-msg" style="display:none;color:#97C459;font-size:12px;opacity:0.75;margin-top:6px;">
-      Keine Coins mehr – neue gibt es morgen! ☀️
-    </div>
+    <div id="slots-result"></div>
+    <div id="slots-no-coins-msg" style="display:none;">Keine Coins mehr – neue gibt es morgen! ☀️</div>
   </div>
+  <div id="sm-coinrain"></div>
 </div>
 
 <!-- ── Verlauf Overlay ──────────────────────────────────────────────── -->

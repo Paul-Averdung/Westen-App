@@ -271,11 +271,15 @@ window.startReactionTest = function() {
   }
 })();
 // ── Hopfen-Slots ─────────────────────────────────────────────────────────────
+// Regeln: 35 % Gewinnchance, Gewinn = 3 × Einsatz, danach optional "Doppel oder Nichts".
 (function() {
   const SYMBOLS = ['🍺','🎩','🦅','🌭','🪶','🍟','🥃'];
+  const REEL_TIMES = [1500, 2000, 2550];   // Dauer bis zum Stopp je Walze (ms, ab Walzenstart)
+  const LEVER_MS = 300;                    // Walzen starten, wenn der Hebel unten ist
   let _spinning = false;
   let _doubleRisk = 0;
   let _doubling = false;
+  let _bulbTimer = null, _bulbStep = 0, _bulbMode = 'idle';
 
   // ── Coins helpers ────────────────────────────────────────────────────────
   function getCoins() { return parseInt(localStorage.getItem('hopfenkonto_coins') || '-1'); }
@@ -301,10 +305,24 @@ window.startReactionTest = function() {
   // Silent init on page load
   checkDailyCoins();
 
+  const rnd = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+  const cellH = () => document.querySelector('.sm-reel').clientHeight / 3;
+
   // ── UI helpers ────────────────────────────────────────────────────────────
   function updateCoinsDisplay() {
     const el = document.getElementById('slots-coins-val');
     if (el) el.textContent = getCoins();
+  }
+  // Münzstand hochzählen (bei Gewinn)
+  function countCoins(from, to) {
+    const el = document.getElementById('slots-coins-val'), box = el.parentElement;
+    const t0 = performance.now(), dur = Math.min(1400, 300 + (to - from) * 25);
+    box.classList.remove('bump'); void box.offsetWidth; box.classList.add('bump');
+    (function step(now) {
+      const k = Math.min(1, (now - t0) / dur);
+      el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(step);
+    })(t0);
   }
 
   function currentBet() {
@@ -321,8 +339,8 @@ window.startReactionTest = function() {
     btn.style.opacity = ok ? '1' : '0.45';
   }
 
-  function refreshUI() {
-    updateCoinsDisplay();
+  function refreshUI(skipCoins) {
+    if (!skipCoins) updateCoinsDisplay();
     updateSpinBtn();
     const maxEl = document.getElementById('slots-bet-max');
     const inp   = document.getElementById('slots-bet-input');
@@ -334,16 +352,68 @@ window.startReactionTest = function() {
   }
 
   window.updateSlotsbet = function() { refreshUI(); };
+  window.stepSlotsBet = function(d) {
+    const inp = document.getElementById('slots-bet-input');
+    inp.value = Math.max(1, Math.min(Math.max(1, getCoins()), currentBet() + d));
+    refreshUI();
+  };
+
+  // ── Walzen ────────────────────────────────────────────────────────────────
+  function fillStrip(i, syms) {
+    const strip = document.getElementById('strip-' + i);
+    strip.innerHTML = syms.map(x => '<div class="sm-cell">' + x + '</div>').join('');
+    return strip;
+  }
+  function visible(i) {      // aktuell sichtbare 3 Symbole (oben, Mitte, unten)
+    const cells = document.querySelectorAll('#strip-' + i + ' .sm-cell');
+    if (cells.length < 3) return [rnd(), '🍺', rnd()];
+    const strip = document.getElementById('strip-' + i);
+    const off = Math.round(-(new DOMMatrix(getComputedStyle(strip).transform).m42) / cellH());
+    return [0, 1, 2].map(k => (cells[off + k] || cells[k]).textContent);
+  }
+
+  // ── Lauflichter am Schild ─────────────────────────────────────────────────
+  function buildBulbs() {
+    const box = document.getElementById('sm-bulbs');
+    if (box.childElementCount) return;
+    const n = 26;
+    for (let i = 0; i < n; i++) {
+      // gleichmäßig über den Rand verteilt (oben, rechts, unten, links)
+      const t = i / n, b = document.createElement('span');
+      let x, y;
+      if (t < 0.35)      { x = t / 0.35 * 100; y = 0; }
+      else if (t < 0.5)  { x = 100; y = (t - 0.35) / 0.15 * 100; }
+      else if (t < 0.85) { x = 100 - (t - 0.5) / 0.35 * 100; y = 100; }
+      else               { x = 0; y = 100 - (t - 0.85) / 0.15 * 100; }
+      b.style.left = x + '%'; b.style.top = y + '%';
+      box.appendChild(b);
+    }
+  }
+  function bulbs(mode) {
+    _bulbMode = mode;
+    clearInterval(_bulbTimer);
+    const speed = mode === 'win' ? 70 : mode === 'spin' ? 110 : 420;
+    _bulbTimer = setInterval(() => {
+      _bulbStep++;
+      document.querySelectorAll('#sm-bulbs span').forEach((b, i) => {
+        const on = _bulbMode === 'win' ? (_bulbStep % 2 === 0) : ((i + _bulbStep) % 3 === 0);
+        b.classList.toggle('on', on);
+      });
+    }, speed);
+  }
 
   // ── Public API ────────────────────────────────────────────────────────────
   window.openSlotsGame = function() {
     const result = checkDailyCoins();
     document.getElementById('slots-overlay').style.display = 'block';
     document.getElementById('slots-result').innerHTML = '';
-    ['reel-sym-0','reel-sym-1','reel-sym-2'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = '🍺';
-    });
+    document.getElementById('sm-window').classList.remove('dim', 'won');
+    for (let i = 0; i < 3; i++) {
+      const strip = fillStrip(i, [rnd(), '🍺', rnd()]);
+      strip.getAnimations().forEach(a => a.cancel());
+      strip.style.transform = 'translateY(0)';
+    }
+    buildBulbs(); bulbs('idle');
     const msgEl = document.getElementById('slots-daily-msg');
     if (msgEl) {
       if (result === 'start')      msgEl.textContent = '🎁 Willkommen! 100 Startguthaben gutgeschrieben!';
@@ -355,6 +425,7 @@ window.startReactionTest = function() {
 
   window.closeSlotsGame = function() {
     document.getElementById('slots-overlay').style.display = 'none';
+    clearInterval(_bulbTimer);
   };
 
   window.spinSlots = function() {
@@ -366,95 +437,106 @@ window.startReactionTest = function() {
     setCoins(getCoins() - bet);
     refreshUI();
     document.getElementById('slots-result').innerHTML = '';
+    const win = document.getElementById('sm-window');
+    win.classList.remove('dim', 'won');
+    document.getElementById('sm-cabinet').classList.remove('lose');
 
     // 35 % Gewinnwahrscheinlichkeit
     let finals;
     if (Math.random() < 0.35) {
-      const sym = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+      const sym = rnd();
       finals = [sym, sym, sym];
     } else {
-      finals = [
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]
-      ];
+      finals = [rnd(), rnd(), rnd()];
       // Avoid accidental triple on the losing path
       if (finals[0] === finals[1] && finals[1] === finals[2]) finals[2] = SYMBOLS[(SYMBOLS.indexOf(finals[2]) + 1) % SYMBOLS.length];
     }
 
-    const STEPS = 20;
+    // Hebel ziehen
+    const lever = document.getElementById('sm-lever');
+    lever.classList.remove('pull'); void lever.offsetWidth; lever.classList.add('pull');
+    bulbs('spin');
+    slotSound('spin', { leverMs: LEVER_MS, reelTimes: REEL_TIMES });
+
+    const H = cellH();
     let done = 0;
-
-    function spinReel(idx, finalSym, startDelay) {
-      setTimeout(() => {
-        const reel = document.getElementById('reel-' + idx);
-        const sym  = document.getElementById('reel-sym-' + idx);
-        if (!reel || !sym) { reelDone(); return; }
-        reel.classList.add('spinning');
-        let step = 0;
-        function tick() {
-          sym.textContent = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-          step++;
-          if (step < STEPS) {
-            setTimeout(tick, 55 + Math.pow(step * 0.85, 1.7));
-          } else {
-            sym.textContent = finalSym;
-            reel.classList.remove('spinning');
-            reelDone();
-          }
-        }
-        tick();
-      }, startDelay);
+    for (let i = 0; i < 3; i++) {
+      // Streifen: oben die Zielsymbole, darunter Zufall, ganz unten die aktuell sichtbaren.
+      // Er läuft von unten (alt sichtbar) nach oben (Ziel sichtbar) -> Symbole wandern nach unten.
+      const old = visible(i);
+      const filler = Array.from({ length: 16 + i * 6 }, rnd);
+      const syms = [rnd(), finals[i], rnd(), ...filler, ...old];
+      const strip = fillStrip(i, syms);
+      strip.getAnimations().forEach(a => a.cancel());
+      const start = -(syms.length - 3) * H;
+      strip.style.transform = 'translateY(' + start + 'px)';
+      const dur = REEL_TIMES[i];
+      const anim = strip.animate([
+        { transform: 'translateY(' + start + 'px)', easing: 'ease-out' },
+        { transform: 'translateY(' + (start - H * 0.25) + 'px)', offset: 0.05, easing: 'cubic-bezier(.25,.1,.25,1)' },  // kurzes Ausholen
+        { transform: 'translateY(' + (H * 0.18) + 'px)', offset: 0.93, easing: 'ease-in-out' },                           // überschwingen
+        { transform: 'translateY(0px)' }                                                                                  // einrasten
+      ], { duration: dur, delay: LEVER_MS, fill: 'forwards' });
+      setTimeout(() => strip.classList.add('blur'), LEVER_MS + dur * 0.12);
+      setTimeout(() => strip.classList.remove('blur'), LEVER_MS + dur * 0.8);
+      anim.onfinish = () => {
+        strip.style.transform = 'translateY(0px)'; anim.cancel();
+        if (++done === 3) { _spinning = false; setTimeout(() => showSlotsResult(finals, bet), 180); }
+      };
     }
-
-    function reelDone() {
-      done++;
-      if (done === 3) {
-        _spinning = false;
-        setTimeout(() => showSlotsResult(finals, bet), 220);
-      }
-    }
-
-    spinReel(0, finals[0], 0);
-    spinReel(1, finals[1], 380);
-    spinReel(2, finals[2], 760);
   };
+
+  function coinRain(n) {
+    const box = document.getElementById('sm-coinrain');
+    box.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const c = document.createElement('span');
+      c.className = 'sm-coin'; c.textContent = '🪙';
+      c.style.left = (Math.random() * 100) + '%';
+      c.style.setProperty('--d', (1.2 + Math.random() * 1.0).toFixed(2) + 's');
+      c.style.setProperty('--delay', (Math.random() * 0.7).toFixed(2) + 's');
+      c.style.setProperty('--dx', (Math.random() * 80 - 40).toFixed(0) + 'px');
+      c.style.setProperty('--rot', (Math.random() * 720 - 360).toFixed(0) + 'deg');
+      box.appendChild(c);
+    }
+    setTimeout(() => { box.innerHTML = ''; }, 2600);
+  }
 
   function showSlotsResult(syms, bet) {
     const win = syms[0] === syms[1] && syms[1] === syms[2];
     const resultEl = document.getElementById('slots-result');
+    const windowEl = document.getElementById('sm-window');
 
     if (win) {
       const gain = bet * 3;
-      setCoins(getCoins() + gain);
+      const before = getCoins();
+      setCoins(before + gain);
       _doubleRisk = gain;
       const msgs = ['Jackpot! 🎉', 'Volltreffer! 🏆', 'Dreifach! 💰', 'Glückspilz! 🍀'];
       const msg  = msgs[Math.floor(Math.random() * msgs.length)];
       resultEl.innerHTML =
-        '<div style="color:#FFD700;font-size:20px;font-weight:700;margin-bottom:4px;">' + msg + '</div>' +
-        '<div style="color:#50C878;font-size:15px;margin-bottom:8px;">+' + gain + ' Coins gewonnen! 🪙</div>' +
-        '<div style="font-size:30px;letter-spacing:6px;margin-bottom:12px;">' + syms.join(' ') + '</div>' +
-        '<button id="double-btn" onclick="doubleOrNothing()" ' +
-          'style="padding:10px 0;font-size:14px;font-weight:700;letter-spacing:0.5px;' +
-          'background:transparent;border:2px solid #EFC93D;color:#EFC93D;' +
-          'border-radius:10px;cursor:pointer;width:100%;' +
-          'font-family:-apple-system,BlinkMacSystemFont,sans-serif;transition:opacity 0.2s;">' +
-          '🎲 Doppel oder Nichts (' + gain + ' 🪙)' +
-        '</button>' +
-        '<div id="double-msg" style="margin-top:8px;font-size:13px;min-height:18px;font-weight:600;"></div>';
-      ['reel-0','reel-1','reel-2'].forEach(id => {
-        const r = document.getElementById(id);
-        if (r) { r.classList.remove('win-flash'); void r.offsetWidth; r.classList.add('win-flash'); }
-      });
+        '<div class="sm-msg-win">' + msg + '</div>' +
+        '<div class="sm-msg-gain">+' + gain + ' Coins gewonnen! 🪙</div>' +
+        '<button id="double-btn" onclick="doubleOrNothing()">🎲 Doppel oder Nichts (' + gain + ' 🪙)</button>' +
+        '<div id="double-msg"></div>';
+      windowEl.classList.add('won');
+      for (let i = 0; i < 3; i++) document.querySelectorAll('#strip-' + i + ' .sm-cell')[1].classList.add('win');
+      bulbs('win'); setTimeout(() => bulbs('idle'), 2400);
+      coinRain(Math.min(40, 10 + gain * 2));
+      slotSound('win', { gain });
+      countCoins(before, before + gain);
+      refreshUI(true);
     } else {
       _doubleRisk = 0;
       const msgs = ['Nicht heute… 😅','Knapp vorbei! 🍺','Nächstes Mal! 🎲','Das Glück kommt noch! 🤞'];
       const msg  = msgs[Math.floor(Math.random() * msgs.length)];
-      resultEl.innerHTML =
-        '<div style="color:#E0115F;font-size:18px;font-weight:700;margin-bottom:6px;">' + msg + '</div>' +
-        '<div style="font-size:28px;letter-spacing:6px;opacity:0.7;">' + syms.join(' ') + '</div>';
+      resultEl.innerHTML = '<div class="sm-msg-lose">' + msg + '</div>';
+      windowEl.classList.add('dim');
+      document.getElementById('sm-cabinet').classList.add('lose');
+      bulbs('idle');
+      slotSound('lose');
+      refreshUI();
     }
-    refreshUI();
   }
 
   window.doubleOrNothing = function() {
@@ -468,22 +550,31 @@ window.startReactionTest = function() {
       btn.textContent = '🪙 ...';
     }
     if (msgEl) { msgEl.textContent = ''; msgEl.style.color = ''; }
+    slotSound('flip');
     setTimeout(() => {
       const won = Math.random() < 0.5;
       if (won) {
-        setCoins(getCoins() + _doubleRisk);
+        const before = getCoins();
+        setCoins(before + _doubleRisk);
+        countCoins(before, before + _doubleRisk);
         _doubleRisk *= 2;
-        if (msgEl) { msgEl.style.color = '#50C878'; msgEl.textContent = 'Verdoppelt! 🎉'; }
+        if (msgEl) { msgEl.style.color = '#6fe08d'; msgEl.textContent = 'Verdoppelt! 🎉'; }
         if (btn) {
           btn.disabled = false;
           btn.style.opacity = '1';
           btn.textContent = '🎲 Doppel oder Nichts (' + _doubleRisk + ' 🪙)';
         }
+        slotSound('win', { gain: _doubleRisk, small: true });
+        coinRain(12);
+        _doubling = false;
+        refreshUI(true);
+        return;
       } else {
         setCoins(getCoins() - _doubleRisk);
         _doubleRisk = 0;
-        if (msgEl) { msgEl.style.color = '#E0115F'; msgEl.textContent = 'Verloren! 😅'; }
+        if (msgEl) { msgEl.style.color = '#ff6f9a'; msgEl.textContent = 'Verloren! 😅'; }
         if (btn) btn.remove();
+        slotSound('lose');
       }
       _doubling = false;
       refreshUI();

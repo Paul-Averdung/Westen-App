@@ -3,8 +3,8 @@
 // Hinweis: Alle Dateien in js/ teilen sich einen Gültigkeitsbereich.
 
 // Alles in einer Kapsel, damit Hilfsnamen (z.B. pad) nicht mit anderen Dateien kollidieren.
-// Nach außen sichtbar sind nur medalSound() und playMedalSound().
-const { medalSound, playMedalSound } = (function() {
+// Nach außen sichtbar sind nur medalSound(), playMedalSound() und die Slots-Sounds.
+const { medalSound, playMedalSound, slotSound, slotSoundRender } = (function() {
   const NOTE = n => 440 * Math.pow(2, (n - 69) / 12);   // MIDI-Nummer -> Hz (60 = C4)
 
   // ── Grundbausteine ──────────────────────────────────────────────────────────
@@ -123,6 +123,120 @@ const { medalSound, playMedalSound } = (function() {
                        pad(c, o, e2, [60, 64, 67, 72, 76, 79], 2.2, 0.032); sparkle(c, o, e2, 84, 16, 0.035); }, // Schwarzer Diamant
   };
 
+
+  // ── Slots-Sounds ──────────────────────────────────────────────────────────
+  // Kurzer mechanischer Klick (Walzen-Raster, Hebel-Ratsche)
+  function tick(ctx, out, t, { freq = 2600, gain = 0.12, dur = 0.018, pan = 0 } = {}) {
+    const n = ctx.createBufferSource(); n.buffer = _noise(ctx, dur + 0.01);
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.4;
+    const g = ctx.createGain(); g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    n.connect(f); f.connect(g);
+    if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); p.connect(out); } else g.connect(out);
+    n.start(t); n.stop(t + dur + 0.01);
+  }
+  // Dumpfes Einrasten einer Walze
+  function clunk(ctx, out, t, pan = 0) {
+    voice(ctx, out, { freq: 150, t, dur: 0.16, type: 'sine', gain: 0.35, attack: 0.002, glide: 0.5, pan });
+    tick(ctx, out, t, { freq: 1200, gain: 0.25, dur: 0.05, pan });
+    tick(ctx, out, t + 0.04, { freq: 3200, gain: 0.08, dur: 0.02, pan });
+  }
+  // Hebel: Ratsche beim Runterziehen, Feder-"Boing" beim Zurückschnellen
+  function leverSound(ctx, out, t) {
+    for (let i = 0; i < 7; i++) tick(ctx, out, t + i * 0.03, { freq: 3000 - i * 180, gain: 0.14, dur: 0.02, pan: 0.5 });
+    voice(ctx, out, { freq: 95, t: t + 0.2, dur: 0.18, type: 'sine', gain: 0.3, attack: 0.003, glide: 0.6, pan: 0.5 });
+    const o = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    o.type = 'triangle'; o.frequency.value = 210; lfo.frequency.value = 28; lg.gain.setValueAtTime(40, t + 0.3); lg.gain.exponentialRampToValueAtTime(1, t + 0.75);
+    lfo.connect(lg); lg.connect(o.frequency);
+    g.gain.setValueAtTime(0.0001, t + 0.3); g.gain.exponentialRampToValueAtTime(0.06, t + 0.31); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.75);
+    o.connect(g); g.connect(out); o.start(t + 0.3); o.stop(t + 0.8); lfo.start(t + 0.3); lfo.stop(t + 0.8);
+  }
+  // Rotierende Walzen: Rasterklicks, die schneller werden und vor dem Stopp ausbremsen,
+  // dazu ein leises mechanisches Surren. Jede Walze rastet mit "Klonk" ein.
+  function spinSound(ctx, out, t, leverMs, reelTimes) {
+    leverSound(ctx, out, t);
+    const t0 = t + leverMs / 1000, pans = [-0.45, 0, 0.45];
+    reelTimes.forEach((ms, i) => {
+      const end = t0 + ms / 1000;
+      let x = t0 + 0.04;
+      while (x < end - 0.03) {
+        const k = (x - t0) / (end - t0);                       // 0..1 Fortschritt
+        const speed = k < 0.12 ? 0.07 - k * 0.3 : k < 0.75 ? 0.034 : 0.034 + Math.pow((k - 0.75) / 0.25, 2) * 0.11;
+        tick(ctx, out, x, { freq: 2300 + i * 250, gain: 0.07, dur: 0.014, pan: pans[i] });
+        x += speed;
+      }
+      clunk(ctx, out, end, pans[i]);
+    });
+    // Surren über die ganze Drehzeit
+    const last = t0 + Math.max(...reelTimes) / 1000;
+    const n = ctx.createBufferSource(); n.buffer = _noise(ctx, last - t0 + 0.1);
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 0.8;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.05, t0 + 0.2);
+    g.gain.setValueAtTime(0.05, last - 0.5); g.gain.exponentialRampToValueAtTime(0.0001, last);
+    n.connect(f); f.connect(g); g.connect(out); n.start(t0); n.stop(last + 0.1);
+  }
+  // Glocke "Ding"
+  function ding(ctx, out, t, f0, gain = 0.07, pan = 0) {
+    [1, 2.4, 4.1, 5.9].forEach((r, i) => voice(ctx, out, { freq: f0 * r, t, dur: 1.0 - i * 0.18, type: 'sine', gain: gain / (i + 1), attack: 0.002, pan }));
+  }
+  // Gewinn: Glocken-Klingeln, Münzregen-Klimpern, kleine Siegesmelodie – länger bei großem Gewinn
+  function winSound(ctx, out, t, gain, small) {
+    const rings = small ? 4 : Math.min(14, 6 + Math.floor(gain / 3));
+    for (let i = 0; i < rings; i++) ding(ctx, out, t + i * 0.09, i % 2 ? 1568 : 1318, 0.05, i % 2 ? 0.3 : -0.3);
+    arp(ctx, out, t + 0.05, [72, 76, 79, 84], 0.08, 0.5, 0.06);
+    const coins = small ? 10 : Math.min(40, 14 + gain);
+    for (let i = 0; i < coins; i++) {
+      const tt = t + 0.25 + Math.random() * (small ? 0.6 : 1.3), f = 2600 + Math.random() * 2200;
+      voice(ctx, out, { freq: f, t: tt, dur: 0.12, type: 'sine', gain: 0.035, attack: 0.001, pan: Math.random() * 1.4 - 0.7 });
+      voice(ctx, out, { freq: f * 1.47, t: tt + 0.01, dur: 0.09, type: 'sine', gain: 0.02, attack: 0.001 });
+    }
+    if (!small) sparkle(ctx, out, t + 0.45, 84, 8, 0.05);
+  }
+  // Verlust: zwei kurze, gedämpfte absteigende "Bwoo"-Töne (nicht hämisch, nur "schade")
+  function loseSound(ctx, out, t) {
+    [[55, 0, 0.28], [52, 0.3, 0.55]].forEach(([n, at, d]) => {
+      const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 6;
+      f.frequency.setValueAtTime(500, t + at); f.frequency.linearRampToValueAtTime(1400, t + at + 0.08); f.frequency.exponentialRampToValueAtTime(380, t + at + d);
+      f.connect(out);
+      voice(ctx, f, { freq: NOTE(n), t: t + at, dur: d, type: 'sawtooth', gain: 0.12, attack: 0.02, glide: 0.97 });
+    });
+  }
+  // Doppel oder Nichts: Münze wird geworfen (wirbelnde Klicks)
+  function flipSound(ctx, out, t) {
+    for (let i = 0; i < 12; i++) tick(ctx, out, t + i * 0.05 + i * i * 0.0015, { freq: 4200, gain: 0.06, dur: 0.012, pan: Math.sin(i) * 0.4 });
+  }
+
+  function _slotGraph(ctx, dest) {
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -12; comp.knee.value = 8; comp.ratio.value = 5; comp.attack.value = 0.003; comp.release.value = 0.2;
+    comp.connect(dest);
+    const master = ctx.createGain(); master.gain.value = 1.8; master.connect(comp);
+    const bus = ctx.createGain(); bus.connect(master); bus.connect(_reverbIn(ctx, master));
+    return bus;
+  }
+  // Für die Hörprobe/Tests: in einen beliebigen (Offline-)Kontext rendern
+  function slotSoundRender(ctx, kind, opts, at) {
+    const bus = _slotGraph(ctx, ctx.destination), t = (at || 0) + 0.02;
+    opts = opts || {};
+    if (kind === 'spin') spinSound(ctx, bus, t, opts.leverMs, opts.reelTimes);
+    else if (kind === 'win') winSound(ctx, bus, t, opts.gain || 3, opts.small);
+    else if (kind === 'lose') loseSound(ctx, bus, t);
+    else if (kind === 'flip') flipSound(ctx, bus, t);
+  }
+  function slotSound(kind, opts) {
+    if (!isSoundOn()) return;
+    try {
+      if (!_audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        _audioCtx = new AC();
+      }
+      const go = () => slotSoundRender(_audioCtx, kind, opts, _audioCtx.currentTime);
+      if (_audioCtx.state === 'suspended') _audioCtx.resume().then(go).catch(function(){});
+      else go();
+    } catch(e) {}
+  }
+
   // Komplette Klangfolge zur Orden-Animation: ein "Pling" pro fallendem Orden, dann die Fanfare,
   // genau dann, wenn der Titel erscheint. ctx/out sind optional (für die Hörprobe).
   function medalSound(milestone, drops, dropDelay, titleAt, ctx, out) {
@@ -154,5 +268,5 @@ const { medalSound, playMedalSound } = (function() {
     } catch(e) {}
   }
 
-  return { medalSound, playMedalSound };
+  return { medalSound, playMedalSound, slotSound, slotSoundRender };
 })();

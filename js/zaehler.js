@@ -185,16 +185,52 @@ function allHours() {
   return out;
 }
 
-function updateChart() {
+// Getränke pro Stunde, aufgeteilt nach Art (aus dem Verlauf der laufenden Sitzung).
+// Was sich im Verlauf nicht zuordnen lässt (ältere Daten), landet unter "Weitere".
+const CHART_KINDS = { bier: ['b02', 'b033', 'b05', 'bfree'], shots: ['shots'], misch: ['misch'] };
+function hourOf(ts) {
+  const d = new Date(ts);
+  return Math.floor((d - new Date(new Date().getFullYear(), 0, 1)) / 3600000);
+}
+function chartSeries() {
   const hours = allHours();
-  const labels    = hours.map(hourLabel);
-  const countData = hours.map(h => hourlyCount[h] || 0);
+  const per = {};
+  drinkLog.forEach(e => {
+    const kind = Object.keys(CHART_KINDS).find(k => CHART_KINDS[k].includes(e.key));
+    if (!kind) return;
+    const h = hourOf(e.ts);
+    per[h] = per[h] || { bier: 0, shots: 0, misch: 0 };
+    per[h][kind] += e.dir;
+  });
+  const s = { bier: [], shots: [], misch: [], rest: [] };
+  hours.forEach(h => {
+    const p = per[h] || { bier: 0, shots: 0, misch: 0 };
+    const b = Math.max(0, p.bier), sh = Math.max(0, p.shots), m = Math.max(0, p.misch);
+    s.bier.push(b); s.shots.push(sh); s.misch.push(m);
+    s.rest.push(Math.max(0, (hourlyCount[h] || 0) - b - sh - m));
+  });
+  return { hours, labels: hours.map(hourLabel), s };
+}
+
+function updateChart() {
+  const { hours, labels, s } = chartSeries();
+  const totals = hours.map(h => hourlyCount[h] || 0);
+  const sum = totals.reduce((a, b) => a + b, 0);
 
   if (chart) {
     chart.data.labels = labels;
-    chart.data.datasets[0].data = countData;
-    chart.update('none');
+    chart.data.datasets[0].data = s.bier;
+    chart.data.datasets[1].data = s.shots;
+    chart.data.datasets[2].data = s.misch;
+    chart.data.datasets[3].data = s.rest;
+    chart.update();
   }
+  document.getElementById('chart-empty').classList.toggle('show', sum === 0);
+  const stat = document.getElementById('chart-stat');
+  if (sum > 0) {
+    const max = Math.max(...totals), at = hours[totals.indexOf(max)];
+    stat.textContent = 'Spitze: ' + max + ' um ' + hourLabel(at).replace(':00', ' Uhr');
+  } else stat.textContent = '';
 
   const totalBierL  = (state.b02 * 0.2) + (state.b033 * 0.33) + (state.b05 * 0.5) + state.bfreeL;
   document.getElementById('total-bier').textContent  = totalBierL.toFixed(2).replace('.',',') + ' l';
@@ -351,6 +387,8 @@ function performReset() {
     chart.data.datasets.forEach(ds => ds.data = [0]);
     chart.update();
   }
+  document.getElementById('chart-empty').classList.add('show');
+  document.getElementById('chart-stat').textContent = '';
   milestonesShown.clear();
   updateMedalsDisplay();
   updateBeerLevel();
@@ -364,36 +402,91 @@ window.resetAll = function() {
 
 window.addEventListener('load', function() {
   const ctx = document.getElementById('barChart').getContext('2d');
+  // senkrechter Farbverlauf je Getränkeart
+  const grad = (top, bottom) => c => {
+    const area = c.chart.chartArea;
+    if (!area) return bottom;
+    const g = c.chart.ctx.createLinearGradient(0, area.bottom, 0, area.top);
+    g.addColorStop(0, bottom); g.addColorStop(1, top);
+    return g;
+  };
+  // nur das oberste Segment eines Balkens bekommt runde Ecken
+  const topRadius = c => {
+    const i = c.dataIndex, ds = c.chart.data.datasets;
+    for (let k = ds.length - 1; k >= 0; k--) {
+      if ((ds[k].data[i] || 0) > 0) return k === c.datasetIndex ? { topLeft: 6, topRight: 6 } : 0;
+    }
+    return 0;
+  };
+  // Summe über jedem Balken
+  const totalLabels = {
+    id: 'totalLabels',
+    afterDatasetsDraw(ch) {
+      const { ctx: g } = ch, n = ch.data.labels.length;
+      g.save(); g.font = '600 11px -apple-system, BlinkMacSystemFont, sans-serif';
+      g.fillStyle = '#EFC93D'; g.textAlign = 'center'; g.textBaseline = 'bottom';
+      for (let i = 0; i < n; i++) {
+        let sum = 0, topY = null, x = null;
+        ch.data.datasets.forEach((ds, k) => {
+          const v = ds.data[i] || 0; if (!v) return;
+          sum += v; const el = ch.getDatasetMeta(k).data[i];
+          if (el && !ch.getDatasetMeta(k).hidden) { topY = topY === null ? el.y : Math.min(topY, el.y); x = el.x; }
+        });
+        if (sum > 0 && topY !== null) g.fillText(sum, x, topY - 3);
+      }
+      g.restore();
+    }
+  };
+  const ds = (label, top, bottom) => ({
+    label, data: [0], backgroundColor: grad(top, bottom), borderRadius: topRadius, borderSkipped: false,
+    maxBarThickness: 34, categoryPercentage: 0.72, barPercentage: 0.9
+  });
   chart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: [hourLabel(currentHour())],
       datasets: [
-        { label: 'Getränke', data: [0], backgroundColor: '#EFC93D', borderRadius: 4, borderSkipped: false }
+        ds('Bier',    '#FFD54A', '#E0950A'),
+        ds('Shots',   '#FF9A6A', '#D4532A'),
+        ds('Misch',   '#7FE3D3', '#2E9C8C'),
+        ds('Weitere', '#C9D8B0', '#7E9562'),
       ]
     },
+    plugins: [totalLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 16 } },
+      animation: { duration: 450, easing: 'easeOutBack' },
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#27500A', titleColor: '#97C459',
-          bodyColor: '#C0DD97', borderColor: '#3B6D11', borderWidth: 0.5,
-          callbacks: { label: c => c.parsed.y + ' Getränk' + (c.parsed.y !== 1 ? 'e' : '') }
+          backgroundColor: 'rgba(15,34,4,0.95)', titleColor: '#EFC93D', titleFont: { weight: '700' },
+          bodyColor: '#C0DD97', borderColor: '#3B6D11', borderWidth: 1, padding: 10, cornerRadius: 8,
+          boxPadding: 4, usePointStyle: true,
+          filter: c => c.parsed.y > 0,
+          callbacks: {
+            title: items => items.length ? items[0].label.replace(':00', ' Uhr') : '',
+            label: c => ' ' + c.dataset.label + ': ' + c.parsed.y,
+            labelColor: c => ({ backgroundColor: ['#F2B01E', '#E8743B', '#4FBFAE', '#A9BC8C'][c.datasetIndex], borderColor: 'transparent', borderRadius: 3 }),
+            footer: items => { const t = items.reduce((a, i) => a + i.parsed.y, 0); return t ? 'Gesamt: ' + t + ' Getränk' + (t !== 1 ? 'e' : '') : ''; }
+          }
         }
       },
       scales: {
         x: {
-          ticks: { color: '#639922', font: { size: 11 }, maxRotation: 0 },
-          grid: { color: 'rgba(151,196,89,0.08)' },
-          border: { color: 'rgba(151,196,89,0.2)' }
+          stacked: true,
+          ticks: { color: '#7FAE45', font: { size: 11 }, maxRotation: 0, autoSkipPadding: 8,
+                   callback: function(v) { return this.getLabelForValue(v).replace(':00', ' h'); } },
+          grid: { display: false },
+          border: { color: 'rgba(151,196,89,0.25)' }
         },
         y: {
-          beginAtZero: true,
-          ticks: { color: '#639922', font: { size: 11 }, stepSize: 1, callback: v => Number.isInteger(v) ? v : '' },
-          grid: { color: 'rgba(151,196,89,0.08)' },
-          border: { color: 'rgba(151,196,89,0.2)' }
+          stacked: true, beginAtZero: true, suggestedMax: 4,
+          ticks: { color: '#5E8A2E', font: { size: 10 }, stepSize: 1, maxTicksLimit: 5, callback: v => Number.isInteger(v) ? v : '' },
+          grid: { color: 'rgba(151,196,89,0.09)', drawTicks: false },
+          border: { display: false, dash: [3, 4] }
         }
       }
     }
