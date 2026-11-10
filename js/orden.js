@@ -27,6 +27,45 @@ function _mix(hex, amt) {
   return '#' + [16, 8, 0].map(s => ch(s).toString(16).padStart(2, '0')).join('');
 }
 
+// Geschliffener Edelstein, symmetrisch, Mittelpunkt (50,88).
+// cut 'side': klassische Diamantform von der Seite (Krone + Spitze), 'top': Brillant von oben (Achteck).
+const GEM_CUT = 'side';
+function gemSVG(c, cut) {
+  cut = cut || GEM_CUT;
+  const P = pts => pts.map(p => p.map(v => v.toFixed(1)).join(',')).join(' ');
+  const L = a => _mix(c, a);
+  let f = '';
+  if (cut === 'top') {
+    const cx = 50, cy = 88, R = 21, r = 10.5, o = Math.PI / 8;
+    const pt = (rad, i) => [cx + Math.cos(o + i * Math.PI / 4) * rad, cy + Math.sin(o + i * Math.PI / 4) * rad];
+    const shades = [0.55, 0.15, 0.35, -0.2, 0.05, -0.4, 0.25, -0.1];
+    for (let i = 0; i < 8; i++) {
+      const O1 = pt(R, i), O2 = pt(R, i + 1), I1 = pt(r, i), I2 = pt(r, i + 1);
+      const mid = [(O1[0] + O2[0]) / 2, (O1[1] + O2[1]) / 2];
+      f += `<polygon points="${P([I1, O1, mid])}" fill="${L(shades[i])}"/>`;
+      f += `<polygon points="${P([I1, mid, I2])}" fill="${L(shades[(i + 3) % 8] * 0.8)}"/>`;
+      f += `<polygon points="${P([I2, mid, O2])}" fill="${L(shades[(i + 5) % 8])}"/>`;
+    }
+    const table = []; for (let i = 0; i < 8; i++) table.push(pt(r, i));
+    const outer = []; for (let i = 0; i < 8; i++) outer.push(pt(R, i));
+    f += `<polygon points="${P(table)}" fill="${L(0.35)}"/>`;
+    f += `<polygon points="${P(outer)}" fill="none" stroke="${L(-0.55)}" stroke-width="1.1" stroke-linejoin="round"/>`;
+    f += `<polygon points="${P([[44,80],[50,79],[47,84]])}" fill="#fff" opacity="0.85"/>`;
+  } else {
+    // Seitenansicht: Rundiste (Gürtel) bei y=82, Tafel oben, Spitze unten – spiegelsymmetrisch
+    const y0 = 70, yg = 81, yp = 107, xg = 23, xt = 12;      // Tafelhöhe, Gürtel, Spitze, halbe Breiten
+    const G = [-xg, -xg / 2, 0, xg / 2, xg].map(dx => [50 + dx, yg]);
+    const T0 = [50 - xt, y0], T1 = [50 + xt, y0], Pk = [50, yp];
+    const crown = [[G[0], T0, G[1], 0.25], [T0, G[2], G[1], 0.5], [T0, T1, G[2], 0.65], [T1, G[3], G[2], 0.4], [T1, G[4], G[3], 0.1]];
+    const pav   = [[G[0], G[1], Pk, -0.15], [G[1], G[2], Pk, 0.2], [G[2], G[3], Pk, -0.05], [G[3], G[4], Pk, -0.4]];
+    [...crown, ...pav].forEach(([a, b, d, sh]) => { f += `<polygon points="${P([a, b, d])}" fill="${L(sh)}"/>`; });
+    f += `<polygon points="${P([G[0], T0, T1, G[4], Pk])}" fill="none" stroke="${L(-0.55)}" stroke-width="1.1" stroke-linejoin="round"/>`;
+    f += `<polyline points="${P(G)}" fill="none" stroke="${L(-0.35)}" stroke-width="0.6"/>`;
+    f += `<polygon points="${P([[44,72],[50,71],[46,77]])}" fill="#fff" opacity="0.85"/>`;
+  }
+  return `<g>${f}</g>`;
+}
+
 let _medalUid = 0;
 // Orden als SVG: Band, gezackter Metallrand mit Verlauf, Glanzlicht und Stern bzw. Edelstein.
 // Aufruf wie bisher: buildMedalSVG(size, tier) – size = Breite in px.
@@ -47,17 +86,7 @@ function buildMedalSVG(size, tier, opts) {
     teeth += (50 + Math.sin(a) * r).toFixed(1) + ',' + (88 - Math.cos(a) * r).toFixed(1) + ' ';
   }
   const star = '50,64 56.5,79 72,80.5 60,90.8 63.8,106 50,97.6 36.2,106 40,90.8 28,80.5 43.5,79';
-  const emblem = gemTier ? `
-      <g transform="translate(50 86) scale(1.3) translate(-50 -86)">
-        <polygon points="50,66 68,80 62,104 38,104 32,80" fill="${gc}" stroke="${_mix(gc,-0.5)}" stroke-width="1.2" stroke-linejoin="round"/>
-        <polygon points="50,66 59,80 41,80" fill="${_mix(gc,0.6)}"/>
-        <polygon points="32,80 41,80 38,104" fill="${_mix(gc,-0.25)}"/>
-        <polygon points="68,80 59,80 62,104" fill="${_mix(gc,-0.4)}"/>
-        <polygon points="41,80 59,80 50,104" fill="${_mix(gc,0.25)}"/>
-        <polygon points="41,80 50,104 38,104" fill="${_mix(gc,0.05)}"/>
-        <polygon points="59,80 62,104 50,104" fill="${_mix(gc,-0.12)}"/>
-        <polygon points="45,70 50,66 52,72" fill="#fff" opacity="0.85"/>
-      </g>` : `
+  const emblem = gemTier ? gemSVG(gc, opts && opts.cut) : `
       <polygon points="${star}" fill="${_mix(tier.fill,-0.35)}" transform="translate(0,1.6)" opacity="0.6"/>
       <polygon points="${star}" fill="url(#${id}e)" stroke="${_mix(tier.fill,-0.4)}" stroke-width="0.8" stroke-linejoin="round"/>`;
   return `<svg class="medal-svg" viewBox="0 0 100 132" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${h}">
