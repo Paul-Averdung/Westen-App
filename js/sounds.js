@@ -1,94 +1,158 @@
-// Orden-Sounds: werden direkt im Browser erzeugt (Web Audio), keine Audiodateien nötig.
-// Jede Stufe hat ihre eigene Fanfare – je höher der Orden, desto größer der Klang.
+// Orden-Sounds im Spiele-Stil ("Level up" / Achievement): werden direkt im Browser
+// erzeugt (Web Audio), keine Audiodateien nötig. Je höher der Orden, desto größer der Klang.
 // Hinweis: Alle Dateien in js/ teilen sich einen Gültigkeitsbereich.
 
-const NOTE = n => 440 * Math.pow(2, (n - 69) / 12);   // MIDI-Nummer -> Hz (60 = C4)
+// Alles in einer Kapsel, damit Hilfsnamen (z.B. pad) nicht mit anderen Dateien kollidieren.
+// Nach außen sichtbar sind nur medalSound() und playMedalSound().
+const { medalSound, playMedalSound } = (function() {
+  const NOTE = n => 440 * Math.pow(2, (n - 69) / 12);   // MIDI-Nummer -> Hz (60 = C4)
 
-// Ein einzelner Ton mit weicher Hüllkurve
-function tone(ctx, out, { freq, t, dur = 0.4, type = 'triangle', gain = 0.25, attack = 0.01, glide = 0 }) {
-  const o = ctx.createOscillator(), g = ctx.createGain();
-  o.type = type;
-  o.frequency.setValueAtTime(freq, t);
-  if (glide) o.frequency.exponentialRampToValueAtTime(freq * glide, t + dur);
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(gain, t + attack);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g); g.connect(out);
-  o.start(t); o.stop(t + dur + 0.05);
-}
-
-// Metallisches "Klirr" – für jeden Orden, der ins Bild fällt
-function clink(ctx, out, t, pitch = 1) {
-  [1, 2.76, 5.4].forEach((r, i) =>
-    tone(ctx, out, { freq: 1180 * pitch * r, t, dur: 0.35 - i * 0.08, type: 'sine', gain: 0.10 / (i + 1), attack: 0.002 }));
-}
-
-// Glitzern: schnelle, hohe Töne
-function sparkle(ctx, out, t, base, count = 6, step = 0.05) {
-  for (let i = 0; i < count; i++)
-    tone(ctx, out, { freq: NOTE(base + [0, 4, 7, 12, 16, 19, 24][i % 7]), t: t + i * step, dur: 0.25, type: 'sine', gain: 0.07, attack: 0.003 });
-}
-
-// Akkord, der stehen bleibt (Blech-artig über gefilterten Sägezahn)
-function chord(ctx, out, t, notes, dur = 1.2, gain = 0.08, bright = 2200) {
-  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = bright; f.connect(out);
-  notes.forEach(n => tone(ctx, f, { freq: NOTE(n), t, dur, type: 'sawtooth', gain, attack: 0.04 }));
-}
-
-// Tiefer Schlag (Pauke)
-function boom(ctx, out, t, gain = 0.5) {
-  tone(ctx, out, { freq: 110, t, dur: 0.6, type: 'sine', gain, attack: 0.003, glide: 0.45 });
-}
-
-// Melodie aus [Note, Startzeit relativ, Dauer]
-function melody(ctx, out, t, notes, type = 'triangle', gain = 0.22) {
-  notes.forEach(([n, at, d]) => tone(ctx, out, { freq: NOTE(n), t: t + at, dur: d, type, gain }));
-}
-
-// Fanfare je Orden-Stufe
-const MEDAL_SOUNDS = {
-  5:  (c, o, t) => melody(c, o, t, [[67, 0, 0.25], [72, 0.16, 0.6]]),                                   // Bronze
-  10: (c, o, t) => melody(c, o, t, [[72, 0, 0.2], [76, 0.13, 0.2], [79, 0.26, 0.7]]),                   // Silber
-  15: (c, o, t) => { melody(c, o, t, [[72, 0, 0.18], [76, 0.11, 0.18], [79, 0.22, 0.18], [84, 0.33, 0.8]]);
-                     sparkle(c, o, t + 0.4, 84, 5); },                                                   // Gold
-  20: (c, o, t) => { melody(c, o, t, [[67, 0, 0.18], [72, 0.12, 0.18], [76, 0.24, 0.18], [79, 0.36, 0.9]]);
-                     chord(c, o, t + 0.36, [60, 67, 72, 76], 1.1); },                                    // Platin
-  25: (c, o, t) => { sparkle(c, o, t, 84, 7, 0.06); melody(c, o, t + 0.42, [[96, 0, 0.9]], 'sine', 0.12); }, // Diamant
-  30: (c, o, t) => { melody(c, o, t, [[69, 0, 0.18], [72, 0.12, 0.18], [76, 0.24, 0.18], [81, 0.36, 0.9]]);
-                     chord(c, o, t + 0.36, [57, 64, 69, 72], 1.1, 0.07); },                              // Rubin (moll)
-  35: (c, o, t) => { melody(c, o, t, [[74, 0, 0.16], [78, 0.1, 0.16], [81, 0.2, 0.16], [86, 0.3, 0.9]], 'sine', 0.2);
-                     sparkle(c, o, t + 0.35, 86, 4); },                                                  // Saphir
-  40: (c, o, t) => { melody(c, o, t, [[67, 0, 0.16], [71, 0.1, 0.16], [74, 0.2, 0.16], [79, 0.3, 0.16], [83, 0.4, 0.9]]);
-                     chord(c, o, t + 0.4, [55, 62, 67, 71], 1.2); },                                     // Smaragd
-  45: (c, o, t) => { melody(c, o, t, [[70, 0, 0.16], [74, 0.1, 0.16], [77, 0.2, 0.16], [82, 0.3, 0.16], [86, 0.4, 1.0]]);
-                     chord(c, o, t + 0.4, [58, 65, 70, 74], 1.3); sparkle(c, o, t + 0.5, 86, 5); },     // Amethyst
-  50: (c, o, t) => { boom(c, o, t); boom(c, o, t + 0.22, 0.4);
-                     chord(c, o, t + 0.45, [48, 55, 60, 64, 67, 72], 1.8, 0.07, 3000);
-                     melody(c, o, t + 0.45, [[72, 0, 0.2], [76, 0.14, 0.2], [79, 0.28, 0.2], [84, 0.42, 1.3]], 'triangle', 0.2);
-                     sparkle(c, o, t + 0.9, 84, 7, 0.07); },                                             // Schwarzer Diamant
-};
-
-// Komplette Klangfolge zur Orden-Animation: ein Klirren pro fallendem Orden, dann die Fanfare.
-// ctx/out sind optional (für die Hörprobe), sonst wird der App-AudioContext genutzt.
-function medalSound(milestone, drops, dropDelay, titleAt, ctx, out) {
-  const make = MEDAL_SOUNDS[milestone];
-  if (!make) return;
-  const t0 = ctx.currentTime + 0.02;
-  const master = ctx.createGain(); master.gain.value = 1.6; master.connect(out || ctx.destination);
-  for (let i = 0; i < drops; i++) clink(ctx, master, t0 + (220 + i * dropDelay) / 1000, 1 + i * 0.06);
-  make(ctx, master, t0 + titleAt / 1000);
-}
-
-function playMedalSound(milestone, drops, dropDelay, titleAt) {
-  if (!isSoundOn()) return;
-  try {
-    if (!_audioCtx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      _audioCtx = new AC();
+  // ── Grundbausteine ──────────────────────────────────────────────────────────
+  function _noise(ctx, sec) {
+    const b = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * sec), ctx.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return b;
+  }
+  // Raumhall, damit es "groß" klingt (einmal pro AudioContext erzeugt)
+  const _reverbs = new WeakMap();
+  function _reverbIn(ctx, out) {
+    if (!_reverbs.has(ctx)) {
+      const sec = 1.6, ir = ctx.createBuffer(2, Math.ceil(ctx.sampleRate * sec), ctx.sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const d = ir.getChannelData(ch);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+      }
+      const conv = ctx.createConvolver(); conv.buffer = ir;
+      const wet = ctx.createGain(); wet.gain.value = 0.32;
+      conv.connect(wet); wet.connect(out);
+      _reverbs.set(ctx, conv);
     }
-    const go = () => medalSound(milestone, drops, dropDelay, titleAt, _audioCtx);
-    if (_audioCtx.state === 'suspended') _audioCtx.resume().then(go).catch(function(){});
-    else go();
-  } catch(e) {}
-}
+    return _reverbs.get(ctx);
+  }
+  // Ein Ton: Oszillator + Hüllkurve, optional im Stereo-Raum verteilt
+  function voice(ctx, out, { freq, t, dur = 0.3, type = 'square', gain = 0.1, attack = 0.005, pan = 0, glide = 0, cutoff = 0 }) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (glide) o.frequency.exponentialRampToValueAtTime(freq * glide, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    let node = o;
+    if (cutoff) { const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; o.connect(f); node = f; }
+    node.connect(g);
+    if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); p.connect(out); }
+    else g.connect(out);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+
+  // ── Effekte ─────────────────────────────────────────────────────────────────
+  // Münz-"Pling" pro fallendem Orden (zwei schnelle Töne, wird pro Orden höher)
+  function coin(ctx, out, t, step) {
+    const base = 83 + Math.min(step, 9);
+    voice(ctx, out, { freq: NOTE(base),     t,        dur: 0.08, type: 'square', gain: 0.05, cutoff: 5000, pan: -0.2 });
+    voice(ctx, out, { freq: NOTE(base + 5), t: t + 0.07, dur: 0.32, type: 'square', gain: 0.05, cutoff: 5000, pan: 0.2 });
+  }
+  // Aufsteigendes Arpeggio, doppelt (Rechteck + Dreieck eine Oktave tiefer)
+  function arp(ctx, out, t, notes, step = 0.075, last = 0.6, gain = 0.07) {
+    notes.forEach((n, i) => {
+      const isLast = i === notes.length - 1, d = isLast ? last : step * 1.6, pan = (i % 2 ? 0.25 : -0.25);
+      voice(ctx, out, { freq: NOTE(n),      t: t + i * step, dur: d, type: 'square',   gain,         cutoff: 4200, pan });
+      voice(ctx, out, { freq: NOTE(n - 12), t: t + i * step, dur: d, type: 'triangle', gain: gain * 1.6, pan: -pan });
+    });
+    return t + (notes.length - 1) * step;   // Zeitpunkt des letzten Tons
+  }
+  // Glitzern: viele kurze hohe Töne, verteilt im Stereo-Raum
+  function sparkle(ctx, out, t, root, count = 8, step = 0.045) {
+    const iv = [0, 7, 12, 16, 19, 24, 28, 31];
+    for (let i = 0; i < count; i++)
+      voice(ctx, out, { freq: NOTE(root + iv[i % iv.length]), t: t + i * step, dur: 0.22, type: 'sine', gain: 0.045, attack: 0.002, pan: (Math.random() * 1.6 - 0.8) });
+  }
+  // Flächiger Akkord (weiche, leicht verstimmte Sägezähne)
+  function pad(ctx, out, t, notes, dur = 1.4, gain = 0.03) {
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass';
+    f.frequency.setValueAtTime(600, t); f.frequency.exponentialRampToValueAtTime(3200, t + 0.25); f.frequency.exponentialRampToValueAtTime(1400, t + dur);
+    f.connect(out);
+    notes.forEach((n, i) => [-8, 8].forEach(dt => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sawtooth'; o.frequency.value = NOTE(n); o.detune.value = dt;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(f); o.start(t); o.stop(t + dur + 0.05);
+    }));
+  }
+  // "Woosh" nach oben, kündigt große Orden an
+  function riser(ctx, out, t, dur = 0.6, gain = 0.12) {
+    const n = ctx.createBufferSource(); n.buffer = _noise(ctx, dur + 0.05);
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 2.5;
+    f.frequency.setValueAtTime(400, t); f.frequency.exponentialRampToValueAtTime(7000, t + dur);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + dur * 0.9); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.05);
+    n.connect(f); f.connect(g); g.connect(out); n.start(t); n.stop(t + dur + 0.05);
+  }
+  // Tiefer Einschlag (Sub-Bass), gibt großen Orden Wucht
+  function impact(ctx, out, t, gain = 0.45) {
+    voice(ctx, out, { freq: 90, t, dur: 0.7, type: 'sine', gain, attack: 0.003, glide: 0.4 });
+    const n = ctx.createBufferSource(); n.buffer = _noise(ctx, 0.4);
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(3000, t); f.frequency.exponentialRampToValueAtTime(200, t + 0.3);
+    const g = ctx.createGain(); g.gain.setValueAtTime(gain * 0.5, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+    n.connect(f); f.connect(g); g.connect(out); n.start(t); n.stop(t + 0.4);
+  }
+
+  // ── Fanfare je Orden-Stufe ──────────────────────────────────────────────────
+  // Steigerung: mehr Töne, höhere Tonart, mehr Ebenen (Glitzern, Fläche, Woosh, Einschlag).
+  const MAJ = r => [r, r + 4, r + 7, r + 12];
+  const MEDAL_SOUNDS = {
+    5:  (c, o, t) => { arp(c, o, t, [72, 76, 79], 0.08, 0.45); },                                              // Bronze
+    10: (c, o, t) => { arp(c, o, t, MAJ(72), 0.075, 0.55); },                                                  // Silber
+    15: (c, o, t) => { const e = arp(c, o, t, [...MAJ(72), 88], 0.07, 0.7); sparkle(c, o, e + 0.05, 84, 6); }, // Gold
+    20: (c, o, t) => { const e = arp(c, o, t, [...MAJ(74), 90], 0.07, 0.8); pad(c, o, e, [62, 66, 69, 74]); sparkle(c, o, e + 0.05, 86, 6); }, // Platin
+    25: (c, o, t) => { riser(c, o, t - 0.45, 0.45, 0.08);
+                       const e = arp(c, o, t, [...MAJ(76), 88, 92], 0.065, 0.9); pad(c, o, e, [64, 68, 71, 76]); sparkle(c, o, e, 88, 8, 0.04); }, // Diamant
+    30: (c, o, t) => { riser(c, o, t - 0.5, 0.5, 0.1); impact(c, o, t, 0.25);
+                       const e = arp(c, o, t, [...MAJ(77), 89, 93], 0.065, 0.9); pad(c, o, e, [65, 69, 72, 77], 1.5); sparkle(c, o, e, 89, 8, 0.04); }, // Rubin
+    35: (c, o, t) => { riser(c, o, t - 0.5, 0.5, 0.1); impact(c, o, t, 0.3);
+                       const e = arp(c, o, t, [...MAJ(79), 91, 95], 0.06, 1.0); pad(c, o, e, [67, 71, 74, 79], 1.6); sparkle(c, o, e, 91, 8, 0.04); }, // Saphir
+    40: (c, o, t) => { riser(c, o, t - 0.55, 0.55, 0.11); impact(c, o, t, 0.35);
+                       const e = arp(c, o, t, [...MAJ(72), ...MAJ(84).slice(1)], 0.06, 1.1); pad(c, o, e, [60, 64, 67, 72, 76], 1.7); sparkle(c, o, e, 84, 10, 0.04); }, // Smaragd
+    45: (c, o, t) => { riser(c, o, t - 0.6, 0.6, 0.12); impact(c, o, t, 0.4);
+                       const e = arp(c, o, t, [...MAJ(74), ...MAJ(86).slice(1)], 0.055, 1.2); pad(c, o, e, [62, 66, 69, 74, 78], 1.8); sparkle(c, o, e, 86, 12, 0.035); }, // Amethyst
+    50: (c, o, t) => { riser(c, o, t - 0.8, 0.8, 0.14); impact(c, o, t, 0.5);
+                       const e1 = arp(c, o, t, MAJ(72), 0.06, 0.3);
+                       impact(c, o, e1 + 0.32, 0.4);
+                       const e2 = arp(c, o, e1 + 0.32, [...MAJ(76), 88, 91, 96], 0.055, 1.5, 0.08);
+                       pad(c, o, e2, [60, 64, 67, 72, 76, 79], 2.2, 0.032); sparkle(c, o, e2, 84, 16, 0.035); }, // Schwarzer Diamant
+  };
+
+  // Komplette Klangfolge zur Orden-Animation: ein "Pling" pro fallendem Orden, dann die Fanfare,
+  // genau dann, wenn der Titel erscheint. ctx/out sind optional (für die Hörprobe).
+  function medalSound(milestone, drops, dropDelay, titleAt, ctx, out) {
+    const make = MEDAL_SOUNDS[milestone];
+    if (!make) return;
+    const dest = out || ctx.destination;
+    const t0 = ctx.currentTime + 0.02;
+    // Kompressor hält die großen Orden unter Kontrolle, die kleinen dürfen lauter sein
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.knee.value = 8; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.25;
+    comp.connect(dest);
+    const master = ctx.createGain(); master.gain.value = 2.4; master.connect(comp);
+    const bus = ctx.createGain(); bus.connect(master); bus.connect(_reverbIn(ctx, master));
+    for (let i = 0; i < drops; i++) coin(ctx, bus, t0 + (220 + i * dropDelay) / 1000, i);
+    make(ctx, bus, t0 + titleAt / 1000);
+  }
+
+  function playMedalSound(milestone, drops, dropDelay, titleAt) {
+    if (!isSoundOn()) return;
+    try {
+      if (!_audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        _audioCtx = new AC();
+      }
+      const go = () => medalSound(milestone, drops, dropDelay, titleAt, _audioCtx);
+      if (_audioCtx.state === 'suspended') _audioCtx.resume().then(go).catch(function(){});
+      else go();
+    } catch(e) {}
+  }
+
+  return { medalSound, playMedalSound };
+})();
