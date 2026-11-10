@@ -127,7 +127,7 @@
       <div class="grand-label">Getränke insgesamt</div>
       <div class="grand-val" id="grand-total">0</div>
     </div>
-    <div id="medals-display"></div>
+    <div id="medals-display" role="button" tabindex="0" aria-label="Orden-Übersicht öffnen" onclick="openMedalGallery()" onkeydown="if(event.key==='Enter') openMedalGallery()"></div>
     <button class="reset-btn" id="reset-btn"><span class="reset-btn-fill" id="reset-fill"></span><span class="reset-btn-label">↺ Alles zurücksetzen</span></button>
   </div>
 
@@ -391,6 +391,17 @@
 </div>
 
 <!-- ── Verlauf Overlay ──────────────────────────────────────────────── -->
+<!-- ── Orden-Übersicht ─────────────────────────────────────────────── -->
+<div id="medal-gallery" onclick="if(event.target===this) closeMedalGallery()">
+  <div class="mg-panel">
+    <button class="mg-close" onclick="closeMedalGallery()" aria-label="Schließen">✕</button>
+    <div class="mg-title">🏅 Deine Orden</div>
+    <div class="mg-progress" id="mg-progress"></div>
+    <div class="mg-bar"><div class="mg-bar-fill" id="mg-bar-fill"></div></div>
+    <div class="mg-grid" id="mg-grid"></div>
+  </div>
+</div>
+
 <div id="verlauf-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,15,2,0.97); z-index:11000; font-family:-apple-system,BlinkMacSystemFont,sans-serif; overflow-y:auto;">
   <button onclick="closeVerlauf()" style="position:absolute;top:18px;right:18px;background:none;border:none;color:#97C459;font-size:22px;cursor:pointer;z-index:2;padding:4px 8px;">✕</button>
 

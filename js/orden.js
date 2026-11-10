@@ -133,6 +133,34 @@ function updateMedalsDisplay() {
   });
 }
 
+// ── Orden-Übersicht (Antippen der Leiste unter dem Diagramm) ────────────────
+window.openMedalGallery = function() {
+  const score = calcScore();
+  const got = MEDAL_STEPS.filter(m => milestonesShown.has(m)).length;
+  const next = MEDAL_STEPS.find(m => !milestonesShown.has(m));
+  const fmt = n => String(Math.round(n * 100) / 100).replace('.', ',');
+  document.getElementById('mg-progress').textContent =
+    got + ' von ' + MEDAL_STEPS.length + ' Orden · ' + fmt(score) + ' Punkte' +
+    (next ? ' · noch ' + fmt(Math.max(0, next - score)) + ' bis ' + MEDAL_TIERS[next].name : ' · alle gesammelt! 🏆');
+  const prev = next ? (MEDAL_STEPS[MEDAL_STEPS.indexOf(next) - 1] || 0) : 0;
+  const pct = next ? Math.min(100, Math.max(0, (score - prev) / (next - prev) * 100)) : 100;
+  const size = Math.min(84, Math.floor((Math.min(window.innerWidth, 420) - 70) / 3 * 0.72));
+  document.getElementById('mg-grid').innerHTML = MEDAL_STEPS.map(m => {
+    const t = MEDAL_TIERS[m], has = milestonesShown.has(m);
+    return `<div class="mg-item${has ? '' : ' locked'}${m === next ? ' next' : ''}">
+      ${buildMedalSVG(size, t)}${has ? '' : '<span class="mg-lock">🔒</span>'}
+      <div class="mg-name">${t.name}</div><div class="mg-pts">ab ${m} Punkten</div></div>`;
+  }).join('');
+  const g = document.getElementById('medal-gallery');
+  g.classList.add('open');
+  const bar = document.getElementById('mg-bar-fill');
+  bar.style.width = '0';
+  requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct + '%'; }));
+};
+window.closeMedalGallery = function() {
+  document.getElementById('medal-gallery').classList.remove('open');
+};
+
 function checkMilestone() {
   const score = calcScore();
   for (const m of MEDAL_STEPS) {

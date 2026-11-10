@@ -362,7 +362,42 @@ body { background: #0f2204; font-family: -apple-system, BlinkMacSystemFont, sans
 #medals-display {
   display: flex; flex-direction: row; justify-content: center;
   gap: 5px; flex-wrap: wrap; margin-top: 8px;
+  cursor: pointer; padding: 4px; border-radius: 8px; -webkit-tap-highlight-color: transparent;
 }
+#medals-display:active { background: rgba(151,196,89,0.12); }
+/* ── Orden-Übersicht ─────────────────────────────────────────────────── */
+#medal-gallery {
+  display: none; position: fixed; inset: 0; z-index: 11000;
+  background: rgba(4,15,2,0.92); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+  align-items: center; justify-content: center; padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+#medal-gallery.open { display: flex; animation: mgIn 0.25s ease; }
+@keyframes mgIn { from { opacity: 0; } to { opacity: 1; } }
+.mg-panel {
+  position: relative; width: 100%; max-width: 420px; max-height: 100%; overflow-y: auto;
+  background: #173404; border: 0.5px solid #3B6D11; border-radius: 16px; padding: 18px 14px 16px;
+  animation: mgPanel 0.35s cubic-bezier(.2,1.3,.4,1);
+}
+@keyframes mgPanel { from { transform: scale(0.9); opacity: 0; } to { transform: none; opacity: 1; } }
+.mg-close { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #97C459; font-size: 20px; cursor: pointer; padding: 4px 8px; }
+.mg-title { text-align: center; color: #EFC93D; font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+.mg-progress { text-align: center; color: #C0DD97; font-size: 13px; margin-bottom: 8px; }
+.mg-bar { height: 6px; border-radius: 3px; background: #0f2204; margin: 0 8px 14px; overflow: hidden; }
+.mg-bar-fill { height: 100%; width: 0; border-radius: 3px; background: linear-gradient(90deg, #97C459, #EFC93D); transition: width 0.6s ease; }
+.mg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 6px; }
+.mg-item { text-align: center; position: relative; }
+.mg-item .medal-svg { display: block; margin: 0 auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.45)); }
+.mg-item.locked .medal-svg { filter: grayscale(1) brightness(0.5) contrast(0.9); opacity: 0.55; }
+.mg-item.next .medal-svg { opacity: 0.75; }
+.mg-name { color: #C0DD97; font-size: 12px; font-weight: 600; margin-top: 4px; line-height: 1.2; }
+.mg-item.locked .mg-name { color: #5f7f3a; }
+.mg-pts { color: #97C459; font-size: 11px; opacity: 0.8; }
+.mg-lock {
+  position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%);
+  font-size: 18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8)); pointer-events: none;
+}
+.mg-item:last-child { grid-column: 2; }  /* 10. Orden mittig in die letzte Reihe */
 .medal-badge {
   opacity: 0.2;
   filter: grayscale(1) brightness(0.65);
