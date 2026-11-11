@@ -58,6 +58,12 @@
     const mo = new MutationObserver(abgleich);
     Object.keys(BEREICHE).forEach(k => mo.observe($(BEREICHE[k].el), { attributes: true, attributeFilter: ['class', 'style'] }));
     abgleich();
+    // Kopfzeilen bekommen ihren dunklen Hintergrund erst, wenn darunter gescrollt wird –
+    // oben läuft der Hintergrund so ohne Kante bis an den Bildschirmrand durch.
+    ['game-overlay', 'shop-overlay', 'sammlung-overlay'].forEach(id => {
+      const el = $(id); if (!el) return;
+      el.addEventListener('scroll', () => el.classList.toggle('gescrollt', el.scrollTop > 6), { passive: true });
+    });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

@@ -114,3 +114,12 @@ body { padding-top: max(12px, var(--sat)); }
 #game-root > .gm-btn:last-child:disabled { opacity: 1; background: #3b3a1c; color: #8f8a5c; box-shadow: 0 4px 0 #1f1e0c, 0 -10px 22px 8px rgba(6,18,2,0.85); }
 .gm-back { white-space: nowrap; }
 @media (max-width: 350px) { .gm-title { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .gm-head .sh-coins { font-size: 14px; padding: 4px 9px; } }
+
+/* Kopfzeilen ohne Kante: durchsichtig, solange nichts darunter gescrollt ist */
+.gm-head, #shop-overlay .sh-head, .sa-head { background: none; }
+.gm-head::before, #shop-overlay .sh-head::before, .sa-head::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -50vw; right: -50vw; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 0.2s ease;
+  background: linear-gradient(rgba(9,24,4,0.93) 80%, rgba(9,24,4,0));
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.gescrollt .gm-head::before, #shop-overlay.gescrollt .sh-head::before, .gescrollt .sa-head::before { opacity: 1; }
