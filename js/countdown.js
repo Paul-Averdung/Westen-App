@@ -58,8 +58,10 @@ function updateCountdown() {
   const entryYear = parseInt(localStorage.getItem('hopfenkonto_entry_year') || '');
   const memberEl  = document.getElementById('member-years-text');
   if (memberEl) {
-    if (!isNaN(entryYear) && entryYear > 1900 && entryYear <= y) {
-      memberEl.textContent = ' · ' + (y - entryYear) + ' Jahre Mitglied';
+    // Gerechnet wird mit dem laufenden Kalenderjahr (wie im Profil) – nicht mit dem Jahr des nächsten Schützenfests
+    const dabei = today.getFullYear() - entryYear;
+    if (!isNaN(entryYear) && entryYear > 1900 && dabei > 0) {
+      memberEl.textContent = ' · ' + dabei + (dabei === 1 ? ' Jahr' : ' Jahre') + ' Mitglied';
     } else {
       memberEl.textContent = '';
     }
