@@ -70,7 +70,11 @@
 .nw-item.t-episch { border-color: rgba(195,139,255,0.6); } .nw-item.t-episch .nw-item-tier { color: #c38bff; }
 .nw-item.t-legendaer { border-color: rgba(255,180,60,0.75); } .nw-item.t-legendaer .nw-item-tier { color: #ffb43c; }
 
-/* Kachel 5: Liste */
+/* Kachel Sammlung: Beispielstücke */
+.nw-sammlung { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 6px; width: 100%; align-items: end; justify-items: center; }
+.nw-sammlung span { display: flex; align-items: flex-end; justify-content: center; }
+
+/* Kachel Coins: Liste */
 .nw-list { display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; }
 .nw-row { display: flex; align-items: center; gap: 12px; background: #102504; border: 1px solid #2a4a12; border-radius: 14px; padding: 11px 12px; }
 .nw-row > span { flex: none; width: 40px; height: 40px; border-radius: 12px; background: #173404; display: flex; align-items: center; justify-content: center; font-size: 21px; }
@@ -95,6 +99,7 @@
   .nw-item .sh-thumb, .nw-item .cos-thumb { height: 50px; }
   .nw-item .sh-thumb { padding: 6px 8px 0; gap: 4px; } .nw-item .sh-mini-head { height: 8px; } .nw-item .sh-mini-card { height: 16px; } .nw-item .sh-mini-card i { width: 9px; height: 9px; }
   .nw-item-name { margin-top: 4px; font-size: 12px; } .nw-item-tier { font-size: 10px; }
+  .nw-sammlung { gap: 6px; } .nw-sammlung svg { transform: scale(0.72); margin: -10px 0; }
   .nw-game { padding: 7px 3px 7px; } .nw-game-icon { height: 34px; font-size: 26px; line-height: 34px; } .nw-game-icon svg { width: 34px; height: 34px; }
   .nw-list { gap: 7px; } .nw-row { padding: 7px 10px; } .nw-row > span { width: 34px; height: 34px; font-size: 18px; }
 }

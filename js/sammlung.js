@@ -133,7 +133,7 @@
       motiv: () => MOTIV.abende(G) },
     presse: { name: 'Pressewart', feld: '#0f5e73', text: 'Für alle, die Pressewart sind oder waren.',
       motiv: () => `<path d="M-12-3h6L6-11v22L-6 3h-6z" fill="${G}" stroke="${GD}" stroke-width="1" stroke-linejoin="round"/><path d="M-9 3v8h4V4" fill="${G}" stroke="${GD}" stroke-width="1"/><path d="M9-5a6 6 0 0 1 0 10M12-9a11 11 0 0 1 0 18" fill="none" stroke="${G}" stroke-width="1.900" stroke-linecap="round"/>` },
-    ehrung: { name: 'Ehrung', feld: '#2b2b2b', text: 'Eine persönliche Auszeichnung des Vereins.',
+    ehrung: { name: 'Ehrung', feld: '#2b2b2b', text: 'Eine persönliche Auszeichnung.',
       motiv: () => `<circle r="13.500" fill="none" stroke="${G}" stroke-width="1.800"/><circle r="10.500" fill="none" stroke="${G}" stroke-opacity="0.5" stroke-width="0.900"/>` + stern(0, 0.500, 8.500, G, GD) },
   };
   function wappenSVG(amt, groesse) {
@@ -244,7 +244,7 @@
     }
     const verl = lesen(K_VERL, []).map((v, i) => { const st = Math.max(1, Math.min(5, parseInt(v.s) || 3));
       return { id: 'v' + i, name: v.n || 'Trophäe', hat: true, n: 1, einmalig: true, verliehen: true, first: v.d, stufe: st,
-        text: v.x || 'Eine persönliche Trophäe, verliehen vom Verein.', svg: g => trophaeSVG({ art: v.a || 'stern', stufe: st }, g, false) }; });
+        text: v.x || 'Eine persönliche Trophäe.', svg: g => trophaeSVG({ art: v.a || 'stern', stufe: st }, g, false) }; });
     if (verl.length) gruppen.push({ titel: 'Verliehen', teile: verl });
     gruppen.push({ titel: 'Schützenfest', teile: fest });
 
@@ -327,7 +327,7 @@
       <span class="sa-rek-bild">${t.svg(46)}</span><span class="sa-rek-text"><i>${t.name}</i><b>${esc(t.wert)}</b><u>${esc(t.unter)}</u></span></button>`).join('')}</div></div>`;
     h += `<div class="sa-vitrine"><h3>Wappen</h3>` + (s.wappen.length
       ? `<div class="sa-raster">${s.wappen.map(t => kachel(t, g)).join('')}</div>`
-      : `<p class="sa-info">Wappen für Vereinsämter und persönliche Ehrungen verleiht der Verein per Code. Einlösen kannst du ihn im Casino unter „Gutschein einlösen“.</p>`) + '</div>';
+      : `<p class="sa-info">Wappen für Vereinsämter und persönliche Ehrungen werden per Gutschein eingelöst.</p>`) + '</div>';
     h += `<div class="sa-vitrine"><h3>Treue</h3>` + (s.gueltig
       ? `<div class="sa-raster sa-spangen">${s.treue.map(t => kachel(t, Math.min(120, g * 1.5), 'sa-spange')).join('')}</div>`
       : `<p class="sa-info">Trag unter „Mehr“ dein Eintrittsjahr ein – für je drei Jahre im Verein gibt es eine Spange.</p>`) + '</div>';
@@ -421,12 +421,15 @@
       if (p.t !== 'trophaee') return '🛡️ Wappen erhalten: ' + this.wappen(p.t, p.n);
       const v = { n: String(p.n || 'Trophäe').slice(0, 60), x: String(p.x || '').slice(0, 160), s: Math.max(1, Math.min(5, parseInt(p.s) || 3)), a: String(p.a || 'stern').slice(0, 12), d: heute() };
       const liste = lesen(K_VERL, []); liste.push(v); schreiben(K_VERL, liste);
-      setTimeout(() => feiern({ id: 'vneu', name: v.n, text: v.x || 'Eine persönliche Trophäe, verliehen vom Verein.', stufe: v.s, hat: true, n: 1, einmalig: true, verliehen: true, first: v.d,
+      setTimeout(() => feiern({ id: 'vneu', name: v.n, text: v.x || 'Eine persönliche Trophäe.', stufe: v.s, hat: true, n: 1, einmalig: true, verliehen: true, first: v.d,
         svg: g => trophaeSVG({ art: v.a, stufe: v.s }, g, false) }, 'Neue Trophäe'), 500);
       if (document.getElementById('sammlung-overlay').classList.contains('open')) render();
       return '🏆 Trophäe erhalten: ' + v.n;
     },
     AEMTER: Object.keys(AEMTER),
+    // Ein paar Beispielstücke als SVG, z. B. für die Neuigkeiten-Tour
+    vorschau: g => [buildMedalSVG(Math.round(g * 0.86), MEDAL_TIERS[15]), trophaeSVG({ art: 'fest', schild: '2026' }, g, false), trophaeSVG({ art: 'reaktion', stufe: 3, schild: '0,9 s' }, g, false),
+      trophaeSVG({ art: 'jackpot', stufe: 5 }, g, false), wappenSVG('bier', Math.round(g * 0.9)), spangeSVG(9, Math.round(g * 1.15), false)],
   };
 
   // Rekorde, die sich nicht aus dem Verlauf berechnen lassen, werden hier mitgeschrieben

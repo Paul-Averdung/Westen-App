@@ -3,7 +3,8 @@
 // Gemerkt wird das in localStorage 'hopfenkonto_neuigkeiten'. Optik in css/neuigkeiten.css.
 // Hinweis: Alle Dateien in js/ teilen sich einen Gültigkeitsbereich.
 (function() {
-  const VERSION = '2026-11';
+  const VERSION = '2026-11b';
+  const NEU_AB = { '2026-11': 4 };   // wer diese ältere Tour schon gesehen hat, startet direkt bei der neuen Kachel
   const KEY = 'hopfenkonto_neuigkeiten';
   const ls = { get: k => { try { return localStorage.getItem(k); } catch(e) { return null; } },
                set: (k, v) => { try { localStorage.setItem(k, v); } catch(e) {} } };
@@ -30,6 +31,9 @@
     { kicker: 'Themes', title: 'Die App in deinem Look',
       text: 'Von Nachtblau bis Bierzelt bekommt die ganze App ein neues Design. Manche Themes gibt es nur zur passenden Zeit – Karneval ab dem 11.11., Schützenfest rund um Fronleichnam.',
       bild: () => raster([['themes', 'bierzelt'], ['themes', 'karneval'], ['themes', 'abendrot'], ['themes', 'gold']]) },
+    { kicker: 'Sammlung', title: 'Medaillen, Trophäen, Wappen',
+      text: 'Unter „Mehr“ findest du jetzt deine Sammlung: Medaillen aus all deinen Abenden, Trophäen für Schützenfeste und Spiele, Wappen, Treue-Spangen und deine Rekorde.',
+      bild: () => `<div class="nw-sammlung">${Trophaeen.vorschau(72).map(x => `<span>${x}</span>`).join('')}</div>` },
     { kicker: 'Coins', title: 'So kommst du an Coins',
       text: 'Jeden Tag gibt es 30 Coins geschenkt, den Rest holst du dir im Casino.',
       bild: () => `<div class="nw-list">
@@ -98,16 +102,18 @@
     setTimeout(() => weg.remove(), 220);
   }
 
-  window.openNeuigkeiten = function() {
+  window.openNeuigkeiten = function(start) {
     if (el) return;
     bauen();
-    zeige(0);
-    requestAnimationFrame(() => el && el.classList.add('open'));
+    start = Math.max(0, Math.min(SLIDES.length - 1, start || 0));
+    zeige(start);
+    requestAnimationFrame(() => { if (!el) return; el.classList.add('open'); if (start) track.scrollLeft = start * track.clientWidth; });
   };
 
   // Einmalig beim ersten Öffnen nach dem Update
   window.addEventListener('load', () => {
-    if (ls.get(KEY) === VERSION) return;
-    setTimeout(() => { try { openNeuigkeiten(); } catch (e) { ls.set(KEY, VERSION); } }, 350);
+    const gesehen = ls.get(KEY);
+    if (gesehen === VERSION) return;
+    setTimeout(() => { try { openNeuigkeiten(NEU_AB[gesehen] || 0); } catch (e) { ls.set(KEY, VERSION); } }, 350);
   });
 })();
