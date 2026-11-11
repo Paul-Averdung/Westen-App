@@ -1,9 +1,10 @@
 /* ── Navigation unten (js/nav.js) ───────────────────────────────────────── */
-:root { --nav-h: calc(58px + env(safe-area-inset-bottom, 0px)); }
+/* Sichere Ränder: oben Uhr/Akku bzw. Notch, unten der Home-Balken (0, wenn das Gerät keine hat) */
+:root { --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); --nav-h: calc(58px + var(--sab)); }
 
 #tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 11500;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: var(--sab);
   background: var(--bg);
   background: color-mix(in srgb, var(--bg) 86%, transparent);
   -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
@@ -89,6 +90,27 @@ body { padding-bottom: calc(12px + var(--nav-h)); }
 .mehr-label { color: #97C459; font-size: 12px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 10px; }
 
 /* Oben Platz für die Statusleiste, wenn die App vom Homescreen im Vollbild läuft */
-body { padding-top: max(12px, env(safe-area-inset-top, 0px)); }
-.cs-head, .sp-head, #shop-overlay .sh-head { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
-#settings-overlay > div { padding-top: calc(22px + env(safe-area-inset-top, 0px)) !important; }
+body { padding-top: max(12px, var(--sat)); }
+.cs-head, .sp-head, #shop-overlay .sh-head { padding-top: calc(14px + var(--sat)); }
+#settings-overlay > div { padding-top: calc(22px + var(--sat)) !important; }
+
+/* ── Fenster über der Leiste: nichts darf unter Uhr, Akku oder Home-Balken liegen ── */
+.gm-head { padding-top: calc(12px + var(--sat)); }
+.gm-wrap { padding-bottom: calc(30px + var(--sab)); }
+#game-toast { bottom: calc(30px + var(--sab)); }
+.sm-close { top: calc(14px + var(--sat)); }
+.sm-wrap { padding-top: calc(46px + var(--sat)); padding-bottom: calc(30px + var(--sab)); box-sizing: border-box; }
+#reaction-overlay > button, #timer-overlay > button, #dice-overlay > button, #verlauf-overlay > button { top: calc(18px + var(--sat)) !important; }
+#verlauf-list-view, #verlauf-detail-view { padding-top: calc(60px + var(--sat)) !important; padding-bottom: calc(40px + var(--sab)) !important; }
+#shop-trybar { top: calc(10px + var(--sat)); }
+#medal-gallery, #redeem-overlay, #sammlung-detail, #fx-kauf { padding-top: max(16px, var(--sat)); padding-bottom: max(16px, var(--sab)); }
+
+/* Casino-Spiele rücken in die Mitte des Bildschirms, wenn Platz ist – Knöpfe bleiben mit dem Daumen erreichbar.
+   Hohe Spiele (Roulette) füllen den Platz wie bisher und lassen sich scrollen. */
+.gm-wrap { min-height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
+#game-root { margin-top: auto; margin-bottom: auto; }
+/* Der Hauptknopf eines Spiels bleibt unten sichtbar, auch wenn das Spiel höher als der Bildschirm ist (Roulette, Pferdeauswahl) */
+#game-root > .gm-btn:last-child { position: sticky; bottom: calc(12px + var(--sab)); z-index: 2; box-shadow: 0 4px 0 #8a5a00, 0 -10px 22px 8px rgba(6,18,2,0.85); }
+#game-root > .gm-btn:last-child:disabled { opacity: 1; background: #3b3a1c; color: #8f8a5c; box-shadow: 0 4px 0 #1f1e0c, 0 -10px 22px 8px rgba(6,18,2,0.85); }
+.gm-back { white-space: nowrap; }
+@media (max-width: 350px) { .gm-title { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .gm-head .sh-coins { font-size: 14px; padding: 4px 9px; } }
