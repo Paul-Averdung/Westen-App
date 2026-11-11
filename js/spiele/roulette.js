@@ -23,26 +23,27 @@
   };
   for (let n = 0; n <= 36; n++) BETS['z' + n] = { label: String(n), pay: 38, wins: x => x === n };
   window.rouletteBets = BETS;   // für Tests
+  window.rouletteWheelSVG = () => wheelSVG(true);   // Vorschaubild im Shop
 
   let chip = 5, bets = {}, last = {}, spinning = false, rot = 0, history = [];
   const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
   const color = n => n === 0 ? 'g' : RED.has(n) ? 'r' : 'b';
 
-  function wheelSVG() {
+  function wheelSVG(thumb) {
     const seg = 360 / 37;
     let s = '';
     ORDER.forEach((n, i) => {
       const a1 = (i * seg - seg / 2 - 90) * Math.PI / 180, a2 = ((i + 1) * seg - seg / 2 - 90) * Math.PI / 180;
       const p = (a, r) => (Math.cos(a) * r).toFixed(2) + ',' + (Math.sin(a) * r).toFixed(2);
-      s += `<path d="M${p(a1, 46)} A46,46 0 0 1 ${p(a2, 46)} L${p(a2, 32)} A32,32 0 0 0 ${p(a1, 32)} Z" fill="${n === 0 ? '#1f8a3a' : RED.has(n) ? '#c0182b' : '#151515'}" stroke="#d9b45a" stroke-width="0.3"/>`;
+      s += `<path d="M${p(a1, 46)} A46,46 0 0 1 ${p(a2, 46)} L${p(a2, 32)} A32,32 0 0 0 ${p(a1, 32)} Z" fill="${n === 0 ? '#1f8a3a' : RED.has(n) ? '#c0182b' : '#151515'}" stroke="#d9b45a" stroke-width="0.3" class="rl-w-pocket"/>`;
       const am = (i * seg - 90) * Math.PI / 180;
       s += `<text x="${(Math.cos(am) * 40.5).toFixed(2)}" y="${(Math.sin(am) * 40.5).toFixed(2)}" fill="#fff" font-size="4" font-weight="700" text-anchor="middle" dominant-baseline="central" transform="rotate(${i * seg} ${(Math.cos(am) * 40.5).toFixed(2)} ${(Math.sin(am) * 40.5).toFixed(2)})">${n}</text>`;
     });
     return `<svg viewBox="-52 -52 104 104" class="rl-wheel-svg">
-      <circle r="51" fill="#5a3418"/><circle r="49" fill="#7a4a24"/><circle r="47" fill="#2a1a0c"/>
-      <g id="rl-rotor">${s}<circle r="32" fill="#7a4a24"/><circle r="22" fill="#a0622a"/>
-        ${[0, 1, 2, 3].map(k => `<rect x="-1.5" y="-21" width="3" height="20" rx="1.5" fill="#d9b45a" transform="rotate(${k * 45})"/>`).join('')}<circle r="6" fill="#d9b45a"/></g>
-      <g id="rl-ball"><circle cx="0" cy="-37" r="2.6" fill="#fff" stroke="#bbb" stroke-width="0.4"/></g>
+      <circle r="51" fill="#5a3418" class="rl-w-rim1"/><circle r="49" fill="#7a4a24" class="rl-w-rim2"/><circle r="47" fill="#2a1a0c" class="rl-w-track"/>
+      <g ${thumb ? '' : 'id="rl-rotor"'}>${s}<circle r="32" fill="#7a4a24" class="rl-w-cone"/><circle r="22" fill="#a0622a" class="rl-w-cone2"/>
+        ${[0, 1, 2, 3].map(k => `<rect x="-1.5" y="-21" width="3" height="20" rx="1.5" fill="#d9b45a" class="rl-w-spoke" transform="rotate(${k * 45})"/>`).join('')}<circle r="6" fill="#d9b45a" class="rl-w-spoke"/></g>
+      <g ${thumb ? '' : 'id="rl-ball"'}><circle cx="0" cy="-37" r="2.6" fill="#fff" stroke="#bbb" stroke-width="0.4"/></g>
       <polygon points="0,-50 -3,-55 3,-55" fill="#EFC93D"/>
     </svg>`;
   }

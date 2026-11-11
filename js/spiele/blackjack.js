@@ -34,10 +34,13 @@
       <div class="bj-cards">${h.cards.map((c, k) => GameShell.cardHTML(c, k >= h.shown ? 'deal' : '')).join('')}</div>
       <div class="bj-total">${lbl}${h.doubled ? ' · verdoppelt' : ''}${h.res ? ' · <b class="' + h.resCls + '">' + h.res + '</b>' : ''}</div></div>`;
   }
+  // Kartenschlitten oben rechts – zeigt den gewählten Kartenrücken
+  const SHOE_HTML = () => `<div class="bj-shoe">${GameShell.cardHTML(null, 'small')}${GameShell.cardHTML(null, 'small')}${GameShell.cardHTML(null, 'small')}</div>`;
   function render() {
+    const SHOE = SHOE_HTML();
     const root = document.getElementById('game-root');
     if (!g || g.state === 'bereit') {
-      root.innerHTML = `<div class="bj-table"><div class="bj-label">BLACKJACK ZAHLT 2:1 · GLEICHSTAND BEI 20/21 GEWINNT</div>
+      root.innerHTML = `<div class="bj-table">${SHOE}<div class="bj-label">BLACKJACK ZAHLT 2:1 · GLEICHSTAND BEI 20/21 GEWINNT</div>
           <div class="bj-empty">Setz deinen Einsatz und teil aus.</div>${g && g.msg ? `<div class="gm-msg ${g.msgCls}">${g.msg}</div>` : ''}</div>
         ${GameShell.betHTML('bj-bet', g && g.bet)}
         <button class="gm-btn" onclick="bjDeal()">Austeilen</button>`;
@@ -49,7 +52,7 @@
     const h = g.hands[g.cur];
     const canDouble = g.state === 'spieler' && h.cards.length === 2 && !h.splitAces && Coins.get() >= h.bet;
     const canSplit = g.state === 'spieler' && g.hands.length === 1 && h.cards.length === 2 && h.cards[0].r === h.cards[1].r && Coins.get() >= h.bet;
-    root.innerHTML = `<div class="bj-table">
+    root.innerHTML = `<div class="bj-table">${SHOE}
         <div class="bj-label">BANK ${g.state === 'spieler' ? '' : '· ' + (total(g.dealer).t > 21 ? 'über 21' : dTotal)}</div>
         <div class="bj-cards dealer">${dCards}</div>
         <div class="bj-sep"></div>
