@@ -68,6 +68,7 @@
     return `<div class="cos-thumb" data-${cat}="${id}">${inner}</div>`;
   }
   function thumb(kind, id) { return kind === 'themes' ? themeThumb(id) : kind === 'skins' ? skinThumb(id) : cosThumb(kind, id); }
+  window.shopThumb = thumb;   // auch für die Neuigkeiten-Tour (js/neuigkeiten.js)
 
   // ── Shop-Fenster ──────────────────────────────────────────────────────────
   let _tab = 'themes', _sub = 'cardback';

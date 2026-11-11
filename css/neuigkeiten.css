@@ -1,0 +1,107 @@
+/* ── Neuigkeiten-Tour (js/neuigkeiten.js) ───────────────────────────────── */
+#news-overlay {
+  position: fixed; inset: 0; z-index: 15000; display: flex; flex-direction: column;
+  background: radial-gradient(circle at 50% 0%, #24480d 0%, #071203 72%);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: #C0DD97;
+  opacity: 0; transition: opacity 0.2s ease; overscroll-behavior: contain;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  -webkit-tap-highlight-color: transparent;
+}
+#news-overlay.open { opacity: 1; }
+.nw-skip {
+  align-self: flex-end; margin: 12px 14px 0; padding: 8px 12px; background: none; border: none; cursor: pointer;
+  color: #97C459; font-size: 14px; font-weight: 600; font-family: inherit;
+}
+#news-overlay.nw-ende .nw-skip { visibility: hidden; }
+.nw-track {
+  flex: 1; min-height: 0; display: flex; overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.nw-track::-webkit-scrollbar { display: none; }
+.nw-slide {
+  flex: 0 0 100%; min-width: 0; scroll-snap-align: center; scroll-snap-stop: always;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  padding: 4px 26px 8px; box-sizing: border-box;
+}
+.nw-slide > * { width: 100%; max-width: 380px; }
+.nw-bild { flex: 0 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; margin-bottom: 22px; }
+.nw-kicker { color: #97C459; font-size: 12px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+.nw-title { margin: 0 0 10px; color: #EFC93D; font-size: 26px; line-height: 1.15; font-weight: 900; text-wrap: balance; }
+.nw-text { margin: 0; color: #C0DD97; font-size: 15px; line-height: 1.45; text-wrap: pretty; }
+/* Inhalt der gerade sichtbaren Kachel gleitet leicht herein */
+.nw-slide > * { opacity: 0.25; transform: translateY(10px); transition: opacity 0.35s ease, transform 0.35s ease; }
+.nw-slide.on > * { opacity: 1; transform: none; }
+.nw-slide.on > .nw-kicker { transition-delay: 0.04s; } .nw-slide.on > .nw-title { transition-delay: 0.08s; } .nw-slide.on > .nw-text { transition-delay: 0.12s; }
+
+.nw-foot { padding: 6px 26px 18px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.nw-dots { display: flex; gap: 2px; }
+.nw-dot { width: 22px; height: 22px; padding: 0; background: none; border: none; cursor: pointer; position: relative; }
+.nw-dot::after { content: ''; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 4px; background: #3B6D11; transition: all 0.2s ease; }
+.nw-dot.on::after { width: 18px; margin-left: -9px; background: #EFC93D; }
+.nw-next {
+  width: 100%; max-width: 380px; padding: 14px 0; border-radius: 14px; border: none; cursor: pointer;
+  background: linear-gradient(180deg, #FFE27A, #E8B923); color: #2a1c00; font-size: 16px; font-weight: 800; font-family: inherit;
+  box-shadow: 0 4px 0 #8a6a10, 0 8px 18px rgba(0,0,0,0.4);
+}
+.nw-next:active { transform: translateY(2px); box-shadow: 0 2px 0 #8a6a10, 0 4px 10px rgba(0,0,0,0.4); }
+.nw-casino { background: none; border: none; color: #97C459; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; padding: 4px 10px; visibility: hidden; }
+#news-overlay.nw-ende .nw-casino { visibility: visible; }
+
+/* Kachel 1: Wappen */
+.nw-hero { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.nw-hero img { width: 150px; height: 150px; object-fit: contain; filter: drop-shadow(0 8px 18px rgba(0,0,0,0.55)); }
+.nw-hero-icons { display: flex; gap: 12px; }
+.nw-hero-icons span { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: #173404; border: 1px solid #3B6D11; }
+
+/* Kachel 2: Spiele */
+.nw-games { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.nw-game { width: calc(33.333% - 7px); min-width: 0; border-radius: 14px; border: 2px solid #E8B923; padding: 10px 4px 9px; box-sizing: border-box; box-shadow: 0 5px 12px rgba(0,0,0,0.45); }
+.nw-game-icon { height: 44px; font-size: 34px; line-height: 44px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
+.nw-game-icon svg { width: 44px; height: 44px; }
+.nw-game-name { margin-top: 6px; color: #FFE9A8; font-size: 12px; font-weight: 800; line-height: 1.15; }
+
+/* Kachel 3 + 4: Vorschaubilder aus dem Shop */
+.nw-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; }
+.nw-item { background: #102504; border: 1.5px solid #2a4a12; border-radius: 14px; padding: 7px 7px 8px; text-align: left; }
+.nw-item .sh-thumb, .nw-item .cos-thumb { height: 92px; }
+.nw-item-name { margin: 6px 2px 0; color: #EAF3C8; font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nw-item-tier { margin: 1px 2px 0; font-size: 11px; font-weight: 700; color: #b9c2b0; }
+.nw-item.t-selten { border-color: rgba(95,182,255,0.55); } .nw-item.t-selten .nw-item-tier { color: #5fb6ff; }
+.nw-item.t-episch { border-color: rgba(195,139,255,0.6); } .nw-item.t-episch .nw-item-tier { color: #c38bff; }
+.nw-item.t-legendaer { border-color: rgba(255,180,60,0.75); } .nw-item.t-legendaer .nw-item-tier { color: #ffb43c; }
+
+/* Kachel 5: Liste */
+.nw-list { display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; }
+.nw-row { display: flex; align-items: center; gap: 12px; background: #102504; border: 1px solid #2a4a12; border-radius: 14px; padding: 11px 12px; }
+.nw-row > span { flex: none; width: 40px; height: 40px; border-radius: 12px; background: #173404; display: flex; align-items: center; justify-content: center; font-size: 21px; }
+.nw-row b { display: block; color: #EAF3C8; font-size: 14px; font-weight: 800; }
+.nw-row i { display: block; font-style: normal; color: #97C459; font-size: 12.5px; line-height: 1.35; margin-top: 1px; }
+
+/* Kleine Handys: Bilder und Schrift kompakter, damit jede Kachel ohne Scrollen passt */
+@media (max-height: 720px) {
+  .nw-bild { margin-bottom: 14px; }
+  .nw-title { font-size: 23px; }
+  .nw-hero img { width: 116px; height: 116px; }
+  .nw-item .sh-thumb, .nw-item .cos-thumb { height: 74px; }
+}
+@media (max-height: 600px) {
+  .nw-skip { margin-top: 4px; }
+  .nw-bild { margin-bottom: 10px; }
+  .nw-kicker { margin-bottom: 3px; }
+  .nw-title { font-size: 21px; margin-bottom: 6px; } .nw-text { font-size: 13.5px; line-height: 1.38; }
+  .nw-foot { gap: 8px; padding-bottom: 10px; } .nw-next { padding: 12px 0; }
+  .nw-hero img { width: 92px; height: 92px; } .nw-hero-icons span { width: 40px; height: 40px; font-size: 20px; }
+  .nw-grid { gap: 8px; } .nw-item { padding: 5px 5px 6px; }
+  .nw-item .sh-thumb, .nw-item .cos-thumb { height: 50px; }
+  .nw-item .sh-thumb { padding: 6px 8px 0; gap: 4px; } .nw-item .sh-mini-head { height: 8px; } .nw-item .sh-mini-card { height: 16px; } .nw-item .sh-mini-card i { width: 9px; height: 9px; }
+  .nw-item-name { margin-top: 4px; font-size: 12px; } .nw-item-tier { font-size: 10px; }
+  .nw-game { padding: 7px 3px 7px; } .nw-game-icon { height: 34px; font-size: 26px; line-height: 34px; } .nw-game-icon svg { width: 34px; height: 34px; }
+  .nw-list { gap: 7px; } .nw-row { padding: 7px 10px; } .nw-row > span { width: 34px; height: 34px; font-size: 18px; }
+}
+@media (max-width: 350px) {
+  .nw-slide { padding-left: 18px; padding-right: 18px; } .nw-foot { padding-left: 18px; padding-right: 18px; }
+  .nw-game-name { font-size: 10.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nw-slide > * { transition: none; opacity: 1; transform: none; }
+}
