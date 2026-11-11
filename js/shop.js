@@ -87,13 +87,16 @@
     let btn;
     if (active)               btn = `<button class="sh-btn sh-active" disabled>✓ Aktiv</button>`;
     else if (own)             btn = `<button class="sh-btn sh-use" onclick="shopUse('${kind}','${id}')">Benutzen</button>`;
-    else if (!season)         btn = `<button class="sh-btn" disabled>Nur ${item.season.label}</button>`;
+    else if (!season)         btn = `<button class="sh-btn sh-buy" disabled>🪙 ${fmt(price)}</button>`;
     else                      btn = `<button class="sh-btn sh-buy" ${coins < price ? 'disabled' : ''} onclick="shopBuy('${kind}','${id}',this)">🪙 ${fmt(price)}</button>`;
     const tryBtn = !own ? `<button class="sh-try" onclick="shopTry('${kind}','${id}')">👁 Anprobieren</button>` : '';
-    return `<div class="sh-item t-${item.tier}${active ? ' is-active' : ''}">
+    // Gerade nicht kaufbar (außerhalb der Saison, noch nicht gekauft): ausgegraut + wann es verfügbar ist
+    const off = !own && !season;
+    const when = off ? `<div class="sh-when">📅 Verfügbar<br><b>${item.season.label}</b></div>` : '';
+    return `<div class="sh-item t-${item.tier}${active ? ' is-active' : ''}${off ? ' sh-off' : ''}">
       ${thumb(kind, id)}
       <div class="sh-meta"><div class="sh-name">${item.name}</div><div class="sh-tier">${TIER[item.tier]}${item.season ? ' · Saison' : ''}</div></div>
-      ${btn}${tryBtn}</div>`;
+      ${btn}${when}${tryBtn}</div>`;
   }
 
   function renderShop() {
