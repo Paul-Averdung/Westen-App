@@ -1,7 +1,7 @@
 // Blackjack – klassische Regeln:
 // 6 Decks (neu gemischt, wenn weniger als ein Viertel übrig ist). Bank zieht bis 16, bleibt ab 17 (auch Soft 17).
-// Hausregeln zugunsten der Spieler: Blackjack zahlt 2:1, Gleichstand bei 20 oder 21 gewinnt der Spieler
-// (Rückfluss ca. 100–105 % je nach Spielweise). Verdoppeln mit den ersten zwei Karten. Einmal Teilen bei
+// Hausregeln zugunsten der Spieler: Blackjack zahlt 2:1, jeder Gleichstand gewinnt für den Spieler
+// (Rückfluss ca. 106–110 % je nach Spielweise). Verdoppeln mit den ersten zwei Karten. Einmal Teilen bei
 // gleichem Rang; geteilte Asse bekommen je nur eine Karte. Ass-Zehn nach Teilen zählt als 21, nicht als Blackjack.
 // Hat die Bank Blackjack (Ass oder Zehn offen → wird geprüft), verliert man sofort (außer bei eigenem Blackjack).
 (function() {
@@ -40,7 +40,7 @@
     const SHOE = SHOE_HTML();
     const root = document.getElementById('game-root');
     if (!g || g.state === 'bereit') {
-      root.innerHTML = `<div class="bj-table">${SHOE}<div class="bj-label">BLACKJACK ZAHLT 2:1 · GLEICHSTAND BEI 20/21 GEWINNT</div>
+      root.innerHTML = `<div class="bj-table">${SHOE}<div class="bj-label">BLACKJACK ZAHLT 2:1 · GLEICHSTAND GEWINNT</div>
           <div class="bj-empty">Setz deinen Einsatz und teil aus.</div>${g && g.msg ? `<div class="gm-msg ${g.msgCls}">${g.msg}</div>` : ''}</div>
         ${GameShell.betHTML('bj-bet', g && g.bet)}
         <button class="gm-btn" onclick="bjDeal()">Austeilen</button>`;
@@ -138,12 +138,11 @@
       stake += h.bet;
       const t = total(h.cards).t, bj = isBJ(h);
       if (bj && !dBJ) { back += h.bet * 3; h.res = 'Blackjack! 2:1'; h.resCls = 'win'; }
-      else if (bj && dBJ) { back += h.bet; h.res = 'Unentschieden'; h.resCls = 'info'; }
+      else if (bj && dBJ) { back += h.bet * 2; h.res = 'Beide Blackjack – gewonnen!'; h.resCls = 'win'; }
       else if (t > 21) { h.res = 'über 21'; h.resCls = 'lose'; }
       else if (dBJ) { h.res = 'Bank hat Blackjack'; h.resCls = 'lose'; }
       else if (d > 21 || t > d) { back += h.bet * 2; h.res = 'Gewonnen'; h.resCls = 'win'; }
-      else if (t === d && t >= 20) { back += h.bet * 2; h.res = 'Gleichstand ' + t + ' – gewonnen!'; h.resCls = 'win'; }
-      else if (t === d) { back += h.bet; h.res = 'Unentschieden'; h.resCls = 'info'; }
+      else if (t === d) { back += h.bet * 2; h.res = 'Gleichstand ' + t + ' – gewonnen!'; h.resCls = 'win'; }
       else { h.res = 'Verloren'; h.resCls = 'lose'; }
     });
     back = Math.floor(back);

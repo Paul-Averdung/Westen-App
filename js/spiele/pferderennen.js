@@ -3,9 +3,9 @@
 // SIMULATIONEN-mal simuliert; daraus ergeben sich die Chancen auf Platz 1/2/3 und faire Quoten:
 //   Quote Platz k = AUSZAHLQUOTE × ANTEIL[k] / Chance(Platz k)
 // Je wahrscheinlicher ein Platz, desto kleiner die Quote. Insgesamt fließen im Schnitt
-// AUSZAHLQUOTE (104 %, leichter Vorteil für die Spieler) der Einsätze zurück. Quote = Faktor auf den Einsatz.
+// AUSZAHLQUOTE (112 %, Vorteil für die Spieler) der Einsätze zurück. Quote = Faktor auf den Einsatz.
 (function() {
-  const AUSZAHLQUOTE = 1.04;
+  const AUSZAHLQUOTE = 1.12;
   const ANTEIL = [0.60, 0.25, 0.15];          // wie sich die Auszahlung auf Platz 1/2/3 verteilt
   const FORM_SPANNE = 0.03, TAGESFORM = 0.05; // Unterschied der Pferde vs. Zufall am Renntag
   const QUOTE_MAX = 50;

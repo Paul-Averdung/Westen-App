@@ -280,7 +280,7 @@ window.startReactionTest = function() {
   }
 })();
 // ── Hopfen-Slots ─────────────────────────────────────────────────────────────
-// Regeln (leichter Vorteil für die Spieler, Rückfluss ca. 103,5 %):
+// Regeln (Vorteil für die Spieler, Rückfluss ca. 113 %, jeder dritte Dreh gewinnt):
 //   Jackpot 🍺🍺🍺 mit JACKPOT_CHANCE → JACKPOT_X × Einsatz
 //   drei gleiche andere Symbole mit GEWINN_CHANCE → 3 × Einsatz
 //   danach optional "Doppel oder Nichts" (DOPPEL_CHANCE Gewinnchance, max. 3×)
@@ -290,7 +290,7 @@ window.startReactionTest = function() {
   const LEVER_MS = 300;                    // Walzen starten, wenn der Hebel unten ist
   const MAX_BET = 50;                      // höchster Einsatz pro Dreh (schützt die Shop-Preise)
   const MAX_DOUBLE = 3;                    // höchstens so oft hintereinander "Doppel oder Nichts"
-  const JACKPOT_CHANCE = 0.015, JACKPOT_X = 10, GEWINN_CHANCE = 0.295, DOPPEL_CHANCE = 0.52;
+  const JACKPOT_CHANCE = 0.02, JACKPOT_X = 10, GEWINN_CHANCE = 0.31, DOPPEL_CHANCE = 0.55;
   let _doubleCount = 0;
   let _spinning = false;
   let _doubleRisk = 0;
