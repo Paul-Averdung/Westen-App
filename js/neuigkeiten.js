@@ -32,7 +32,7 @@
       text: 'Von Nachtblau bis Bierzelt bekommt die ganze App ein neues Design. Manche Themes gibt es nur zur passenden Zeit – Karneval ab dem 11.11., Schützenfest rund um Fronleichnam.',
       bild: () => raster([['themes', 'bierzelt'], ['themes', 'karneval'], ['themes', 'abendrot'], ['themes', 'gold']]) },
     { kicker: 'Sammlung', title: 'Medaillen, Trophäen, Wappen',
-      text: 'Unter „Mehr“ findest du jetzt deine Sammlung: Medaillen aus all deinen Abenden, Trophäen für Schützenfeste und Spiele, Wappen und deine Rekorde.',
+      text: 'Im Profil findest du jetzt deine Sammlung: Medaillen aus all deinen Abenden, Trophäen für Schützenfeste und Spiele, Wappen und deine Rekorde.',
       bild: () => `<div class="nw-sammlung">${Trophaeen.vorschau(72).map(x => `<span>${x}</span>`).join('')}</div>` },
     { kicker: 'Coins', title: 'So kommst du an Coins',
       text: 'Jeden Tag gibt es 30 Coins geschenkt, den Rest holst du dir im Casino.',

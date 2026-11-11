@@ -1,4 +1,4 @@
-// Navigation unten: Zähler · Spiele · Casino · Shop · Mehr.
+// Navigation unten: Zähler · Spiele · Casino · Shop · Profil.
 // Jeder Bereich außer dem Zähler ist ein bildschirmfüllendes Fenster; die Leiste liegt darüber.
 // Einzelne Spiele, Verlauf, Orden usw. öffnen sich wie bisher über der Leiste (z-index in css/nav.css).
 // Welcher Reiter leuchtet, wird aus dem Zustand der Fenster abgelesen – so stimmt die Leiste auch,
@@ -13,8 +13,7 @@
               auf: () => $('spiele-overlay').classList.add('open'), zu: () => $('spiele-overlay').classList.remove('open') },
     casino: { el: 'casino-overlay',   offen: hatKlasse('casino-overlay'), auf: () => openCasino(), zu: () => closeCasino() },
     shop:   { el: 'shop-overlay',     offen: hatKlasse('shop-overlay'),   auf: () => openShop(),   zu: () => closeShop() },
-    mehr:   { el: 'settings-overlay', offen: () => $('settings-overlay').style.display === 'block',
-              auf: () => toggleSettings(), zu: () => closeSettings() },
+    profil: { el: 'profil-overlay',   offen: hatKlasse('profil-overlay'), auf: () => openProfil(), zu: () => closeProfil() },
   };
 
   function aktiv() {

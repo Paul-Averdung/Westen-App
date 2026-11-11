@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="css/nav.css">
 <link rel="stylesheet" href="css/sammlung.css">
 <link rel="stylesheet" href="css/effekte.css">
+<link rel="stylesheet" href="css/profil.css">
 </head>
 <body>
 <div id="theme-scene" aria-hidden="true"></div>
@@ -301,6 +302,8 @@
 <script src="js/casino.js"></script>
 <script src="js/verlauf.js"></script>
 <script src="js/sammlung.js"></script>
+<script src="js/avatar.js"></script>
+<script src="js/profil.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/neuigkeiten.js"></script>
 <script src="js/offline.js"></script>
@@ -472,12 +475,7 @@
 <div id="settings-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,15,2,0.97); z-index:11000; font-family:-apple-system,BlinkMacSystemFont,sans-serif; overflow-y:auto;">
   <button onclick="closeSettings()" style="position:absolute;top:18px;right:18px;background:none;border:none;color:#97C459;font-size:22px;cursor:pointer;z-index:2;padding:4px 8px;">✕</button>
   <div style="padding:60px 20px 40px; max-width:420px; margin:0 auto;">
-    <div class="mehr-title">Mehr</div>
-    <div class="mehr-links">
-      <button onclick="openVerlauf()"><span>📖</span><b>Verlauf</b><i>Deine bisherigen Abende</i></button>
-      <button onclick="openSammlung()"><span>🏆</span><b>Sammlung</b><i>Medaillen, Trophäen, Wappen</i></button>
-    </div>
-    <div class="mehr-label">Einstellungen</div>
+    <div class="mehr-title">Einstellungen</div>
     <label style="color:#97C459; font-size:12px; display:block; margin-bottom:4px;">Mitgliedsnummer (für Gutscheine)</label>
     <div class="rd-id" style="margin-bottom:14px;"><span class="member-id-val">—</span><button onclick="copyMemberId(this)">Kopieren</button></div>
     <label style="color:#97C459; font-size:12px; display:block; margin-bottom:4px;">Eintrittsjahr</label>
@@ -560,6 +558,25 @@
 </div>
 <div id="sammlung-hinweis" onclick="this.classList.remove('show')"></div>
 
+<!-- ── Profil (js/profil.js, css/profil.css) ──────────────────────── -->
+<div id="profil-overlay"><div class="pf-wrap" id="pf-inhalt"></div></div>
+<div id="avatar-editor">
+  <div class="pf-wrap">
+    <div class="ae-kopf"><button class="ae-ab" onclick="avatarAbbrechen()">Abbrechen</button><b>Avatar</b><button class="ae-ok" onclick="avatarFertig()">Fertig</button></div>
+    <div class="ae-buehne" id="ae-buehne"></div>
+    <input type="text" id="ae-name" maxlength="16" placeholder="Dein Spitzname" autocomplete="off" autocapitalize="words" spellcheck="false" aria-label="Spitzname">
+    <div class="ae-reiter" id="ae-reiter"></div>
+    <div id="ae-auswahl"></div>
+  </div>
+</div>
+<div id="schild-wahl" onclick="if(event.target===this) schildWahlZu()">
+  <div class="sw-karte">
+    <div class="sw-kopf"><b>Aushängeschild</b><button onclick="schildWahlZu()" aria-label="Schließen">✕</button></div>
+    <div class="sw-info">Wähle ein Stück aus deiner Sammlung.</div>
+    <div class="sw-raster" id="sw-raster"></div>
+  </div>
+</div>
+
 <!-- ── Navigation unten (js/nav.js, css/nav.css) ────────────────────── -->
 <nav id="tabbar" aria-label="Hauptnavigation">
   <div class="tb-inner">
@@ -579,9 +596,9 @@
       <span class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.200 12.200a1 1 0 0 1-1 .8H7.200a1 1 0 0 1-1-.8z"/><path d="M9 10.500V6.500a3 3 0 0 1 6 0v4"/></svg></span>
       <span class="tb-label">Shop</span>
     </button>
-    <button class="tb-item" data-tab="mehr" onclick="showTab('mehr')">
-      <span class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
-      <span class="tb-label">Mehr</span>
+    <button class="tb-item" data-tab="profil" onclick="showTab('profil')">
+      <span class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8.500" r="4"/><path d="M4.500 20.500c1-4 4-6 7.500-6s6.500 2 7.500 6"/></svg></span>
+      <span class="tb-label">Profil</span>
     </button>
   </div>
 </nav>

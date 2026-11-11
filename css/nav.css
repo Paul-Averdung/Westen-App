@@ -36,11 +36,10 @@ body { padding-bottom: calc(12px + var(--nav-h)); }
 .cs-wrap { padding-bottom: calc(24px + var(--nav-h)); }
 #shop-overlay { padding-bottom: calc(24px + var(--nav-h)); }
 #shop-toast { bottom: calc(16px + var(--nav-h)); }
-#settings-overlay > div { padding-top: 22px !important; padding-bottom: calc(24px + var(--nav-h)) !important; }
 #settings-overlay[style*="block"] { animation: mgIn 0.2s ease; }
 
 /* Die Bereiche sind jetzt Reiter – ihr ✕ wird nicht mehr gebraucht */
-#casino-overlay .sh-close, #shop-overlay .sh-head .sh-close, #settings-overlay > button { display: none; }
+#casino-overlay .sh-close, #shop-overlay .sh-head .sh-close { display: none; }
 
 /* Alles, was sich über einem Bereich öffnet (einzelne Spiele, Verlauf, Orden), liegt über der Leiste */
 #game-overlay, #slots-overlay, #medal-gallery, #medal-overlay { z-index: 11600; }
@@ -76,8 +75,10 @@ body { padding-bottom: calc(12px + var(--nav-h)); }
 .sp-go { flex: none; font-size: 24px; opacity: 0.7; }
 .sp-more { display: block; width: 100%; margin-top: 6px; padding: 12px 0; background: none; border: none; color: #97C459; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
 
-/* ── Bereich „Mehr“ (früher Einstellungen) ──────────────────────────────── */
-#settings-overlay { background: radial-gradient(circle at 50% 0%, #1c3a08 0%, #061202 70%) !important; }
+/* ── Einstellungen ──────────────────────────────── */
+/* Einstellungen: eigenes Fenster über der Leiste, geöffnet über das Zahnrad im Profil */
+#settings-overlay { background: radial-gradient(circle at 50% 0%, #1c3a08 0%, #061202 70%) !important; z-index: 11600 !important; }
+#settings-overlay > button { top: calc(18px + var(--sat)) !important; }
 .mehr-title { color: #EFC93D; font-size: 24px; font-weight: 900; margin-bottom: 14px; }
 .mehr-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
 .mehr-links button {
@@ -92,7 +93,7 @@ body { padding-bottom: calc(12px + var(--nav-h)); }
 /* Oben Platz für die Statusleiste, wenn die App vom Homescreen im Vollbild läuft */
 body { padding-top: max(12px, var(--sat)); }
 .cs-head, .sp-head, #shop-overlay .sh-head { padding-top: calc(14px + var(--sat)); }
-#settings-overlay > div { padding-top: calc(22px + var(--sat)) !important; }
+#settings-overlay > div { padding-top: calc(56px + var(--sat)) !important; padding-bottom: calc(40px + var(--sab)) !important; }
 
 /* ── Fenster über der Leiste: nichts darf unter Uhr, Akku oder Home-Balken liegen ── */
 .gm-head { padding-top: calc(12px + var(--sat)); }

@@ -330,7 +330,7 @@
       : `<p class="sa-info">Wappen für Vereinsämter und persönliche Ehrungen werden per Gutschein eingelöst.</p>`) + '</div>';
     h += `<div class="sa-vitrine"><h3>Treue</h3>` + (s.gueltig
       ? `<div class="sa-raster sa-spangen">${s.treue.map(t => kachel(t, Math.min(120, g * 1.5), 'sa-spange')).join('')}</div>`
-      : `<p class="sa-info">Trag unter „Mehr“ dein Eintrittsjahr ein – für je drei Jahre im Verein gibt es eine Spange.</p>`) + '</div>';
+      : `<p class="sa-info">Trag in den Einstellungen dein Eintrittsjahr ein – für je drei Jahre im Verein gibt es eine Spange.</p>`) + '</div>';
     document.getElementById('sa-inhalt').innerHTML = h;
   }
 
@@ -427,6 +427,8 @@
       return '🏆 Trophäe erhalten: ' + v.n;
     },
     AEMTER: Object.keys(AEMTER),
+    // Alles, was in der Sammlung liegt – für das Profil (Aushängeschild, Rahmenfarbe)
+    stand: () => stand(),
     // Ein paar Beispielstücke als SVG, z. B. für die Neuigkeiten-Tour
     vorschau: g => [buildMedalSVG(Math.round(g * 0.86), MEDAL_TIERS[15]), trophaeSVG({ art: 'fest', schild: '2026' }, g, false), trophaeSVG({ art: 'reaktion', stufe: 3, schild: '0,9 s' }, g, false),
       trophaeSVG({ art: 'jackpot', stufe: 5 }, g, false), wappenSVG('bier', Math.round(g * 0.9)), spangeSVG(9, Math.round(g * 1.15), false)],
