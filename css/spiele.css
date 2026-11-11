@@ -229,7 +229,20 @@
 .pr-car { width: 50px; height: 20px; margin-top: 7px; transform: none; animation: cosCar 0.12s linear infinite alternate; }
 .pr-car svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 2px 1px rgba(0,0,0,0.45)); }
 @keyframes cosCar { from { transform: translateY(0); } to { transform: translateY(-0.8px); } }
-[data-racer="f1"] .pr-runner i { display: none; }
+/* Gezeichnete Tiere: Farbe steckt in der Figur, das alte Farbkästchen wird nicht gebraucht */
+.pr-runner > i { display: none; }
+.pr-svg { width: 42px; height: 30px; margin-left: -4px; transform: none; animation: svgHop 0.3s ease-in-out infinite alternate; }
+.pr-svg svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 1.5px 1px rgba(0,0,0,0.35)); }
+@keyframes svgHop { from { transform: translateY(0); } to { transform: translateY(-2.5px); } }
+.pr-svg .lg1, .pr-svg .lg2 { transform-box: fill-box; transform-origin: 50% 0; animation: legA 0.3s ease-in-out infinite alternate; }
+.pr-svg .lg2 { animation-name: legB; }
+@keyframes legA { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
+@keyframes legB { from { transform: rotate(24deg); } to { transform: rotate(-24deg); } }
+.pr-svg.r-schnecke { animation: none; }
+.pr-svg.r-schnecke .sn-body { transform-box: fill-box; transform-origin: 0 100%; animation: snail 0.9s ease-in-out infinite alternate; }
+@keyframes snail { to { transform: scaleX(1.08); } }
+.pr-svg.r-ente { animation: duck 0.3s ease-in-out infinite alternate; }
+@keyframes duck { from { transform: rotate(-5deg); } to { transform: rotate(5deg) translateY(-1.5px); } }
 [data-racer="f1"] .pr-runner::before { content: ''; position: absolute; right: 38px; top: 15px; width: 34px; height: 8px; pointer-events: none;
   background: repeating-linear-gradient(0deg, transparent 0 1.5px, rgba(255,255,255,0.75) 1.5px 2.5px, transparent 2.5px 4px);
   -webkit-mask: linear-gradient(90deg, transparent, #000); mask: linear-gradient(90deg, transparent, #000); animation: cosSpeed 0.25s linear infinite; }
