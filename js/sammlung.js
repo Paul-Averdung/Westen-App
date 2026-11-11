@@ -198,6 +198,8 @@
     { id: 'legendaer', gruppe: 'Casino & Shop', art: 'shop',      stufe: 5, name: 'Legendäres Teil',  text: 'Im Shop ein legendäres Teil gekauft.' },
   ];
   const ABENDE_STUFEN = [10, 25, 50, 75, 100];
+  const ANRECHNEN_BIS = 2026;        // Schützenfeste bis zu diesem Jahr werden über das Eintrittsjahr angerechnet
+  const JUNGSCHUETZEN_SEIT = 1991;   // früher kann niemand dabei gewesen sein
 
   // Stellt alles zusammen. Jedes Stück: { id, name, text, svg(groesse), hat, n, first, last, fortschritt }
   function stand() {
@@ -213,12 +215,26 @@
     });
 
     const gruppen = [];
-    // Schützenfest – eine Trophäe je Jahr, in dem an einem Festtag gezählt wurde
+    // Schützenfest – eine Trophäe je Jahr.
+    // Bis einschließlich ANRECHNEN_BIS zählt die Mitgliedschaft (Eintrittsjahr), weil es die App vorher nicht gab;
+    // danach nur noch Jahre, in denen an einem Festtag gezählt wurde.
     const jahre = {};
     ab.filter(a => istFesttag(a.date)).forEach(a => { const j = a.date.slice(0, 4); (jahre[j] = jahre[j] || []).push(a.date); });
-    const fest = Object.keys(jahre).sort().map(j => ({ id: 'fest' + j, name: 'Schützenfest ' + j, hat: true, n: jahre[j].length, einheit: ['Festtag', 'Festtagen'],
-      first: jahre[j][0], last: jahre[j][jahre[j].length - 1], text: 'Beim Schützenfest ' + j + ' an mindestens einem Festtag (Donnerstag bis Sonntag) mitgezählt.',
-      svg: g => trophaeSVG({ art: 'fest', schild: j }, g, false) }));
+    const ejFest = parseInt(localStorage.getItem('hopfenkonto_entry_year') || ''), angerechnet = {};
+    if (!isNaN(ejFest) && ejFest > 1900 && ejFest <= new Date().getFullYear()) {
+      for (let j = Math.max(ejFest, JUNGSCHUETZEN_SEIT); j <= ANRECHNEN_BIS; j++) if (festEnde(j).getTime() < Date.now()) angerechnet[j] = true;
+    }
+    const fest = [...new Set(Object.keys(jahre).concat(Object.keys(angerechnet)))].sort().map(j => {
+      const tage = jahre[j] || [], f = getFestDates(+j), iso = d => localDateStr(d.getTime());
+      const fakten = [];
+      if (angerechnet[j]) fakten.push(['Angerechnet', 'Mitglied seit ' + ejFest]);
+      if (tage.length) fakten.push(['Mitgezählt', 'an ' + tage.length + (tage.length === 1 ? ' Festtag' : ' Festtagen')]);
+      fakten.push(['Festtage', datum(iso(f.thu)).slice(0, 6) + ' bis ' + datum(iso(festEnde(+j)))]);
+      return { id: 'fest' + j, name: 'Schützenfest ' + j, hat: true, n: tage.length || 1, einmalig: tage.length < 2, fakten,
+        text: angerechnet[j] && !tage.length ? 'Schützenfest ' + j + ' – angerechnet über deine Mitgliedschaft, weil es die App damals noch nicht gab.'
+                             : 'Beim Schützenfest ' + j + ' an mindestens einem Festtag (Donnerstag bis Sonntag) mitgezählt.',
+        svg: g => trophaeSVG({ art: 'fest', schild: j }, g, false) };
+    });
     const jetzt = new Date(); let nj = jetzt.getFullYear();
     if (jetzt.getTime() > festEnde(nj).getTime() + 864e5) nj++;
     if (!jahre[nj]) {
