@@ -1,4 +1,4 @@
-// Szenen für die Fest- und Jahreszeiten-Themes (Schützenfest, Karneval, Sommer-Biergarten).
+// Szenen für die Fest- und Jahreszeiten-Themes (Schützenfest, Karneval, Oktoberfest).
 // Wird VOR js/themes.js geladen; der Theme-Katalog dort holt sich Szene und Animation aus window.THEME_SCENES.
 // Feinschliff (Animationen, Karten-Optik) in css/themes.css, Abschnitt "Fest-Themes".
 // Hinweis: Alle Dateien in js/ teilen sich einen Gültigkeitsbereich.
@@ -251,58 +251,103 @@
       span(el, 'confetti', '', `left:${rnd(0, 100).toFixed(1)}%;background:${cols[i % cols.length]};--w:${rnd(5, 9).toFixed(0)}px;--h:${rnd(8, 14).toFixed(0)}px;--dur:${rnd(6, 12).toFixed(1)}s;--delay:-${rnd(0, 12).toFixed(1)}s;--sway:${rnd(15, 45).toFixed(0)}px${i % 4 ? '' : ';border-radius:50%'}`);
   }
 
-  // ── Sommer-Biergarten ─────────────────────────────────────────────────────
-  function biergartenScene() {
-    const canopy = (cx, cy, r) => {
-      let g = '';
-      for (let i = 0; i < 22; i++) { const a = i * 2.39, d = r * Math.sqrt(i / 22); g += `<circle cx="${(cx + Math.cos(a) * d).toFixed(1)}" cy="${(cy + Math.sin(a) * d * 0.7).toFixed(1)}" r="${(r * 0.38).toFixed(1)}" fill="${i % 3 ? '#2f5d22' : '#3b6f2a'}"/>`; }
-      // Kastanienblüten ("Kerzen")
-      for (let i = 0; i < 12; i++) { const a = i * 1.9, d = r * 0.85; g += `<path d="M${(cx + Math.cos(a) * d).toFixed(1)},${(cy + Math.sin(a) * d * 0.7 + 8).toFixed(1)} l-3,0 l3,-11 l3,11 z" fill="#fff6e8" opacity="0.9"/>`; }
-      return g;
-    };
-    let lights = `<path d="M40,200 Q200,290 360,200" stroke="#2a1c10" stroke-width="1.3" fill="none"/>`;
-    for (let i = 0; i <= 14; i++) {
-      const t = i / 14, x = 40 + 320 * t, y = 200 + 2 * 45 * t * (1 - t) + 5;
-      lights += `<circle class="bulb" style="animation-delay:${(i * 0.41 % 2.2).toFixed(2)}s" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="url(#bgGlow)"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" fill="#fff4c2"/>`;
+  // ── Oktoberfest-Edition ───────────────────────────────────────────────────
+  // Liegendes Holzfass von vorne (Fassboden mit Dauben, Eisenreifen, Spundloch)
+  function fassBoden(cx, cy, r, zapf) {
+    let planks = '';
+    for (let i = -3; i <= 3; i++) {
+      const x = cx + i * r * 0.26, h = Math.sqrt(Math.max(0, (r * 0.84) ** 2 - (x - cx) ** 2));
+      planks += `<line x1="${x.toFixed(1)}" y1="${(cy - h).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(cy + h).toFixed(1)}" stroke="#8a5523" stroke-width="0.9" opacity="0.7"/>`;
     }
-    const table = (x, y, s) => `<g transform="translate(${x},${y}) scale(${s})">
-      <rect x="-70" y="-8" width="140" height="9" rx="2" fill="#8a5a2c"/><rect x="-70" y="-8" width="140" height="3" fill="#a8743e"/>
-      <path d="M-56,1 l-10,34 M-44,1 l10,34 M56,1 l-10,34 M44,1 l10,34" stroke="#5a3a1a" stroke-width="3"/>
-      <rect x="-76" y="16" width="38" height="5" rx="1" fill="#7a4e24"/><rect x="38" y="16" width="38" height="5" rx="1" fill="#7a4e24"/>
-      ${[-40, -6, 30].map(mx => `<g transform="translate(${mx},-30)"><rect x="0" y="0" width="16" height="22" rx="2" fill="#f2b43a" opacity="0.92"/>
-        <rect x="0" y="-5" width="16" height="7" rx="3" fill="#fffaf0"/><path d="M16,5 h4 q3,0 3,4 v4 q0,4 -3,4 h-4" stroke="#e8e0cc" stroke-width="2" fill="none"/></g>`).join('')}
-      <path d="M-62,-14 q4,-8 8,0 q4,-8 8,0" stroke="#b5712c" stroke-width="3" fill="none"/></g>`;
+    return `<g><circle cx="${cx}" cy="${cy}" r="${r}" fill="#9a5f28"/>
+      <circle cx="${cx}" cy="${cy}" r="${r * 0.86}" fill="url(#okWood)"/>${planks}
+      <circle cx="${cx}" cy="${cy}" r="${r * 0.93}" fill="none" stroke="#2f2f2f" stroke-width="${r * 0.08}"/>
+      <circle cx="${cx - r * 0.3}" cy="${cy - r * 0.35}" r="${r * 0.32}" fill="#fff6e0" opacity="0.12"/>
+      <circle cx="${cx}" cy="${cy - r * 0.45}" r="${r * 0.08}" fill="#4a2a10"/>
+      ${zapf ? `<rect x="${cx - 3}" y="${cy + r * 0.35}" width="6" height="${r * 0.35}" rx="1.5" fill="#d4a63a"/><rect x="${cx - 6}" y="${cy + r * 0.32}" width="12" height="4" rx="2" fill="#b8892e"/><circle cx="${cx}" cy="${cy + r * 0.72}" r="2" fill="#d4a63a"/>` : ''}</g>`;
+  }
+  // Stehendes Fass (Seitenansicht) mit gewölbten Dauben und zwei Reifen
+  function fassStehend(x, y, sc, oben) {
+    return `<g transform="translate(${x},${y}) scale(${sc})">
+      <ellipse cx="0" cy="1" rx="26" ry="4" fill="#3a2a10" opacity="0.25"/>
+      <path d="M-20,0 Q-27,-32 -20,-64 H20 Q27,-32 20,0 Z" fill="url(#okStave)"/>
+      ${[-12, -4, 4, 12].map(d => `<path d="M${d},0 Q${d * 1.35},-32 ${d},-64" stroke="#7a4518" stroke-width="0.9" fill="none" opacity="0.7"/>`).join('')}
+      <path d="M-22.6,-12 Q0,-9 22.6,-12" stroke="#2f2f2f" stroke-width="3.4" fill="none"/>
+      <path d="M-22.6,-52 Q0,-49 22.6,-52" stroke="#2f2f2f" stroke-width="3.4" fill="none"/>
+      <ellipse cx="0" cy="-64" rx="20" ry="4.5" fill="#b8793a" stroke="#2f2f2f" stroke-width="1.6"/>
+      ${oben || ''}</g>`;
+  }
+  const MASS = (x, y) => `<g transform="translate(${x},${y})"><rect x="-6" y="-17" width="12" height="17" rx="1.5" fill="#f2b43a" opacity="0.92" stroke="#fff" stroke-width="0.8"/>
+      <rect x="-6.5" y="-21" width="13" height="5.5" rx="2.5" fill="#fffaf0"/><path d="M6,-14 h3.5 q2.5,0 2.5,3 v4 q0,3 -2.5,3 H6" stroke="#eee" stroke-width="1.8" fill="none"/></g>`;
+  const BREZN = (x, y, s) => `<path transform="translate(${x},${y}) scale(${s})" d="M-9,2 Q-14,-10 -4,-10 Q4,-10 0,-2 Q-4,-10 4,-10 Q14,-10 9,2 Q4,8 0,0 Q-4,8 -9,2 Z" fill="none" stroke="#8a4a14" stroke-width="3.2" stroke-linejoin="round"/>`;
+  function lebkuchenherz(x, y, s, txt) {
+    return `<g transform="translate(${x},${y}) scale(${s})"><line x1="-9" y1="-22" x2="0" y2="-34" stroke="#1e6fc8" stroke-width="1.2"/><line x1="9" y1="-22" x2="0" y2="-34" stroke="#1e6fc8" stroke-width="1.2"/>
+      <path d="M0,16 C-26,0 -24,-24 -10,-24 C-4,-24 -1,-20 0,-17 C1,-20 4,-24 10,-24 C24,-24 26,0 0,16 Z" fill="#8b4a1e"/>
+      <path d="M0,12 C-21,-1 -20,-20 -10,-20 C-5,-20 -1.5,-17 0,-13 C1.5,-17 5,-20 10,-20 C20,-20 21,-1 0,12 Z" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="2 1.6"/>
+      <text x="0" y="-3" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-weight="700" font-size="7.5" fill="#ff9ec4">${txt}</text>
+      <circle cx="-12" cy="-12" r="1.6" fill="#3aa0ff"/><circle cx="12" cy="-12" r="1.6" fill="#3aa0ff"/></g>`;
+  }
+  function rautenWimpel(y, sag, cls) {
+    let f = `<path d="M-10,${y} Q200,${y + sag * 2} 410,${y}" stroke="#e8eef6" stroke-width="1.3" fill="none"/>`;
+    for (let i = 0; i <= 14; i++) {
+      const t = i / 14, x = -10 + 420 * t, yy = y + 4 * sag * t * (1 - t) * 0.5 * 2 * 0.5 * 2;
+      f += `<polygon points="${(x - 10).toFixed(1)},${yy.toFixed(1)} ${(x + 10).toFixed(1)},${yy.toFixed(1)} ${x.toFixed(1)},${(yy + 24).toFixed(1)}" fill="url(#okRaute)" stroke="#1e6fc8" stroke-width="0.8"/>`;
+    }
+    return `<g class="${cls}">${f}</g>`;
+  }
+  function oktoberfestScene() {
+    // Riesenrad (dreht sich langsam), Festzelt mit Rautendach, Fasspyramide, Stehtisch-Fässer, Lebkuchenherzen
+    const W = { x: 92, y: 330, r: 100 };
+    let wheel = `<circle cx="${W.x}" cy="${W.y}" r="${W.r}" fill="none" stroke="#e9eef5" stroke-width="3"/><circle cx="${W.x}" cy="${W.y}" r="${W.r * 0.8}" fill="none" stroke="#e9eef5" stroke-width="1.2"/>`;
+    for (let i = 0; i < 16; i++) {
+      const a = i * Math.PI / 8, gx = W.x + Math.cos(a) * W.r, gy = W.y + Math.sin(a) * W.r;
+      wheel += `<line x1="${W.x}" y1="${W.y}" x2="${gx.toFixed(1)}" y2="${gy.toFixed(1)}" stroke="#e9eef5" stroke-width="1"/>`;
+      wheel += `<circle cx="${gx.toFixed(1)}" cy="${gy.toFixed(1)}" r="7" fill="${['#1e6fc8', '#ffffff', '#d32f2f', '#f2c200'][i % 4]}" stroke="#2a3a55" stroke-width="0.8"/>`;
+    }
+    let roof = '';
+    for (let i = 0; i < 9; i++) roof += `<path d="M${150 + i * 30},450 a15,9 0 0 0 30,0 z" fill="${i % 2 ? '#fff' : '#1e6fc8'}"/>`;
+    const fass = [[252, 664], [300, 664], [348, 664], [276, 618], [324, 618], [300, 572]].map(([x, y], i) => fassBoden(x, y, 24, i === 1)).join('');
+    const herz = [[40, 262, "I mog di"], [130, 286, "Servus"], [220, 292, "Prost!"], [310, 282, "Schatzi"], [385, 262, "O'zapft"]].map(([x, y, t]) => lebkuchenherz(x, y, 1, t)).join('');
     return `<svg class="scene-svg" viewBox="0 0 400 860" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="bgSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f6fb0"/><stop offset="0.45" stop-color="#e8a76a"/><stop offset="0.72" stop-color="#ffcf7a"/></linearGradient>
-        <radialGradient id="bgGlow"><stop offset="0" stop-color="#ffe9a0" stop-opacity="0.95"/><stop offset="1" stop-color="#ffb030" stop-opacity="0"/></radialGradient>
-        <radialGradient id="bgSun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff2c0"/><stop offset="0.4" stop-color="#ffc870" stop-opacity="0.6"/><stop offset="1" stop-color="#ff9a3c" stop-opacity="0"/></radialGradient>
-        <linearGradient id="bgKiesShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a3a10" stop-opacity="0.25"/><stop offset="0.3" stop-color="#5a3a10" stop-opacity="0"/></linearGradient>
-        <pattern id="bgKies" width="9" height="7" patternUnits="userSpaceOnUse"><rect width="9" height="7" fill="#d9c08f"/><circle cx="2" cy="2" r="1" fill="#b89d6a"/><circle cx="6.5" cy="5" r="1.2" fill="#c9b07c"/></pattern>
+        <linearGradient id="okSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a9be6"/><stop offset="0.55" stop-color="#a9d4f7"/></linearGradient>
+        <pattern id="okRaute" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="12" height="12" fill="#fff"/><rect width="6" height="6" fill="#1e6fc8"/><rect x="6" y="6" width="6" height="6" fill="#1e6fc8"/></pattern>
+        <radialGradient id="okWood" cx="0.45" cy="0.4" r="0.7"><stop offset="0" stop-color="#e2a660"/><stop offset="0.7" stop-color="#c3843f"/><stop offset="1" stop-color="#a8692c"/></radialGradient>
+        <linearGradient id="okStave" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a5220"/><stop offset="0.35" stop-color="#d49a55"/><stop offset="0.6" stop-color="#c3843f"/><stop offset="1" stop-color="#7a4518"/></linearGradient>
+        <pattern id="okSpiral" width="9" height="16" patternUnits="userSpaceOnUse" patternTransform="skewY(-35)"><rect width="9" height="16" fill="#fff"/><rect width="9" height="8" fill="#1e6fc8"/></pattern>
+        <pattern id="okGround" width="12" height="8" patternUnits="userSpaceOnUse"><rect width="12" height="8" fill="#e6d3a2"/><circle cx="3" cy="2" r="1" fill="#cdb684"/><circle cx="9" cy="6" r="1.1" fill="#d9c492"/></pattern>
       </defs>
-      <rect width="400" height="860" fill="url(#bgSky)"/>
-      <circle cx="200" cy="470" r="150" fill="url(#bgSun)"/>
-      <path d="M0,500 Q100,470 200,490 T400,480 V860 H0 Z" fill="#6b7f3a"/>
-      <rect x="40" y="150" width="14" height="400" fill="#4a2f1a"/><rect x="346" y="150" width="14" height="400" fill="#4a2f1a"/>
-      ${canopy(40, 90, 120)}${canopy(360, 100, 120)}
-      ${lights}
-      <rect y="540" width="400" height="320" fill="url(#bgKies)"/>
-      <rect y="540" width="400" height="320" fill="url(#bgKiesShade)"/>
-      ${table(110, 585, 0.9)}${table(300, 610, 1)}${gaeste()}${table(120, 690, 1.2)}${table(310, 740, 1.3)}${table(90, 810, 1.45)}
+      <rect width="400" height="860" fill="url(#okSky)"/>
+      ${driftClouds(6, 30, 360)}
+      <g class="ok-wheel">${wheel}</g><circle cx="${W.x}" cy="${W.y}" r="7" fill="#c0c8d4"/>
+      <path d="M${W.x},${W.y} L${W.x - 50},540 M${W.x},${W.y} L${W.x + 50},540" stroke="#d6dde6" stroke-width="5"/>
+      <rect x="150" y="430" width="250" height="22" fill="url(#okRaute)"/>${roof}
+      <rect x="150" y="452" width="250" height="88" fill="#8a5a2c"/>
+      ${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => `<rect x="${150 + i * 28}" y="452" width="2" height="88" fill="#6b4220"/>`).join('')}
+      <rect x="236" y="480" width="78" height="60" fill="#3a2410"/><rect x="236" y="480" width="78" height="60" fill="#ffcf75" opacity="0.3"/>
+      <rect x="196" y="456" width="158" height="22" rx="3" fill="#fff" stroke="#1e6fc8" stroke-width="2"/>
+      <text x="275" y="472" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-style="italic" font-size="15" fill="#1e6fc8">O'zapft is!</text>
+      ${[160, 384].map(x => `<line x1="${x}" y1="430" x2="${x}" y2="398" stroke="#777" stroke-width="1.4"/><path class="sf-flag" d="M${x},398 h18 v12 h-18 z" fill="url(#okRaute)"/>`).join('')}
+      <rect x="368" y="112" width="9" height="430" fill="url(#okSpiral)"/>
+      <ellipse cx="372.5" cy="112" rx="15" ry="5" fill="#2e7d32"/><path d="M357,112 q15,14 31,0" stroke="#2e7d32" stroke-width="3" fill="none"/>
+      <rect x="371.5" y="78" width="2" height="34" fill="#777"/><path class="sf-flag" d="M373.5,78 h20 v13 h-20 z" fill="url(#okRaute)"/>
+      ${[170, 230, 290, 350].map((y, i) => `<line x1="${i % 2 ? 377 : 368}" y1="${y}" x2="${i % 2 ? 392 : 353}" y2="${y}" stroke="#555" stroke-width="1"/><rect x="${i % 2 ? 384 : 343}" y="${y}" width="16" height="12" rx="1.5" fill="#fff" stroke="#1e6fc8" stroke-width="1"/><path d="M${i % 2 ? 388 : 347},${y + 9} l4,-6 l4,6" stroke="#8a5a2c" stroke-width="1.4" fill="none"/>`).join('')}
+      <rect y="540" width="400" height="320" fill="url(#okGround)"/>
+      <rect x="230" y="686" width="140" height="8" rx="2" fill="#6b4220"/><rect x="236" y="694" width="8" height="14" fill="#5a3818"/><rect x="356" y="694" width="8" height="14" fill="#5a3818"/>
+      ${fass}
+      ${fassStehend(70, 640, 1, MASS(-9, -66) + MASS(9, -66) + BREZN(0, -70, 0.7))}
+      ${fassStehend(150, 700, 1.15, MASS(-10, -66) + MASS(8, -66) + MASS(0, -62))}
+      ${fassStehend(60, 790, 1.35, BREZN(-6, -70, 0.9) + MASS(10, -66))}
+      ${fassStehend(330, 800, 1.3, MASS(-8, -66) + MASS(9, -66))}
+      ${rautenWimpel(18, 34, 'sway')}
+      <path d="M-10,250 Q200,320 410,250" stroke="#1e6fc8" stroke-width="1.2" fill="none"/>
+      <g class="sway s2">${herz}</g>
     </svg>`;
-  }
-  // ein paar Gäste, die mit dem Krug in der Hand zwischen den Tischen stehen
-  function gaeste() {
-    return [[200, 600], [228, 612], [52, 650], [380, 668], [214, 700]].map(([x, y], i) => person(x, y, 0.7 + (y - 560) / 300, i * 3 + 1, false)).join('');
-  }
-  function biergartenInit(el) {
-    for (let i = 0; i < 14; i++)
-      span(el, 'firefly', '', `left:${rnd(5, 95).toFixed(0)}%;top:${rnd(30, 85).toFixed(0)}%;--dur:${rnd(5, 9).toFixed(1)}s;--delay:-${rnd(0, 9).toFixed(1)}s;--dx:${rnd(-40, 40).toFixed(0)}px;--dy:${rnd(-40, 20).toFixed(0)}px`);
   }
 
   window.THEME_SCENES = {
     schuetzenfest: { scene: schuetzenfestScene, init: schuetzenfestInit },
     karneval:      { scene: karnevalScene,      init: karnevalInit },
-    biergarten:    { scene: biergartenScene,    init: biergartenInit },
+    oktoberfest:   { scene: oktoberfestScene,   init: null },
   };
 })();

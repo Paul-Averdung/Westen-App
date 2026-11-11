@@ -161,23 +161,28 @@ body[data-theme="karneval"] .drink-card {
               linear-gradient(90deg, #ff3b5c, #ffd23f, #3bd16f, #2ec4b6, #7b5cff, #ff3b5c) border-box;
 }
 
-/* Biergarten: Glühwürmchen, Holzkarten */
-.firefly { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #fff3a0; box-shadow: 0 0 8px 3px rgba(255,230,120,0.7);
-  animation: firefly var(--dur) ease-in-out var(--delay) infinite alternate; }
-@keyframes firefly { 0% { transform: translate(0,0); opacity: 0.1; } 50% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)); opacity: 0.2; } }
-/* Karten leicht durchsichtig, damit Tische und Krüge durchscheinen */
-body[data-theme="biergarten"] .drink-card { -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px); box-shadow: 0 6px 18px rgba(40,20,0,0.25); }
-body[data-theme="biergarten"] .section-label { text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
-body[data-theme="biergarten"] .header, body[data-theme="biergarten"] .graph-card {
-  background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 26px, rgba(0,0,0,0.22) 26px 28px), var(--surface);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,230,180,0.15);
+/* Oktoberfest: Riesenrad dreht sich, Karten mit blau-weißem Rand */
+.ok-wheel { transform-box: view-box; transform-origin: 92px 330px; animation: okWheel 60s linear infinite; }
+@keyframes okWheel { to { transform: rotate(360deg); } }
+/* Rand als eigene Ebene (Maske), damit die halbdurchsichtige Karte innen nicht gestreift wird */
+body[data-theme="oktoberfest"] .drink-card {
+  position: relative; border: 3px solid transparent;
+  -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px);   /* Fässer scheinen durch */
 }
+body[data-theme="oktoberfest"] .drink-card::before {
+  content: ''; position: absolute; inset: -3px; border-radius: inherit; padding: 3px; pointer-events: none;
+  background: repeating-linear-gradient(45deg, #1e6fc8 0 7px, #ffffff 7px 14px);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+body[data-theme="oktoberfest"] .header, body[data-theme="oktoberfest"] .graph-card { border: 2px solid rgba(255,255,255,0.6); }
+body[data-theme="oktoberfest"] .section-label { text-shadow: 0 1px 3px rgba(0,30,80,0.8); }
 
 /* Ruhige Variante bei "Bewegung reduzieren" */
 @media (prefers-reduced-motion: reduce) {
   .leaf, .flake, .gold-spark, .aurora, .sway, .bulb, .neon, .star, .smoke,
-  .sky-bird, .sky-bird svg, .sf-sun, .sf-flag, .sf-box, .confetti, .kv-balloon, .firefly { animation: none !important; }
-  .confetti, .firefly, .sky-bird { display: none; }
+  .sky-bird, .sky-bird svg, .sf-sun, .sf-flag, .sf-box, .confetti, .kv-balloon, .ok-wheel { animation: none !important; }
+  .confetti, .sky-bird { display: none; }
   .sv-cloud { animation-play-state: paused !important; }
   .fw-canvas { display: none; }
 }
