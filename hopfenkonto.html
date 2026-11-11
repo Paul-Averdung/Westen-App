@@ -368,6 +368,7 @@
 <script src="js/spiele/roulette.js"></script>
 <script src="js/casino.js"></script>
 <script src="js/verlauf.js"></script>
+<script src="js/offline.js"></script>
 </script>
 
 
@@ -534,7 +535,7 @@
       </button>
     </div>
     <div style="margin-top:8px; border-top:0.5px solid #3B6D11; padding-top:10px;">
-      <button onclick="location.reload()"
+      <button onclick="window.hkAppAktualisieren ? hkAppAktualisieren(this) : location.reload()"
         style="width:100%; padding:8px; background:transparent; border:0.5px solid #3B6D11;
                color:#97C459; border-radius:8px; font-size:13px; cursor:pointer;
                font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
