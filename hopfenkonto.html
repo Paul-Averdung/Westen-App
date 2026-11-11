@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hopfenkonto">
@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="css/themes.css">
 <link rel="stylesheet" href="css/spiele.css">
 <link rel="stylesheet" href="css/neuigkeiten.css">
+<link rel="stylesheet" href="css/nav.css">
 </head>
 <body>
 <div id="theme-scene" aria-hidden="true"></div>
@@ -161,79 +162,6 @@
     <div id="countdown-date" style="color:var(--line); font-size:11px; margin-top:5px;"></div>
   </div>
 
-  <!-- Settings -->
-  <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin:10px 0 4px;">
-    <button id="settings-btn" onclick="toggleSettings()"
-      style="background:none; border:none; color:var(--icon); cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
-      title="Einstellungen">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" stroke="none">
-        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54A.49.49 0 0 0 13.92 2.4H10.08a.49.49 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.72 8.87c-.12.22-.07.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94L2.84 14.52c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/>
-      </svg>
-    </button>
-    <button id="reaction-btn" onclick="openReactionTest()"
-      style="background:none; border:none; color:var(--icon); cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
-      title="Promille-Reaktionstest">
-      <svg viewBox="-1 -1 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-        <circle cx="11" cy="11" r="9"/>
-        <circle cx="11" cy="11" r="3.5"/>
-        <line x1="11" y1="1"  x2="11" y2="6.5"/>
-        <line x1="11" y1="15.5" x2="11" y2="21"/>
-        <line x1="1"  y1="11" x2="6.5" y2="11"/>
-        <line x1="15.5" y1="11" x2="21" y2="11"/>
-      </svg>
-    </button>
-    <button id="timer-btn" onclick="openTimerOverlay()"
-      style="background:none; border:none; color:var(--icon); cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
-      title="Exen-Timer">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" stroke="none">
-        <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61 1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.96 8.96 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9a9 9 0 0 0 9-9 8.96 8.96 0 0 0-2.97-6.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
-      </svg>
-    </button>
-    <button id="dice-btn" onclick="openDiceGame()"
-      style="background:none; border:none; color:var(--icon); cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
-      title="Würfelspiel">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="2" width="20" height="20" rx="3.5"/>
-        <circle cx="8"  cy="8"  r="1.3" fill="currentColor" stroke="none"/>
-        <circle cx="16" cy="8"  r="1.3" fill="currentColor" stroke="none"/>
-        <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/>
-        <circle cx="8"  cy="16" r="1.3" fill="currentColor" stroke="none"/>
-        <circle cx="16" cy="16" r="1.3" fill="currentColor" stroke="none"/>
-      </svg>
-    </button>
-    <button id="slots-btn" onclick="openCasino()"
-      style="background:none; border:none; color:var(--icon); cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
-      title="Casino">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <!-- machine body -->
-        <rect x="1" y="4" width="19" height="16" rx="2"/>
-        <!-- 3 reel windows -->
-        <rect x="3"   y="8" width="4" height="7" rx="1" stroke-width="1.5"/>
-        <rect x="8.5" y="8" width="4" height="7" rx="1" stroke-width="1.5"/>
-        <rect x="14"  y="8" width="4" height="7" rx="1" stroke-width="1.5"/>
-        <!-- lever arm -->
-        <line x1="22" y1="5" x2="22" y2="15"/>
-        <circle cx="22" cy="16.5" r="2" fill="currentColor" stroke="none"/>
-      </svg>
-    </button>
-    <button id="shop-btn" onclick="openShop()"
-      style="background:none; border:none; color:var(--icon); cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
-      title="Shop" aria-label="Shop">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 8h14l-1.2 12.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8z"/>
-        <path d="M9 10V6.5a3 3 0 0 1 6 0V10"/>
-      </svg>
-    </button>
-    <button id="verlauf-btn" onclick="openVerlauf()"
-      style="background:none; border:none; color:var(--icon); cursor:pointer; opacity:0.7; padding:4px 8px; line-height:0;"
-      title="Verlauf">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 11a9 9 0 1 0 2.6-6.36"/>
-        <path d="M3 3.5V8h4.5"/>
-        <path d="M12 7v5l3.5 2"/>
-      </svg>
-    </button>
-  </div>
 </div>
 
 <!-- ── Orden Milestone Animation Overlay ────────────────────────── -->
@@ -369,6 +297,7 @@
 <script src="js/spiele/roulette.js"></script>
 <script src="js/casino.js"></script>
 <script src="js/verlauf.js"></script>
+<script src="js/nav.js"></script>
 <script src="js/neuigkeiten.js"></script>
 <script src="js/offline.js"></script>
 </script>
@@ -514,11 +443,36 @@
   </div>
 </div>
 
+<!-- ── Spiele (Partyspiele für den Tisch) ───────────────────────────── -->
+<div id="spiele-overlay">
+  <div class="sp-wrap">
+    <div class="sp-head"><div class="sp-title">Spiele</div><div class="sp-sub">Für die Runde am Tisch</div></div>
+    <button class="sp-card sp-rxn" onclick="openReactionTest()">
+      <span class="sp-icon"><svg viewBox="-1 -1 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="9"/><circle cx="11" cy="11" r="3.5"/><line x1="11" y1="1" x2="11" y2="6.5"/><line x1="11" y1="15.5" x2="11" y2="21"/><line x1="1" y1="11" x2="6.5" y2="11"/><line x1="15.5" y1="11" x2="21" y2="11"/></svg></span>
+      <span class="sp-text"><b>Reaktionstest</b><i>Drei Ziele, so schnell du kannst – wie fit bist du noch?</i></span><span class="sp-go">›</span>
+    </button>
+    <button class="sp-card sp-timer" onclick="openTimerOverlay()">
+      <span class="sp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="8"/><path d="M12 9.5v4l2.5 2"/><path d="M9.5 2.5h5"/><path d="M12 2.5v3"/><path d="M18.5 6.5l1.5-1.5"/></svg></span>
+      <span class="sp-text"><b>Exen-Timer</b><i>Stoppuhr auf die Hundertstel – wer ext am schnellsten?</i></span><span class="sp-go">›</span>
+    </button>
+    <button class="sp-card sp-dice" onclick="openDiceGame()">
+      <span class="sp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="19" height="19" rx="3.5"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.3" fill="currentColor" stroke="none"/></svg></span>
+      <span class="sp-text"><b>Würfelspiel</b><i>Wer kauft die nächste Runde? Der Würfel entscheidet.</i></span><span class="sp-go">›</span>
+    </button>
+    <button class="sp-more" onclick="showTab('casino')">Lust auf Coins? Zum Casino ›</button>
+  </div>
+</div>
+
 <!-- ── Einstellungen Overlay ────────────────────────────────────────── -->
 <div id="settings-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,15,2,0.97); z-index:11000; font-family:-apple-system,BlinkMacSystemFont,sans-serif; overflow-y:auto;">
   <button onclick="closeSettings()" style="position:absolute;top:18px;right:18px;background:none;border:none;color:#97C459;font-size:22px;cursor:pointer;z-index:2;padding:4px 8px;">✕</button>
   <div style="padding:60px 20px 40px; max-width:420px; margin:0 auto;">
-    <div style="color:#EFC93D;font-size:22px;font-weight:700;margin-bottom:16px;text-align:center;">⚙️ Einstellungen</div>
+    <div class="mehr-title">Mehr</div>
+    <div class="mehr-links">
+      <button onclick="openVerlauf()"><span>📖</span><b>Verlauf</b><i>Deine bisherigen Abende</i></button>
+      <button onclick="openMedalGallery()"><span>🏅</span><b>Orden</b><i>Alle Orden im Überblick</i></button>
+    </div>
+    <div class="mehr-label">Einstellungen</div>
     <label style="color:#97C459; font-size:12px; display:block; margin-bottom:4px;">Mitgliedsnummer (für Gutscheine)</label>
     <div class="rd-id" style="margin-bottom:14px;"><span class="member-id-val">—</span><button onclick="copyMemberId(this)">Kopieren</button></div>
     <label style="color:#97C459; font-size:12px; display:block; margin-bottom:4px;">Eintrittsjahr</label>
@@ -579,6 +533,32 @@
     </div>
   </div>
 </div>
+
+<!-- ── Navigation unten (js/nav.js, css/nav.css) ────────────────────── -->
+<nav id="tabbar" aria-label="Hauptnavigation">
+  <div class="tb-inner">
+    <button class="tb-item on" data-tab="home" onclick="showTab('home')">
+      <span class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10v10.5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 10.5h2.2a2.3 2.3 0 0 1 2.3 2.3v1.9a2.3 2.3 0 0 1-2.3 2.3H15"/><path d="M5 8a2.6 2.6 0 0 1 1.6-4.6A3.2 3.2 0 0 1 12.400 3 2.700 2.700 0 0 1 15 8"/><path d="M8.300 11.500v5.500M11.700 11.500v5.500"/></svg></span>
+      <span class="tb-label">Zähler</span>
+    </button>
+    <button class="tb-item" data-tab="spiele" onclick="showTab('spiele')">
+      <span class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3.500"/><circle cx="8.200" cy="8.200" r="1.300" fill="currentColor" stroke="none"/><circle cx="15.800" cy="8.200" r="1.300" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.300" fill="currentColor" stroke="none"/><circle cx="8.200" cy="15.800" r="1.300" fill="currentColor" stroke="none"/><circle cx="15.800" cy="15.800" r="1.300" fill="currentColor" stroke="none"/></svg></span>
+      <span class="tb-label">Spiele</span>
+    </button>
+    <button class="tb-item" data-tab="casino" onclick="showTab('casino')">
+      <span class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4.500" width="17" height="15" rx="2.200"/><rect x="4.300" y="8.500" width="3.400" height="6.500" rx="0.900" stroke-width="1.500"/><rect x="8.800" y="8.500" width="3.400" height="6.500" rx="0.900" stroke-width="1.500"/><rect x="13.300" y="8.500" width="3.400" height="6.500" rx="0.900" stroke-width="1.500"/><path d="M21.500 6.500v8"/><circle cx="21.500" cy="5" r="1.600" fill="currentColor" stroke="none"/></svg></span>
+      <span class="tb-label">Casino</span>
+    </button>
+    <button class="tb-item" data-tab="shop" onclick="showTab('shop')">
+      <span class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.200 12.200a1 1 0 0 1-1 .8H7.200a1 1 0 0 1-1-.8z"/><path d="M9 10.500V6.500a3 3 0 0 1 6 0v4"/></svg></span>
+      <span class="tb-label">Shop</span>
+    </button>
+    <button class="tb-item" data-tab="mehr" onclick="showTab('mehr')">
+      <span class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+      <span class="tb-label">Mehr</span>
+    </button>
+  </div>
+</nav>
 
 </body>
 </html>

@@ -1,0 +1,94 @@
+/* ── Navigation unten (js/nav.js) ───────────────────────────────────────── */
+:root { --nav-h: calc(58px + env(safe-area-inset-bottom, 0px)); }
+
+#tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 11500;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
+  border-top: 0.5px solid var(--line);
+  box-shadow: 0 -6px 18px rgba(0,0,0,0.28);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none;
+}
+.tb-inner { display: flex; max-width: 460px; margin: 0 auto; height: 58px; padding: 0 6px; }
+.tb-item {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  background: none; border: none; padding: 0; cursor: pointer; font-family: inherit;
+  color: var(--text-soft); opacity: 0.72; transition: color 0.18s ease, opacity 0.18s ease;
+}
+.tb-icon {
+  width: 52px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s ease, transform 0.2s cubic-bezier(.3,1.5,.5,1);
+}
+.tb-icon svg { width: 23px; height: 23px; }
+.tb-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.1px; line-height: 1; }
+.tb-item.on { color: var(--accent); opacity: 1; }
+.tb-item.on .tb-icon { background: var(--surface-2); }
+.tb-item.on .tb-label { font-weight: 800; }
+.tb-item:active .tb-icon { transform: scale(0.9); }
+
+/* Platz für die Leiste: Startseite und die Bereiche darunter */
+body { padding-bottom: calc(12px + var(--nav-h)); }
+.app.tb-rein { animation: mgIn 0.2s ease; }
+.cs-wrap { padding-bottom: calc(24px + var(--nav-h)); }
+#shop-overlay { padding-bottom: calc(24px + var(--nav-h)); }
+#shop-toast { bottom: calc(16px + var(--nav-h)); }
+#settings-overlay > div { padding-top: 22px !important; padding-bottom: calc(24px + var(--nav-h)) !important; }
+#settings-overlay[style*="block"] { animation: mgIn 0.2s ease; }
+
+/* Die Bereiche sind jetzt Reiter – ihr ✕ wird nicht mehr gebraucht */
+#casino-overlay .sh-close, #shop-overlay .sh-head .sh-close, #settings-overlay > button { display: none; }
+
+/* Alles, was sich über einem Bereich öffnet (einzelne Spiele, Verlauf, Orden), liegt über der Leiste */
+#game-overlay, #slots-overlay, #medal-gallery, #medal-overlay { z-index: 11600; }
+#reaction-overlay, #timer-overlay, #dice-overlay, #verlauf-overlay { z-index: 11600 !important; }
+
+/* ── Bereich „Spiele“ ───────────────────────────────────────────────────── */
+#spiele-overlay {
+  display: none; position: fixed; inset: 0; z-index: 11000; overflow-y: auto;
+  background: radial-gradient(circle at 50% 0%, #1c3a08 0%, #061202 70%);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+#spiele-overlay.open { display: block; animation: mgIn 0.2s ease; }
+.sp-wrap { max-width: 460px; margin: 0 auto; padding: 0 14px calc(24px + var(--nav-h)); }
+.sp-head { padding: 14px 0 14px; }
+.sp-title { color: #EFC93D; font-size: 24px; font-weight: 900; }
+.sp-sub { color: #97C459; font-size: 13px; margin-top: 2px; }
+.sp-card {
+  position: relative; overflow: hidden; width: 100%; display: flex; align-items: center; gap: 14px; text-align: left;
+  padding: 16px 14px; margin-bottom: 12px; border-radius: 16px; border: 1.5px solid rgba(255,255,255,0.14);
+  color: #fff; cursor: pointer; font-family: inherit; box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+  -webkit-tap-highlight-color: transparent; transition: transform 0.12s;
+}
+.sp-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(255,255,255,0.16), transparent 45%); pointer-events: none; }
+.sp-card:active { transform: scale(0.98); }
+.sp-rxn   { background: linear-gradient(150deg, #a3262f 0%, #4a0d14 100%); }
+.sp-timer { background: linear-gradient(150deg, #b0791a 0%, #4a2f06 100%); }
+.sp-dice  { background: linear-gradient(150deg, #2b6f9e 0%, #0d2c44 100%); }
+.sp-icon { flex: none; width: 54px; height: 54px; border-radius: 15px; background: rgba(0,0,0,0.26); display: flex; align-items: center; justify-content: center; }
+.sp-icon svg { width: 30px; height: 30px; }
+.sp-text { flex: 1; min-width: 0; }
+.sp-text b { display: block; font-size: 17px; font-weight: 800; }
+.sp-text i { display: block; font-style: normal; font-size: 13px; line-height: 1.35; opacity: 0.85; margin-top: 2px; }
+.sp-go { flex: none; font-size: 24px; opacity: 0.7; }
+.sp-more { display: block; width: 100%; margin-top: 6px; padding: 12px 0; background: none; border: none; color: #97C459; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+
+/* ── Bereich „Mehr“ (früher Einstellungen) ──────────────────────────────── */
+#settings-overlay { background: radial-gradient(circle at 50% 0%, #1c3a08 0%, #061202 70%) !important; }
+.mehr-title { color: #EFC93D; font-size: 24px; font-weight: 900; margin-bottom: 14px; }
+.mehr-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+.mehr-links button {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 12px;
+  background: #102504; border: 1px solid #2a4a12; border-radius: 14px; cursor: pointer; font-family: inherit;
+}
+.mehr-links span { font-size: 22px; margin-bottom: 4px; }
+.mehr-links b { color: #EAF3C8; font-size: 15px; font-weight: 800; }
+.mehr-links i { font-style: normal; color: #97C459; font-size: 12px; }
+.mehr-label { color: #97C459; font-size: 12px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 10px; }
+
+/* Oben Platz für die Statusleiste, wenn die App vom Homescreen im Vollbild läuft */
+body { padding-top: max(12px, env(safe-area-inset-top, 0px)); }
+.cs-head, .sp-head, #shop-overlay .sh-head { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+#settings-overlay > div { padding-top: calc(22px + env(safe-area-inset-top, 0px)) !important; }

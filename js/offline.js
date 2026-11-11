@@ -15,7 +15,7 @@
     b.id = 'hk-update-hinweis';
     b.type = 'button';
     b.textContent = '✨ Neue Version – tippen zum Aktualisieren';
-    b.style.cssText = 'position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);' +
+    b.style.cssText = 'position:fixed;left:50%;bottom:calc(72px + env(safe-area-inset-bottom));transform:translateX(-50%);' +
       'z-index:20000;max-width:92%;white-space:nowrap;padding:11px 16px;border-radius:999px;border:1px solid #EFC93D;' +
       'background:#173404;color:#EFC93D;font-size:13px;font-weight:600;cursor:pointer;' +
       'box-shadow:0 6px 20px rgba(0,0,0,.45);font-family:-apple-system,BlinkMacSystemFont,sans-serif;';
