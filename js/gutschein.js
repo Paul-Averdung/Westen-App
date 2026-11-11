@@ -85,7 +85,7 @@
     try { localStorage.setItem(KEY_REDEEMED, JSON.stringify(list)); } catch(e) {}
     const teile = [];
     if (p.c > 0) { window.slotsAddCoins(p.c); teile.push('🎁 +' + p.c + ' Coins gutgeschrieben!'); }
-    if (p.t && window.Trophaeen) teile.push('🛡️ Wappen erhalten: ' + Trophaeen.wappen(p.t, p.n));
+    if (p.t && window.Trophaeen) teile.push(Trophaeen.verleihen(p));
     if (window.refreshCasino) window.refreshCasino();
     msg.className = 'ok';
     msg.textContent = teile.join(' ') + (p.r ? ' (' + p.r + ')' : '');

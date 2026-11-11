@@ -35,7 +35,7 @@
     clamp(id) { const el = document.getElementById(id); if (parseInt(el.value) > MAX_BET) el.value = MAX_BET; },
     // Einsatz abbuchen; false wenn zu wenig Coins
     take(n) { const ok = Coins.spend(n); GameShell.coins(); if (!ok) GameShell.toast('Nicht genug Coins'); return ok; },
-    pay(n, big) { if (n <= 0) return; big ? Coins.add(n) : Coins.credit(n); GameShell.coins(); setTimeout(GameShell.coins, 1500); },
+    pay(n, big) { if (n <= 0) return; if (window.Rekorde) Rekorde.gewinn(n, document.querySelector('#game-overlay .gm-title').textContent.replace(/^[^A-Za-zÄÖÜ]+/, '').trim()); big ? Coins.add(n) : Coins.credit(n); GameShell.coins(); setTimeout(GameShell.coins, 1500); },
     toast(text) {
       const t = document.getElementById('game-toast');
       t.textContent = text; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');

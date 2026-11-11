@@ -69,3 +69,14 @@
 
 /* Verweis in der Medaillen-Übersicht des Abends */
 .mg-sammlung { display: block; width: 100%; margin-top: 12px; padding: 9px 0; background: none; border: 1px solid #3B6D11; border-radius: 10px; color: #97C459; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+
+/* Rekorde */
+.sa-rekorde { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.sa-rek { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 10px 12px; background: #102504; border: 1px solid #2a4a12; border-radius: 14px; cursor: pointer; font-family: inherit; transition: transform 0.12s; }
+.sa-rek:active { transform: scale(0.98); }
+.sa-rek-bild { flex: none; }
+.sa-rek-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.sa-rek-text i { font-style: normal; color: #97C459; font-size: 12px; font-weight: 700; }
+.sa-rek-text b { color: #EFC93D; font-size: 20px; font-weight: 900; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.sa-rek-text u { text-decoration: none; color: #C0DD97; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sa-rek.zu .sa-rek-text b { color: #7d8a70; }

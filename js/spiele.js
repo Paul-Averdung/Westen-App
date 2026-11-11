@@ -300,7 +300,7 @@ window.startReactionTest = function() {
 
   // ── Coins helpers ────────────────────────────────────────────────────────
   function getCoins() { return parseInt(localStorage.getItem('hopfenkonto_coins') || '-1'); }
-  function setCoins(n) { localStorage.setItem('hopfenkonto_coins', String(Math.max(0, n))); }
+  function setCoins(n) { localStorage.setItem('hopfenkonto_coins', String(Math.max(0, n))); if (window.Rekorde) Rekorde.konto(n); }
 
   function checkDailyCoins() {
     const today = new Date().toDateString();
@@ -551,6 +551,7 @@ window.startReactionTest = function() {
       const jackpot = syms[0] === '🍺';
       if (jackpot && window.Trophaeen) Trophaeen.award('jackpot', 2800);
       const gain = bet * (jackpot ? JACKPOT_X : 3);
+      if (window.Rekorde) Rekorde.gewinn(gain, 'Hopfen-Slots');
       const before = getCoins();
       setCoins(before + gain);
       _doubleRisk = gain;
@@ -597,6 +598,7 @@ window.startReactionTest = function() {
         setCoins(before + _doubleRisk);
         countCoins(before, before + _doubleRisk);
         _doubleRisk *= 2;
+        if (window.Rekorde) Rekorde.gewinn(_doubleRisk, 'Hopfen-Slots');
         if (msgEl) { msgEl.style.color = '#6fe08d'; msgEl.textContent = 'Verdoppelt'; }
         if (btn && _doubleCount < MAX_DOUBLE) {
           btn.disabled = false;

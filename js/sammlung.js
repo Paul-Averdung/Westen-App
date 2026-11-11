@@ -6,11 +6,15 @@
 //   Wappen    – Vereinsämter und Ehrungen, kommen per Code (js/gutschein.js):
 //               localStorage 'hopfenkonto_wappen' = [ { t, n, d } ]
 //   Treue     – eine Spange je 3 Jahre, berechnet aus dem Eintrittsjahr (Einstellungen).
+//   Rekorde   – bester Abend und bestes Schützenfest aus dem Verlauf berechnet; höchster Gewinn und
+//               höchster Kontostand werden mitgeschrieben: localStorage 'hopfenkonto_rekorde'
+//   Verliehene Trophäen – frei gestaltbar per Code (Titel, Beschreibung, Stufe, Motiv), ohne App-Update:
+//               localStorage 'hopfenkonto_verliehen' = [ { n, x, s, a, d } ]
 // Neue Spiel-Trophäe: Eintrag in SPIEL_TROPHAEEN + an passender Stelle Trophaeen.award('id') aufrufen.
 // Optik in css/sammlung.css.
 // Hinweis: Alle Dateien in js/ teilen sich einen Gültigkeitsbereich.
 (function() {
-  const K_TROPH = 'hopfenkonto_trophaeen', K_WAPPEN = 'hopfenkonto_wappen';
+  const K_TROPH = 'hopfenkonto_trophaeen', K_WAPPEN = 'hopfenkonto_wappen', K_VERL = 'hopfenkonto_verliehen', K_REK = 'hopfenkonto_rekorde';
   const lesen = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) || d; } catch(e) { return d; } };
   const schreiben = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
   const heute = () => localDateStr(Date.now());
@@ -48,7 +52,16 @@
       <g fill="#fff" fill-opacity="0.75"><circle cx="-9" cy="7" r="1.100"/><circle cx="-9" cy="1" r="1.100"/><circle cx="-6.300" cy="-6.300" r="1.100"/><circle cx="0" cy="-10.800" r="1.100"/><circle cx="6.300" cy="-6.300" r="1.100"/><circle cx="9" cy="1" r="1.100"/><circle cx="9" cy="7" r="1.100"/></g>`,
     shop: c => `<path d="M-12-3 -6-11h12l6 8L0 13z" fill="${c}"/><path d="M-12-3h24M-6-11l3 8L0 13M6-11 3-3 0 13" fill="none" stroke="#fff" stroke-opacity="0.7" stroke-width="1.100"/>`,
     fest: c => `<circle r="12" fill="none" stroke="${c}" stroke-width="2.200"/><circle r="7.300" fill="none" stroke="${c}" stroke-width="2.200"/><circle r="2.800" fill="${c}"/>`,
+    stern: c => stern(0, 0.500, 13, c, c),
+    scheibe: c => MOTIV.fest(c),
+    muenze: c => `<circle r="12.500" fill="${c}"/><circle r="9" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1.200"/>` + stern(0, 0.300, 6, '#fff', '#fff').replace('fill="#fff"', 'fill="#fff" fill-opacity="0.8"'),
+    stapel: c => [9, 3, -3, -9].map(y => `<ellipse cx="0" cy="${y}" rx="12" ry="4.400" fill="${c}" stroke="#fff" stroke-opacity="0.55" stroke-width="1"/>`).join(''),
   };
+  // Bekanntes Motiv zeichnen – alles andere (z. B. ein Emoji aus einem Code) wird als Zeichen gesetzt
+  function motiv(art, c) {
+    if (MOTIV[art]) return MOTIV[art](c);
+    return `<text y="7" text-anchor="middle" font-size="20">${esc(String(art || '★').slice(0, 8))}</text>`;
+  }
 
   let _nr = 0;
   // Lorbeerzweig: Blätter entlang eines Bogens
@@ -67,7 +80,7 @@
 
   // Trophäe als SVG. t = { art, stufe, schild }, zu = noch nicht erreicht
   function trophaeSVG(t, groesse, zu) {
-    const st = t.art === 'fest' ? 3 : t.stufe, m = MAT[zu ? 0 : st], id = 'tr' + (++_nr);
+    const st = t.art === 'fest' ? 3 : t.stufe, mat = t.mat || st, m = MAT[zu ? 0 : mat], id = 'tr' + (++_nr);
     const defs = `<defs><linearGradient id="${id}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${m.a}"/><stop offset="0.45" stop-color="${m.b}"/><stop offset="1" stop-color="${m.c}"/></linearGradient>
       <linearGradient id="${id}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>`;
     const F = `url(#${id}g)`, R = `stroke="${m.d}" stroke-width="1.400" stroke-linejoin="round"`;
@@ -102,7 +115,7 @@
       my = 39; ms = 1.2;
     }
     const top = st >= 5 ? -5 : 0;
-    return `<svg viewBox="0 ${top} 100 ${106 - top}" width="${groesse}" height="${Math.round(groesse * (106 - top) / 100)}" class="tr-svg${!zu && st >= 4 ? ' tr-glanz' + st : ''}">${defs}${form}<g transform="translate(${mx} ${my}) scale(${ms})">${MOTIV[t.art](zu ? '#8a8a8a' : m.d)}</g></svg>`;
+    return `<svg viewBox="0 ${top} 100 ${106 - top}" width="${groesse}" height="${Math.round(groesse * (106 - top) / 100)}" class="tr-svg${!zu && mat >= 3 ? ' tr-glanz' + mat : ''}">${defs}${form}<g transform="translate(${mx} ${my}) scale(${ms})">${motiv(t.art, zu ? '#8a8a8a' : m.d)}</g></svg>`;
   }
 
   // ── Wappen (Vereinsämter und Ehrungen) ────────────────────────────────────
@@ -148,16 +161,29 @@
 
   // ── Daten ─────────────────────────────────────────────────────────────────
   // Alle Abende aus dem Verlauf (älteste zuerst) plus der laufende – Stand immer frisch berechnet.
+  function zaehle(entries) {
+    const z = { bier: 0, shots: 0, misch: 0 };
+    (entries || []).forEach(e => {
+      if (e.key === 'shots') z.shots += e.dir; else if (e.key === 'misch') z.misch += e.dir; else if (e.key !== 'manta') z.bier += e.dir;
+    });
+    z.bier = Math.max(0, z.bier); z.shots = Math.max(0, z.shots); z.misch = Math.max(0, z.misch);
+    z.alle = z.bier + z.shots + z.misch;
+    return z;
+  }
   function abende() {
-    const liste = loadHistory().map(t => ({ date: t.date, score: summarizeEntries(t.entries || []).score }));
-    if (drinkLog.length > 0) liste.push({ date: localDateStr(drinkLog[0].ts), score: summarizeEntries(drinkLog).score, laeuft: true });
+    const liste = loadHistory().map(t => ({ date: t.date, score: summarizeEntries(t.entries || []).score, z: zaehle(t.entries) }));
+    if (drinkLog.length > 0) liste.push({ date: localDateStr(drinkLog[0].ts), score: summarizeEntries(drinkLog).score, z: zaehle(drinkLog), laeuft: true });
     return liste.filter(a => a.date).sort((x, y) => x.date < y.date ? -1 : x.date > y.date ? 1 : 0);
   }
+  // Schützenfest: Donnerstag (Fronleichnam) bis einschließlich Sonntag
+  function festEnde(jahr) { const d = new Date(getFestDates(jahr).thu); d.setDate(d.getDate() + 3); return d; }
   function istFesttag(dateStr) {
-    const p = dateStr.split('-').map(Number), f = getFestDates(p[0]);
+    const p = dateStr.split('-').map(Number);
     const d = new Date(p[0], p[1] - 1, p[2]).getTime();
-    return d >= f.thu.getTime() && d <= f.sat.getTime();
+    return d >= getFestDates(p[0]).thu.getTime() && d <= festEnde(p[0]).getTime();
   }
+  const zahl = n => String(Math.round(n * 100) / 100).replace('.', ',');
+  const tsd = n => Number(n).toLocaleString('de-DE');
 
   const SPIEL_TROPHAEEN = [
     { id: 'rx1500', gruppe: 'Reaktionstest', art: 'reaktion', stufe: 1, schild: '1,5 s',  ms: 1500, name: 'Reaktionstest unter 1,5 s',  text: 'Alle drei Ziele in zusammen weniger als 1,5 Sekunden getroffen.' },
@@ -191,15 +217,19 @@
     const jahre = {};
     ab.filter(a => istFesttag(a.date)).forEach(a => { const j = a.date.slice(0, 4); (jahre[j] = jahre[j] || []).push(a.date); });
     const fest = Object.keys(jahre).sort().map(j => ({ id: 'fest' + j, name: 'Schützenfest ' + j, hat: true, n: jahre[j].length, einheit: ['Festtag', 'Festtagen'],
-      first: jahre[j][0], last: jahre[j][jahre[j].length - 1], text: 'Beim Schützenfest ' + j + ' an mindestens einem Festtag mitgezählt.',
+      first: jahre[j][0], last: jahre[j][jahre[j].length - 1], text: 'Beim Schützenfest ' + j + ' an mindestens einem Festtag (Donnerstag bis Sonntag) mitgezählt.',
       svg: g => trophaeSVG({ art: 'fest', schild: j }, g, false) }));
     const jetzt = new Date(); let nj = jetzt.getFullYear();
-    if (jetzt.getTime() > getFestDates(nj).sat.getTime() + 864e5) nj++;
+    if (jetzt.getTime() > festEnde(nj).getTime() + 864e5) nj++;
     if (!jahre[nj]) {
       const f = getFestDates(nj), dm = d => String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.';
       fest.push({ id: 'fest' + nj, name: 'Schützenfest ' + nj, hat: false, n: 0, text: 'Zähle beim Schützenfest ' + nj + ' an mindestens einem Festtag mit.',
-        fortschritt: 'Festtage: ' + dm(f.thu) + ' bis ' + dm(f.sat) + nj, svg: g => trophaeSVG({ art: 'fest', schild: String(nj) }, g, true) });
+        fortschritt: 'Festtage: ' + dm(f.thu) + ' bis ' + dm(festEnde(nj)) + nj, svg: g => trophaeSVG({ art: 'fest', schild: String(nj) }, g, true) });
     }
+    const verl = lesen(K_VERL, []).map((v, i) => { const st = Math.max(1, Math.min(5, parseInt(v.s) || 3));
+      return { id: 'v' + i, name: v.n || 'Trophäe', hat: true, n: 1, einmalig: true, verliehen: true, first: v.d, stufe: st,
+        text: v.x || 'Eine persönliche Trophäe, verliehen vom Verein.', svg: g => trophaeSVG({ art: v.a || 'stern', stufe: st }, g, false) }; });
+    if (verl.length) gruppen.push({ titel: 'Verliehen', teile: verl });
     gruppen.push({ titel: 'Schützenfest', teile: fest });
 
     // Abende im Verlauf – steigende Stufen
@@ -230,7 +260,31 @@
     if (gueltig) { const n = Math.floor(dabei / 3) * 3 + 3;
       treue.push({ id: 'tr' + n, name: n + ' Jahre dabei', hat: false, n: 0, text: 'Treue-Spange für ' + n + ' Jahre Mitgliedschaft.', breit: true, fortschritt: 'Erreichst du ' + (ej + n), svg: g => spangeSVG(n, g, true) }); }
 
-    return { medaillen, gruppen, wappen, treue, gueltig, abende: ab };
+    // Rekorde
+    const rk = lesen(K_REK, {}), rekorde = [];
+    const plakette = (art, hat) => g => trophaeSVG({ art, stufe: 1, mat: 3 }, g, !hat);
+    const top = ab.reduce((b, a) => a.score > 0 && (!b || a.score > b.score) ? a : b, null);
+    rekorde.push({ id: 'rkabend', name: 'Bester Abend', hat: !!top, wert: top ? zahl(top.score) + ' Punkte' : '–', unter: top ? datum(top.date) + ' · ' + top.z.alle + ' Getränke' : 'Noch kein Abend im Verlauf',
+      text: 'Der Abend mit den meisten Punkten im Verlauf. Ein Punkt entspricht etwa einem Standardgetränk.', svg: plakette('abende', !!top),
+      fakten: top ? [['Punkte', zahl(top.score)], ['Datum', datum(top.date)], ['Bier', String(top.z.bier)], ['Shots', String(top.z.shots)], ['Mischgetränke', String(top.z.misch)]] : null });
+    const fj = {};
+    ab.filter(a => istFesttag(a.date)).forEach(a => { const j = a.date.slice(0, 4), f = fj[j] = fj[j] || { jahr: j, bier: 0, shots: 0, misch: 0, alle: 0, tage: 0 };
+      f.bier += a.z.bier; f.shots += a.z.shots; f.misch += a.z.misch; f.alle += a.z.alle; f.tage++; });
+    const bf = Object.values(fj).reduce((b, f) => f.alle > 0 && (!b || f.alle > b.alle) ? f : b, null);
+    rekorde.push({ id: 'rkfest', name: 'Bestes Schützenfest', hat: !!bf, wert: bf ? bf.alle + ' Getränke' : '–', unter: bf ? 'Schützenfest ' + bf.jahr + ' · ' + bf.bier + ' Bier · ' + bf.shots + ' Shots · ' + bf.misch + ' Mischen' : 'Noch kein Schützenfest gezählt',
+      text: 'Das Schützenfest mit den meisten Getränken, zusammengezählt von Donnerstag (Fronleichnam) bis Sonntag.', svg: plakette('scheibe', !!bf),
+      fakten: bf ? [['Schützenfest', bf.jahr], ['Getränke insgesamt', String(bf.alle)], ['Bier', String(bf.bier)], ['Shots', String(bf.shots)], ['Mischgetränke', String(bf.misch)], ['Gezählte Tage', String(bf.tage)]] : null });
+    const gw = rk.gewinn;
+    rekorde.push({ id: 'rkgewinn', name: 'Höchster Gewinn im Casino', hat: !!gw, wert: gw ? tsd(gw.v) + ' Coins' : '–', unter: gw ? (gw.spiel ? gw.spiel + ' · ' : '') + datum(gw.d) : 'Noch nichts gewonnen',
+      text: 'Die höchste Auszahlung in einer einzelnen Runde im Casino.', svg: plakette('muenze', !!gw),
+      fakten: gw ? [['Auszahlung', tsd(gw.v) + ' Coins']].concat(gw.spiel ? [['Spiel', gw.spiel]] : [], [['Datum', datum(gw.d)]]) : null });
+    let stand0 = parseInt(localStorage.getItem('hopfenkonto_coins') || ''); if (isNaN(stand0) || stand0 < 0) stand0 = 0;
+    const ko = rk.konto && rk.konto.v >= stand0 ? rk.konto : (stand0 > 0 ? { v: stand0, d: heute() } : null);
+    rekorde.push({ id: 'rkkonto', name: 'Höchster Kontostand', hat: !!ko, wert: ko ? tsd(ko.v) + ' Coins' : '–', unter: ko ? datum(ko.d) : 'Noch keine Coins',
+      text: 'So viele Coins hattest du höchstens gleichzeitig auf dem Konto.', svg: plakette('stapel', !!ko),
+      fakten: ko ? [['Kontostand', tsd(ko.v) + ' Coins'], ['Datum', datum(ko.d)]] : null });
+
+    return { medaillen, gruppen, wappen, treue, gueltig, rekorde, abende: ab };
   }
 
   // ── Seite ─────────────────────────────────────────────────────────────────
@@ -247,11 +301,14 @@
     const alle = s.medaillen.concat(...s.gruppen.map(x => x.teile), s.wappen, s.treue);
     const best = Math.max(0, ...s.abende.map(a => a.score));
     document.getElementById('sa-summe').textContent = alle.filter(t => t.hat).length + ' Auszeichnungen' + (s.abende.length ? ' · bester Abend: ' + String(best).replace('.', ',') + ' Punkte' : '');
-    const zahl = teile => `<em>${teile.filter(t => t.hat).length} von ${teile.length}</em>`;
-    let h = `<div class="sa-vitrine"><h3>Medaillen ${zahl(s.medaillen)}</h3><p class="sa-info">Aus deinen Abenden im Verlauf – der laufende Abend zählt schon mit.</p>
+    const anz = teile => `<em>${teile.filter(t => t.hat).length} von ${teile.length}</em>`;
+    let h = `<div class="sa-vitrine"><h3>Medaillen ${anz(s.medaillen)}</h3><p class="sa-info">Aus deinen Abenden im Verlauf – der laufende Abend zählt schon mit.</p>
       <div class="sa-raster">${s.medaillen.map(t => kachel(t, g)).join('')}</div></div>`;
-    h += `<div class="sa-vitrine"><h3>Trophäen ${zahl([].concat(...s.gruppen.map(x => x.teile)))}</h3>` +
+    h += `<div class="sa-vitrine"><h3>Trophäen ${anz([].concat(...s.gruppen.map(x => x.teile)))}</h3>` +
       s.gruppen.map(x => `<div class="sa-gruppe">${x.titel}</div><div class="sa-raster">${x.teile.map(t => kachel(t, g)).join('')}</div>`).join('') + '</div>';
+    s.rekorde.forEach(t => { _teile[t.id] = t; });
+    h += `<div class="sa-vitrine"><h3>Rekorde</h3><div class="sa-rekorde">${s.rekorde.map(t => `<button type="button" class="sa-rek${t.hat ? '' : ' zu'}" onclick="sammlungDetail('${t.id}')">
+      <span class="sa-rek-bild">${t.svg(46)}</span><span class="sa-rek-text"><i>${t.name}</i><b>${esc(t.wert)}</b><u>${esc(t.unter)}</u></span></button>`).join('')}</div></div>`;
     h += `<div class="sa-vitrine"><h3>Wappen</h3>` + (s.wappen.length
       ? `<div class="sa-raster">${s.wappen.map(t => kachel(t, g)).join('')}</div>`
       : `<p class="sa-info">Wappen für Vereinsämter und persönliche Ehrungen verleiht der Verein per Code. Einlösen kannst du ihn im Casino unter „Gutschein einlösen“.</p>`) + '</div>';
@@ -270,6 +327,7 @@
 
   function fakten(t) {
     const z = [];
+    if (t.fakten) return t.fakten;
     if (!t.hat) { z.push(['Stand', 'Noch nicht erreicht']); if (t.fortschritt) z.push(['Fortschritt', t.fortschritt]); return z; }
     if (t.verliehen) { z.push(['Verliehen am', datum(t.first)]); return z; }
     if (t.jahrErreicht) { z.push(['Erreicht', String(t.jahrErreicht)]); return z; }
@@ -342,6 +400,30 @@
       if (document.getElementById('sammlung-overlay').classList.contains('open')) render();
       return name;
     },
+    // Aus einem Code (js/gutschein.js): Wappen oder frei gestaltete Trophäe. Rückgabe: Meldung für das Einlöse-Fenster
+    verleihen(p) {
+      if (p.t !== 'trophaee') return '🛡️ Wappen erhalten: ' + this.wappen(p.t, p.n);
+      const v = { n: String(p.n || 'Trophäe').slice(0, 60), x: String(p.x || '').slice(0, 160), s: Math.max(1, Math.min(5, parseInt(p.s) || 3)), a: String(p.a || 'stern').slice(0, 12), d: heute() };
+      const liste = lesen(K_VERL, []); liste.push(v); schreiben(K_VERL, liste);
+      setTimeout(() => feiern({ id: 'vneu', name: v.n, text: v.x || 'Eine persönliche Trophäe, verliehen vom Verein.', stufe: v.s, hat: true, n: 1, einmalig: true, verliehen: true, first: v.d,
+        svg: g => trophaeSVG({ art: v.a, stufe: v.s }, g, false) }, 'Neue Trophäe'), 500);
+      if (document.getElementById('sammlung-overlay').classList.contains('open')) render();
+      return '🏆 Trophäe erhalten: ' + v.n;
+    },
     AEMTER: Object.keys(AEMTER),
+  };
+
+  // Rekorde, die sich nicht aus dem Verlauf berechnen lassen, werden hier mitgeschrieben
+  window.Rekorde = {
+    gewinn(n, spiel) {
+      n = Math.floor(n); if (!(n > 0)) return;
+      const rk = lesen(K_REK, {});
+      if (!rk.gewinn || n > rk.gewinn.v) { rk.gewinn = { v: n, d: heute(), spiel: String(spiel || '').slice(0, 30) }; schreiben(K_REK, rk); }
+    },
+    konto(n) {
+      n = Math.floor(n); if (!(n > 0)) return;
+      const rk = lesen(K_REK, {});
+      if (!rk.konto || n > rk.konto.v) { rk.konto = { v: n, d: heute() }; schreiben(K_REK, rk); }
+    },
   };
 })();
