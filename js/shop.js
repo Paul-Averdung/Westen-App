@@ -40,7 +40,8 @@
   function themeThumb(id) {
     const th = THEMES[id], v = Object.assign({}, DEF, th.vars);
     let scene = th.grad ? `<div class="sh-fill" style="background:${th.grad}"></div>` : '';
-    if (th.scene) scene += `<div class="sh-fill sh-scene">${th.scene().replace(/<canvas[^>]*><\/canvas>/, '')}</div>`;
+    // thumbPos: welcher Ausschnitt der Szene im Vorschaubild zu sehen ist (z. B. oben die Vogelstange)
+    if (th.scene) scene += `<div class="sh-fill sh-scene">${th.scene().replace(/<canvas[^>]*><\/canvas>/, '').replace('xMidYMax slice', th.thumbPos || 'xMidYMax slice')}</div>`;
     return `<div class="sh-thumb" style="background:${v.bg}">${scene}
       <div class="sh-mini-head" style="background:${v.surface};border-color:${v.line}"></div>
       <div class="sh-mini-card" style="background:${v['card-bg']}"><b style="background:${v['card-accent']}"></b><i style="background:${v['btn-bg']}"></i></div>
@@ -60,7 +61,7 @@
       cardback: () => card(null) + card(null),
       felt:     () => `<div class="cos-felt"></div>${card({ r: 'A', s: '♠' })}<div class="cos-chip"></div>`,
       track:    () => `<div class="pr-course"><div class="pr-finish"></div>${[0, 1, 2].map(l => `<div class="pr-lane"><div class="pr-track"><div class="pr-runner" style="left:${[14, 48, 30][l]}%"><span class="pr-emoji">🏇</span></div></div></div>`).join('')}</div>`,
-      racer:    () => `<div class="pr-course"><div class="pr-finish"></div>${[0, 1, 2].map(l => `<div class="pr-lane"><div class="pr-track"><div class="pr-runner" style="left:${[40, 18, 58][l]}%"><span class="pr-emoji" style="animation-delay:${l * 0.15}s">${COSMETICS.racer.items[id].emoji}</span></div></div></div>`).join('')}</div>`,
+      racer:    () => `<div class="pr-course"><div class="pr-finish"></div>${[0, 1, 2].map(l => `<div class="pr-lane"><div class="pr-track"><div class="pr-runner" style="left:${[40, 18, 58][l]}%">${racerHTML(['#e10600', '#00a19c', '#ff8700'][l], (l * 0.15) + 's', COSMETICS.racer.items[id])}</div></div></div>`).join('')}</div>`,
       wheel:    () => rouletteWheelSVG(),
     }[cat]();
     return `<div class="cos-thumb" data-${cat}="${id}">${inner}</div>`;

@@ -118,9 +118,81 @@ body[data-theme="gold"] .drink-card { border-color: #d4af37; box-shadow: 0 0 0 1
 /* Feuerwerk */
 .fw-canvas { position: absolute; inset: 0; }
 
+/* ── Fest-Themes (Szenen in js/themes-feste.js) ─────────────────────────── */
+/* Wolken ziehen langsam von links nach rechts über den Himmel (SVG-Einheiten, Szene ist 400 breit) */
+.sv-cloud { animation: svCloud var(--dur) linear var(--delay) infinite; }
+@keyframes svCloud { from { transform: translateX(-150px); } to { transform: translateX(430px); } }
+.sky-bird svg, .bee svg, .butterfly svg { display: block; width: 100%; height: auto; }
+@keyframes cloudDrift { from { transform: translateX(-200px); } to { transform: translateX(calc(100vw + 40px)); } }
+.sky-bird { position: absolute; left: 0; width: 16px; animation: cloudDrift var(--dur) linear var(--delay) infinite; }
+.sky-bird svg { animation: birdFlap 0.6s ease-in-out infinite alternate; }
+@keyframes birdFlap { to { transform: scaleY(0.4); } }
+.sf-sun { transform-origin: 70px 110px; animation: sfSun 5s ease-in-out infinite alternate; }
+@keyframes sfSun { from { transform: scale(0.92); opacity: 0.85; } to { transform: scale(1.08); opacity: 1; } }
+.sf-flag { animation: sfFlag 1.4s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: left center; }
+@keyframes sfFlag { to { transform: skewY(6deg) scaleX(0.9); } }
+.sf-box { transform-box: view-box; transform-origin: 300px 196px; animation: sfBox 7s ease-in-out infinite alternate; }
+@keyframes sfBox { from { transform: rotate(-0.6deg); } to { transform: rotate(0.6deg); } }
+
+/* Schützenfest & Frühling: helle Milchglas-Karten, die Szene scheint durch */
+body[data-theme="schuetzenfest"] .drink-card, body[data-theme="fruehling"] .drink-card {
+  -webkit-backdrop-filter: blur(5px) saturate(1.2); backdrop-filter: blur(5px) saturate(1.2); box-shadow: 0 6px 18px rgba(10,50,20,0.18);
+}
+/* Schützenfest: kaum Weichzeichner, damit Vogelstange und Vogel klar durch die Karten zu sehen sind */
+body[data-theme="schuetzenfest"] .drink-card { -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px); }
+body[data-theme="schuetzenfest"] .header, body[data-theme="schuetzenfest"] .graph-card { -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+body[data-theme="schuetzenfest"] .section-label, body[data-theme="fruehling"] .section-label { text-shadow: 0 1px 3px rgba(0,40,10,0.7); }
+body[data-theme="schuetzenfest"] .btn.minus, body[data-theme="fruehling"] .btn.minus { background: rgba(255,255,255,0.7); }
+body[data-theme="schuetzenfest"] .header { border: 1.5px solid rgba(255,255,255,0.55); }
+
+/* Karneval: Konfetti, schwebende Ballons, bunter Kartenrand */
+.confetti { position: absolute; top: -20px; width: var(--w); height: var(--h); animation: confFall var(--dur) linear var(--delay) infinite; }
+@keyframes confFall {
+  0%   { transform: translate(0, 0) rotate(0) rotateY(0); }
+  50%  { transform: translate(var(--sway), 55vh) rotate(270deg) rotateY(540deg); }
+  100% { transform: translate(0, 112vh) rotate(540deg) rotateY(1080deg); }
+}
+.kv-balloon { animation: kvFloat 4s ease-in-out infinite alternate; }
+@keyframes kvFloat { to { transform: translateY(-12px); } }
+.kv-helau { filter: drop-shadow(0 0 10px rgba(255,210,63,0.6)); }
+body[data-theme="karneval"] .drink-card {
+  border: 2px solid transparent;
+  background: linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+              linear-gradient(90deg, #ff3b5c, #ffd23f, #3bd16f, #2ec4b6, #7b5cff, #ff3b5c) border-box;
+}
+
+/* Frühling: Bienen und Schmetterlinge */
+.bee, .butterfly { position: absolute; left: 0; width: 26px; animation: flyAcross var(--dur) linear var(--delay) infinite; }
+.butterfly { width: 22px; }
+.bee svg { animation: bob 0.9s ease-in-out infinite alternate; }
+.bee-wing { animation: buzz 0.08s linear infinite alternate; transform-box: fill-box; transform-origin: bottom; }
+@keyframes buzz { to { transform: scaleY(0.4); } }
+.bf-wings { animation: flutter 0.25s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+@keyframes flutter { to { transform: scaleX(0.3); } }
+@keyframes flyAcross {
+  0%   { transform: translate(-40px, 0); }
+  25%  { transform: translate(25vw, calc(var(--amp) * -1)); }
+  50%  { transform: translate(50vw, 0); }
+  75%  { transform: translate(75vw, var(--amp)); }
+  100% { transform: translate(calc(100vw + 40px), 0); }
+}
+@keyframes bob { to { transform: translateY(-5px); } }
+
+/* Biergarten: Glühwürmchen, Holzkarten */
+.firefly { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #fff3a0; box-shadow: 0 0 8px 3px rgba(255,230,120,0.7);
+  animation: firefly var(--dur) ease-in-out var(--delay) infinite alternate; }
+@keyframes firefly { 0% { transform: translate(0,0); opacity: 0.1; } 50% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)); opacity: 0.2; } }
+body[data-theme="biergarten"] .header, body[data-theme="biergarten"] .graph-card {
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 26px, rgba(0,0,0,0.22) 26px 28px), var(--surface);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,230,180,0.15);
+}
+
 /* Ruhige Variante bei "Bewegung reduzieren" */
 @media (prefers-reduced-motion: reduce) {
-  .leaf, .flake, .gold-spark, .aurora, .sway, .bulb, .neon, .star, .smoke { animation: none !important; }
+  .leaf, .flake, .gold-spark, .aurora, .sway, .bulb, .neon, .star, .smoke,
+  .sky-bird, .sky-bird svg, .sf-sun, .sf-flag, .sf-box, .confetti, .kv-balloon, .bee, .bee svg, .bee-wing, .butterfly, .bf-wings, .firefly { animation: none !important; }
+  .confetti, .bee, .butterfly, .firefly, .sky-bird { display: none; }
+  .sv-cloud { animation-play-state: paused !important; }
   .fw-canvas { display: none; }
 }
 

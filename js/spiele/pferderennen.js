@@ -65,7 +65,7 @@
       // Kleine Vorschau der Rennbahn mit den aktuellen Renntieren (Kosmetik aus dem Shop)
       const racer = cosmeticRacer(), pos = [[8, 52], [30, 74]];
       const mini = pos.map((ps, l) => `<div class="pr-lane"><div class="pr-track">${ps.map((x, k) =>
-        `<div class="pr-runner" style="left:${x}%"><span class="pr-emoji" style="animation-delay:${(l + k) * 0.13}s">${racer.emoji}</span><i style="background:${HORSES[l * 2 + k].c}"></i></div>`).join('')}</div></div>`).join('');
+        `<div class="pr-runner" style="left:${x}%">${racerHTML(HORSES[l * 2 + k].c, ((l + k) * 0.13) + 's', racer)}<i style="background:${HORSES[l * 2 + k].c}"></i></div>`).join('')}</div></div>`).join('');
       root.innerHTML = `<div class="pr-course pr-mini"><div class="pr-finish"></div>${mini}</div>
         <div class="pr-hint">Wähle ein Pferd. Je wahrscheinlicher, desto kleiner die Quote. Gewinn = Einsatz × Quote.</div>
         <div class="pr-list">${rows}</div>
@@ -76,7 +76,7 @@
     // Rennbahn
     const racer = cosmeticRacer();
     const lanes = HORSES.map((h, i) => `<div class="pr-lane ${race.pick === i ? 'mine' : ''}"><span class="pr-nr" style="background:${h.c}">${i + 1}</span>
-        <div class="pr-track"><div class="pr-runner" id="pr-r${i}"><span class="pr-emoji">${racer.emoji}</span><i style="background:${h.c}"></i></div></div></div>`).join('');
+        <div class="pr-track"><div class="pr-runner" id="pr-r${i}">${racerHTML(h.c, null, racer)}<i style="background:${h.c}"></i></div></div></div>`).join('');
     root.innerHTML = `<div class="pr-comment" id="pr-comment">Und sie sind gestartet!</div>
       <div class="pr-course"><div class="pr-finish"></div>${lanes}</div>
       <div id="pr-result"></div>`;
