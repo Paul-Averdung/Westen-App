@@ -212,6 +212,22 @@
     return `<div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div>`;
   }
 
+  // Schützenfest-Theme: kaufbar von 1 Woche vor bis 1 Woche nach Fronleichnam (fronleichnam() aus js/countdown.js)
+  const MON = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+  function fensterFronleichnam(y) {
+    const f = fronleichnam(y);
+    return { von: new Date(y, f.getMonth(), f.getDate() - 7), bis: new Date(y, f.getMonth(), f.getDate() + 7, 23, 59, 59) };
+  }
+  const SCHUETZENFEST_ZEIT = {
+    test(d) { const w = fensterFronleichnam(d.getFullYear()); return d >= w.von && d <= w.bis; },
+    // Text fürs Shop-Schild: das aktuelle bzw. nächste Fenster, z. B. "20. Mai – 3. Juni 2027"
+    get label() {
+      const now = new Date(); let w = fensterFronleichnam(now.getFullYear());
+      if (now > w.bis) w = fensterFronleichnam(now.getFullYear() + 1);
+      return `${w.von.getDate()}. ${MON[w.von.getMonth()]} – ${w.bis.getDate()}. ${MON[w.bis.getMonth()]} ${w.bis.getFullYear()}`;
+    },
+  };
+
   // ── Theme-Katalog ─────────────────────────────────────────────────────────
   // vars: überschreibt Farbvariablen. bg kann auch ein Verlauf sein (dann über die Szene gelegt).
   const T = {
@@ -245,7 +261,7 @@
     oktoberfest: { name: 'Oktoberfest-Edition', tier: 'episch', season: { months: [9, 10], label: 'September – Oktober' }, scene: FS.oktoberfest.scene,
                   vars: { bg: '#4a9be6', surface: 'rgba(14,52,110,0.86)', 'surface-2': 'rgba(30,111,200,0.5)', line: 'rgba(255,255,255,0.5)', text: '#ffffff', 'text-soft': '#cfe3fb', label: '#ffffff', icon: '#ffffff', accent: '#FFD54A', 'chart-fade': 'rgba(14,52,110,0.35)', 'card-bg': 'rgba(255,255,255,0.74)', 'card-border': '#1e6fc8', 'card-title': '#0e3470', 'card-muted': '#5a7090', 'card-accent': '#1e6fc8', 'btn-bg': '#1e6fc8', 'btn-fg': '#ffffff', 'btn-line': '#155aa8' } },
     // Legendär
-    schuetzenfest: { name: 'Schützenfest', tier: 'legendaer', thumbPos: 'xMidYMin slice', scene: FS.schuetzenfest.scene, init: FS.schuetzenfest.init,
+    schuetzenfest: { name: 'Schützenfest', tier: 'legendaer', season: SCHUETZENFEST_ZEIT, thumbPos: 'xMidYMin slice', scene: FS.schuetzenfest.scene, init: FS.schuetzenfest.init,
                   vars: { bg: '#3d8fd9', surface: 'rgba(16,70,34,0.7)', 'surface-2': 'rgba(60,130,60,0.5)', line: 'rgba(255,255,255,0.5)', text: '#f4fbef', 'text-soft': '#c9ecb8', label: '#ffffff', icon: '#ffffff', accent: '#FFD54A', 'chart-fade': 'rgba(16,70,34,0.35)', 'card-bg': 'rgba(255,255,255,0.6)', 'card-border': 'rgba(255,255,255,0.95)', 'card-title': '#123a1c', 'card-muted': '#4f6b52', 'card-accent': '#c62828', 'btn-bg': '#2e7d32', 'btn-fg': '#ffffff', 'btn-line': '#1f5e24' } },
     gold:       { name: 'Gold-Edition', tier: 'legendaer', scene: goldScene, init: goldInit,
                   vars: { bg: '#070604', surface: 'rgba(18,14,6,0.92)', 'surface-2': 'rgba(60,45,12,0.7)', line: '#b8902e', text: '#fbe7a6', 'text-soft': '#d4b060', label: '#d4b060', icon: '#d4af37', accent: '#FFD54A', 'chart-fade': 'rgba(7,6,4,0.4)', 'card-bg': '#fffaf0', 'card-border': '#d4af37', 'card-title': '#2a2106', 'card-muted': '#8a7440', 'card-accent': '#9a7412', 'btn-bg': '#1a150a', 'btn-fg': '#FFD54A', 'btn-line': '#b8902e' } },

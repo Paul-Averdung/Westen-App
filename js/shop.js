@@ -24,11 +24,12 @@
   const equipped = kind => isCos(kind) ? cosmeticEquipped(kind) : (ls.get(kind === 'themes' ? K_THEME : K_SKIN) || 'standard');
   const fmt = n => n.toLocaleString('de-DE');
 
-  // Saison-Prüfung: { months: [...] } oder { from: [m,d], to: [m,d] } (über den Jahreswechsel möglich)
+  // Saison-Prüfung: { months: [...] }, { from: [m,d], to: [m,d] } (über den Jahreswechsel möglich) oder { test(datum) }
   function inSeason(item, d) {
     const s = item.season; if (!s) return true;
     d = d || new Date();
     const m = d.getMonth() + 1, day = d.getDate();
+    if (s.test) return s.test(d);                       // eigene Regel, z. B. rund um Fronleichnam
     if (s.months) return s.months.includes(m);
     const v = m * 100 + day, a = s.from[0] * 100 + s.from[1], b = s.to[0] * 100 + s.to[1];
     return a <= b ? (v >= a && v <= b) : (v >= a || v <= b);
