@@ -1,11 +1,11 @@
 // Hoch oder Tief
 // Regeln: Einsatz setzen → erste Karte. Tippe, ob die nächste höher oder tiefer ist.
 // Der Multiplikator richtet sich nach der Wahrscheinlichkeit: unwahrscheinlicher Tipp = mehr Gewinn.
-// Multiplikator = (1 − Hausvorteil) / Wahrscheinlichkeit. Gleicher Wert = weiter ohne Verlust.
+// Multiplikator = RUECKFLUSS / Wahrscheinlichkeit (103 % = leichter Vorteil für die Spieler). Gleicher Wert = weiter.
 // Nach dem ersten Treffer jederzeit auszahlen. Topf ist bei TOPF_MAX gedeckelt (dann Auto-Auszahlung).
 // Ass ist hoch (2 … 10, B, D, K, A). Jede Karte wird unabhängig gezogen.
 (function() {
-  const HAUSVORTEIL = 0.04;
+  const RUECKFLUSS = 1.03;
   const TOPF_MAX = 1000;
   const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'B', 'D', 'K', 'A'];   // Wert = Index + 2
   const SUITS = ['♠', '♥', '♦', '♣'];
@@ -18,7 +18,7 @@
     const n = dir === 'hi' ? above : below;
     if (n === 0) return { p: 0, m: 0 };
     const p = n / (above + below);
-    return { p, m: (1 - HAUSVORTEIL) / p };
+    return { p, m: RUECKFLUSS / p };
   }
   window.hochTiefChance = chance;   // für Tests
 

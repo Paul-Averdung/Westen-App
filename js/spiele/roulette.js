@@ -1,5 +1,6 @@
 // Roulette – europäisch, eine Null. Chips 1/5/10/25 auf das Tableau setzen (gesamt max. 50 pro Dreh).
-// Auszahlung (inkl. Einsatz): Zahl 36×, Dutzend/Kolonne 3×, Rot/Schwarz, Gerade/Ungerade, 1–18/19–36 je 2×.
+// Auszahlung (inkl. Einsatz, leicht erhöht zugunsten der Spieler, ca. 102,5 %):
+// Zahl 38×, Dutzend/Kolonne 3,15×, Rot/Schwarz, Gerade/Ungerade, 1–18/19–36 je 2,1×. Summe wird gerundet.
 // Fällt die 0, verlieren alle Außenwetten.
 (function() {
   const ORDER = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
@@ -7,20 +8,20 @@
   const MAX_TOTAL = 50, CHIPS = [1, 5, 10, 25];
   // Wett-Arten: Schlüssel → { label, payout (Faktor inkl. Einsatz), wins(n) }
   const BETS = {
-    rot:    { label: 'Rot',      pay: 2, wins: n => RED.has(n) },
-    schwarz:{ label: 'Schwarz',  pay: 2, wins: n => n > 0 && !RED.has(n) },
-    gerade: { label: 'Gerade',   pay: 2, wins: n => n > 0 && n % 2 === 0 },
-    ungerade:{ label: 'Ungerade',pay: 2, wins: n => n % 2 === 1 },
-    tief:   { label: '1–18',     pay: 2, wins: n => n >= 1 && n <= 18 },
-    hoch:   { label: '19–36',    pay: 2, wins: n => n >= 19 },
-    d1: { label: '1. Dutzend', pay: 3, wins: n => n >= 1 && n <= 12 },
-    d2: { label: '2. Dutzend', pay: 3, wins: n => n >= 13 && n <= 24 },
-    d3: { label: '3. Dutzend', pay: 3, wins: n => n >= 25 },
-    k1: { label: 'Kolonne 1', pay: 3, wins: n => n > 0 && n % 3 === 1 },
-    k2: { label: 'Kolonne 2', pay: 3, wins: n => n > 0 && n % 3 === 2 },
-    k3: { label: 'Kolonne 3', pay: 3, wins: n => n > 0 && n % 3 === 0 },
+    rot:    { label: 'Rot',      pay: 2.1, wins: n => RED.has(n) },
+    schwarz:{ label: 'Schwarz',  pay: 2.1, wins: n => n > 0 && !RED.has(n) },
+    gerade: { label: 'Gerade',   pay: 2.1, wins: n => n > 0 && n % 2 === 0 },
+    ungerade:{ label: 'Ungerade',pay: 2.1, wins: n => n % 2 === 1 },
+    tief:   { label: '1–18',     pay: 2.1, wins: n => n >= 1 && n <= 18 },
+    hoch:   { label: '19–36',    pay: 2.1, wins: n => n >= 19 },
+    d1: { label: '1. Dutzend', pay: 3.15, wins: n => n >= 1 && n <= 12 },
+    d2: { label: '2. Dutzend', pay: 3.15, wins: n => n >= 13 && n <= 24 },
+    d3: { label: '3. Dutzend', pay: 3.15, wins: n => n >= 25 },
+    k1: { label: 'Kolonne 1', pay: 3.15, wins: n => n > 0 && n % 3 === 1 },
+    k2: { label: 'Kolonne 2', pay: 3.15, wins: n => n > 0 && n % 3 === 2 },
+    k3: { label: 'Kolonne 3', pay: 3.15, wins: n => n > 0 && n % 3 === 0 },
   };
-  for (let n = 0; n <= 36; n++) BETS['z' + n] = { label: String(n), pay: 36, wins: x => x === n };
+  for (let n = 0; n <= 36; n++) BETS['z' + n] = { label: String(n), pay: 38, wins: x => x === n };
   window.rouletteBets = BETS;   // für Tests
 
   let chip = 5, bets = {}, last = {}, spinning = false, rot = 0, history = [];
@@ -78,6 +79,7 @@
       <div class="rl-chips">${CHIPS.map(v => `<button class="rl-chipbtn ${v === chip ? 'on' : ''}" onclick="rlChip(${v})">${v}</button>`).join('')}
         <button class="rl-small" onclick="rlClear()">Löschen</button><button class="rl-small" onclick="rlRepeat()">Wieder</button></div>
       ${boardHTML()}
+      <div class="rl-pays">Auszahlung: Zahl ×38 · Dutzend/Kolonne ×3,15 · Rot/Schwarz, Gerade/Ungerade, Hälften ×2,1</div>
       <button class="gm-btn" id="rl-spin" ${total && !spinning ? '' : 'disabled'} onclick="rlSpin()">Drehen</button>`;
     document.getElementById('rl-rotor').style.transform = `rotate(${rot}deg)`;
   }
@@ -119,6 +121,7 @@
   function done(n) {
     let back = 0;
     Object.entries(last).forEach(([k, amt]) => { if (BETS[k].wins(n)) back += amt * BETS[k].pay; });
+    back = Math.round(back);
     history.push(n); spinning = false;
     const total = sum(last);
     bets = {};

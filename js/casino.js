@@ -24,7 +24,7 @@
     <path d="M48 58 l10 -12 h-6 v-10 h-8 v10 h-6 z" fill="#e0536a" stroke="#3a1015" stroke-width="1.5"/></svg>`;
 
   const GAMES = [
-    { id: 'slots',     name: 'Hopfen-Slots', desc: 'Drei Gleiche = dreifacher Einsatz', icon: '🎰', ready: true,
+    { id: 'slots',     name: 'Hopfen-Slots', desc: 'Drei Gleiche ×3 · 🍺🍺🍺 Jackpot ×10', icon: '🎰', ready: true,
       bg: 'linear-gradient(160deg, #8a1424 0%, #4e0912 100%)', open: () => openSlotsGame() },
     { id: 'hochtief',  name: 'Hoch oder Tief', desc: 'Je riskanter der Tipp, desto höher der Gewinn', icon: hiLo, ready: true,
       bg: 'linear-gradient(160deg, #6a3a0a 0%, #2a1604 100%)', open: () => openHochTief() },

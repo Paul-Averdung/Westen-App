@@ -3,18 +3,18 @@
 // SIMULATIONEN-mal simuliert; daraus ergeben sich die Chancen auf Platz 1/2/3 und faire Quoten:
 //   Quote Platz k = AUSZAHLQUOTE × ANTEIL[k] / Chance(Platz k)
 // Je wahrscheinlicher ein Platz, desto kleiner die Quote. Insgesamt fließen im Schnitt
-// AUSZAHLQUOTE (92 %) der Einsätze zurück. Die Quote ist der Faktor auf den Einsatz.
+// AUSZAHLQUOTE (104 %, leichter Vorteil für die Spieler) der Einsätze zurück. Quote = Faktor auf den Einsatz.
 (function() {
-  const AUSZAHLQUOTE = 0.92;
+  const AUSZAHLQUOTE = 1.04;
   const ANTEIL = [0.60, 0.25, 0.15];          // wie sich die Auszahlung auf Platz 1/2/3 verteilt
   const FORM_SPANNE = 0.03, TAGESFORM = 0.05; // Unterschied der Pferde vs. Zufall am Renntag
   const QUOTE_MAX = 50;
   const SIMULATIONEN = 2500;
   const ZIEL = 100, SCHRITT = 0.55;           // Streckenlänge und Grundtempo pro Takt
   const HORSES = [
-    { name: 'Hopfenblitz', c: '#e63946' }, { name: 'Korn-Kurt', c: '#f4a261' }, { name: 'Westwind', c: '#2a9d8f' },
-    { name: 'Zapfhahn', c: '#ffd166' },    { name: 'Vogelkönig', c: '#7b5cff' }, { name: 'Pilsprinz', c: '#4dabf7' },
-    { name: 'Mantaplatte', c: '#8d6e63' }, { name: 'Schützenstolz', c: '#2f6b2a' },
+    { name: 'Rot', c: '#e63946' },  { name: 'Orange', c: '#f4a261' }, { name: 'Türkis', c: '#2a9d8f' },
+    { name: 'Gelb', c: '#ffd166' }, { name: 'Lila', c: '#7b5cff' },   { name: 'Blau', c: '#4dabf7' },
+    { name: 'Braun', c: '#8d6e63' }, { name: 'Grün', c: '#2f6b2a' },
   ];
   let race = null, anim = null;
 

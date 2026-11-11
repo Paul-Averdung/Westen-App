@@ -280,13 +280,17 @@ window.startReactionTest = function() {
   }
 })();
 // ── Hopfen-Slots ─────────────────────────────────────────────────────────────
-// Regeln: 35 % Gewinnchance, Gewinn = 3 × Einsatz, danach optional "Doppel oder Nichts".
+// Regeln (leichter Vorteil für die Spieler, Rückfluss ca. 103,5 %):
+//   Jackpot 🍺🍺🍺 mit JACKPOT_CHANCE → JACKPOT_X × Einsatz
+//   drei gleiche andere Symbole mit GEWINN_CHANCE → 3 × Einsatz
+//   danach optional "Doppel oder Nichts" (DOPPEL_CHANCE Gewinnchance, max. 3×)
 (function() {
   const SYMBOLS = ['🍺','🎩','🦅','🌭','🪶','🍟','🥃'];
   const REEL_TIMES = [1500, 2000, 2550];   // Dauer bis zum Stopp je Walze (ms, ab Walzenstart)
   const LEVER_MS = 300;                    // Walzen starten, wenn der Hebel unten ist
   const MAX_BET = 50;                      // höchster Einsatz pro Dreh (schützt die Shop-Preise)
   const MAX_DOUBLE = 3;                    // höchstens so oft hintereinander "Doppel oder Nichts"
+  const JACKPOT_CHANCE = 0.015, JACKPOT_X = 10, GEWINN_CHANCE = 0.295, DOPPEL_CHANCE = 0.52;
   let _doubleCount = 0;
   let _spinning = false;
   let _doubleRisk = 0;
@@ -473,10 +477,13 @@ window.startReactionTest = function() {
     win.classList.remove('dim', 'won');
     document.getElementById('sm-cabinet').classList.remove('lose');
 
-    // 35 % Gewinnwahrscheinlichkeit
+    // Ergebnis auswürfeln: Jackpot (🍺🍺🍺), normaler Gewinn (andere Dreier) oder Niete
     let finals;
-    if (Math.random() < 0.35) {
-      const sym = rnd();
+    const r = Math.random();
+    if (r < JACKPOT_CHANCE) {
+      finals = ['🍺', '🍺', '🍺'];
+    } else if (r < JACKPOT_CHANCE + GEWINN_CHANCE) {
+      const sym = SYMBOLS[1 + Math.floor(Math.random() * (SYMBOLS.length - 1))];   // alles außer 🍺
       finals = [sym, sym, sym];
     } else {
       finals = [rnd(), rnd(), rnd()];
@@ -540,19 +547,21 @@ window.startReactionTest = function() {
     const windowEl = document.getElementById('sm-window');
 
     if (win) {
-      const gain = bet * 3;
+      const jackpot = syms[0] === '🍺';
+      const gain = bet * (jackpot ? JACKPOT_X : 3);
       const before = getCoins();
       setCoins(before + gain);
       _doubleRisk = gain;
       resultEl.innerHTML =
+        (jackpot ? '<div class="sm-jackpot">🍺 <span>JACKPOT</span> 🍺</div>' : '') +
         '<div class="sm-msg-win">+' + gain + ' Coins 🪙</div>' +
         '<button id="double-btn" onclick="doubleOrNothing()">🎲 Doppel oder Nichts (' + gain + ' 🪙)</button>' +
         '<div id="double-msg"></div>';
       windowEl.classList.add('won');
       for (let i = 0; i < 3; i++) document.querySelectorAll('#strip-' + i + ' .sm-cell')[1].classList.add('win');
       bulbs('win'); setTimeout(() => bulbs('idle'), 2400);
-      coinRain(Math.min(40, 10 + gain * 2));
-      slotSound('win', { gain });
+      coinRain(jackpot ? 60 : Math.min(40, 10 + gain * 2));
+      slotSound('win', { gain: jackpot ? 40 : gain });
       countCoins(before, before + gain);
       refreshUI(true);
     } else {
@@ -580,7 +589,7 @@ window.startReactionTest = function() {
     if (msgEl) { msgEl.textContent = ''; msgEl.style.color = ''; }
     slotSound('flip');
     setTimeout(() => {
-      const won = Math.random() < 0.5;
+      const won = Math.random() < DOPPEL_CHANCE;
       if (won) {
         const before = getCoins();
         setCoins(before + _doubleRisk);
