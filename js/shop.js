@@ -140,6 +140,7 @@
     equip(kind, id);
     if (typeof slotSound === 'function') slotSound('win', { gain: 10, small: true });
     toast(item.name + ' gehört jetzt dir! 🎉');
+    if (item.tier === 'legendaer' && window.Trophaeen) Trophaeen.award('legendaer', 900);
     renderShop();
   };
 

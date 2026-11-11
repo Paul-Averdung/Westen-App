@@ -140,7 +140,7 @@ window.openMedalGallery = function() {
   const next = MEDAL_STEPS.find(m => !milestonesShown.has(m));
   const fmt = n => String(Math.round(n * 100) / 100).replace('.', ',');
   document.getElementById('mg-progress').textContent =
-    got + ' von ' + MEDAL_STEPS.length + ' Orden · ' + fmt(score) + ' Punkte' +
+    got + ' von ' + MEDAL_STEPS.length + ' Medaillen · ' + fmt(score) + ' Punkte' +
     (next ? ' · noch ' + fmt(Math.max(0, next - score)) + ' bis ' + MEDAL_TIERS[next].name : ' · alle gesammelt! 🏆');
   const prev = next ? (MEDAL_STEPS[MEDAL_STEPS.indexOf(next) - 1] || 0) : 0;
   const pct = next ? Math.min(100, Math.max(0, (score - prev) / (next - prev) * 100)) : 100;
@@ -222,7 +222,7 @@ function showMedalAnimation(milestone) {
     <div class="stage-flash"></div>
     <div class="stage-particles"></div>`;
 
-  titleEl.innerHTML = `<span>${tier.name}-Orden!</span>`;
+  titleEl.innerHTML = `<span>${tier.name}-Medaille!</span>`;
   subEl.textContent = milestone + ' Punkte erreicht — Glückwunsch!';
   overlay.classList.add('active');
 

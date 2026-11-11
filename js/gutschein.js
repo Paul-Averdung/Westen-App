@@ -35,16 +35,17 @@
 
   // Prüft einen Code. Ergebnis: { ok, payload } oder { ok:false, msg }
   async function checkCode(text) {
-    const m = String(text).match(/HK1\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)/);
+    // HK1 = Coins, HK2 = Code mit Wappen (ältere App-Versionen lehnen HK2 sauber ab, statt nur die Coins zu buchen)
+    const m = String(text).match(/HK([12])\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)/);
     if (!m) return { ok: false, msg: 'Kein Gutschein-Code gefunden. Bitte den ganzen Code einfügen.' };
     if (!(window.crypto && crypto.subtle)) return { ok: false, msg: 'Dieser Browser kann Codes leider nicht prüfen.' };
     let valid = false, payload = null;
     try {
       const key = await crypto.subtle.importKey('jwk', PUBLIC_KEY, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
-      valid = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, b64uToBytes(m[2]), new TextEncoder().encode('HK1.' + m[1]));
-      payload = JSON.parse(new TextDecoder().decode(b64uToBytes(m[1])));
+      valid = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, b64uToBytes(m[3]), new TextEncoder().encode('HK' + m[1] + '.' + m[2]));
+      payload = JSON.parse(new TextDecoder().decode(b64uToBytes(m[2])));
     } catch(e) { valid = false; }
-    if (!valid || !payload || !(payload.c > 0) || !payload.i) return { ok: false, msg: 'Dieser Code ist ungültig.' };
+    if (!valid || !payload || !payload.i || !(payload.c > 0 || (m[1] === '2' && payload.t))) return { ok: false, msg: 'Dieser Code ist ungültig.' };
     if (payload.m && payload.m !== memberId()) return { ok: false, msg: 'Dieser Code gehört zu einer anderen Mitgliedsnummer.' };
     if (payload.e && today() > payload.e) return { ok: false, msg: 'Dieser Code ist abgelaufen (gültig bis ' + payload.e.split('-').reverse().join('.') + ').' };
     if (redeemed().includes(payload.i)) return { ok: false, msg: 'Dieser Code wurde auf diesem Handy schon eingelöst.' };
@@ -82,10 +83,12 @@
     const p = res.payload;
     const list = redeemed(); list.push(p.i);
     try { localStorage.setItem(KEY_REDEEMED, JSON.stringify(list)); } catch(e) {}
-    window.slotsAddCoins(p.c);
+    const teile = [];
+    if (p.c > 0) { window.slotsAddCoins(p.c); teile.push('🎁 +' + p.c + ' Coins gutgeschrieben!'); }
+    if (p.t && window.Trophaeen) teile.push('🛡️ Wappen erhalten: ' + Trophaeen.wappen(p.t, p.n));
     if (window.refreshCasino) window.refreshCasino();
     msg.className = 'ok';
-    msg.textContent = '🎁 +' + p.c + ' Coins gutgeschrieben!' + (p.r ? ' (' + p.r + ')' : '');
+    msg.textContent = teile.join(' ') + (p.r ? ' (' + p.r + ')' : '');
     document.getElementById('redeem-input').value = '';
   };
 })();

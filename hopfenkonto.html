@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="css/spiele.css">
 <link rel="stylesheet" href="css/neuigkeiten.css">
 <link rel="stylesheet" href="css/nav.css">
+<link rel="stylesheet" href="css/sammlung.css">
 </head>
 <body>
 <div id="theme-scene" aria-hidden="true"></div>
@@ -141,7 +142,7 @@
       <div class="grand-label">Getränke insgesamt</div>
       <div class="grand-val" id="grand-total">0</div>
     </div>
-    <div id="medals-display" role="button" tabindex="0" aria-label="Orden-Übersicht öffnen" onclick="openMedalGallery()" onkeydown="if(event.key==='Enter') openMedalGallery()"></div>
+    <div id="medals-display" role="button" tabindex="0" aria-label="Medaillen von heute öffnen" onclick="openMedalGallery()" onkeydown="if(event.key==='Enter') openMedalGallery()"></div>
     <button class="reset-btn" id="reset-btn"><span class="reset-btn-fill" id="reset-fill"></span><span class="reset-btn-label">↺ Alles zurücksetzen</span></button>
   </div>
 
@@ -297,6 +298,7 @@
 <script src="js/spiele/roulette.js"></script>
 <script src="js/casino.js"></script>
 <script src="js/verlauf.js"></script>
+<script src="js/sammlung.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/neuigkeiten.js"></script>
 <script src="js/offline.js"></script>
@@ -418,10 +420,11 @@
 <div id="medal-gallery" onclick="if(event.target===this) closeMedalGallery()">
   <div class="mg-panel">
     <button class="mg-close" onclick="closeMedalGallery()" aria-label="Schließen">✕</button>
-    <div class="mg-title">🏅 Deine Orden</div>
+    <div class="mg-title">🏅 Medaillen heute</div>
     <div class="mg-progress" id="mg-progress"></div>
     <div class="mg-bar"><div class="mg-bar-fill" id="mg-bar-fill"></div></div>
     <div class="mg-grid" id="mg-grid"></div>
+    <button class="mg-sammlung" onclick="closeMedalGallery(); openSammlung()">Alle Auszeichnungen in der Sammlung ›</button>
   </div>
 </div>
 
@@ -470,7 +473,7 @@
     <div class="mehr-title">Mehr</div>
     <div class="mehr-links">
       <button onclick="openVerlauf()"><span>📖</span><b>Verlauf</b><i>Deine bisherigen Abende</i></button>
-      <button onclick="openMedalGallery()"><span>🏅</span><b>Orden</b><i>Alle Orden im Überblick</i></button>
+      <button onclick="openSammlung()"><span>🏆</span><b>Sammlung</b><i>Medaillen, Trophäen, Wappen</i></button>
     </div>
     <div class="mehr-label">Einstellungen</div>
     <label style="color:#97C459; font-size:12px; display:block; margin-bottom:4px;">Mitgliedsnummer (für Gutscheine)</label>
@@ -533,6 +536,27 @@
     </div>
   </div>
 </div>
+
+<!-- ── Sammlung (js/sammlung.js, css/sammlung.css) ──────────────────── -->
+<div id="sammlung-overlay">
+  <div class="sa-wrap">
+    <div class="sa-head">
+      <button class="sa-zurueck" onclick="closeSammlung()" aria-label="Zurück">‹ Zurück</button>
+      <div class="sa-titel">Sammlung</div>
+    </div>
+    <div class="sa-summe" id="sa-summe"></div>
+    <div id="sa-inhalt"></div>
+  </div>
+</div>
+<div id="sammlung-detail" onclick="if(event.target===this) sammlungDetailZu()">
+  <div class="sa-d-karte">
+    <button class="sa-d-x" onclick="sammlungDetailZu()" aria-label="Schließen">✕</button>
+    <div class="sa-d-inhalt"></div>
+    <button class="sa-d-zur" onclick="sammlungDetailZu(); openSammlung()">Zur Sammlung ›</button>
+    <button class="sa-d-ok" onclick="sammlungDetailZu()">Weiter</button>
+  </div>
+</div>
+<div id="sammlung-hinweis" onclick="this.classList.remove('show')"></div>
 
 <!-- ── Navigation unten (js/nav.js, css/nav.css) ────────────────────── -->
 <nav id="tabbar" aria-label="Hauptnavigation">

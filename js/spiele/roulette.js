@@ -123,6 +123,7 @@
     let back = 0;
     Object.entries(last).forEach(([k, amt]) => { if (BETS[k].wins(n)) back += amt * BETS[k].pay; });
     back = Math.round(back);
+    if (last['z' + n] > 0 && window.Trophaeen) Trophaeen.award('roulette', 1400);
     history.push(n); spinning = false;
     const total = sum(last);
     bets = {};

@@ -137,6 +137,7 @@
     g.hands.forEach(h => {
       stake += h.bet;
       const t = total(h.cards).t, bj = isBJ(h);
+      if (bj && window.Trophaeen) Trophaeen.award('blackjack', 1400);
       if (bj && !dBJ) { back += h.bet * 3; h.res = 'Blackjack! 2:1'; h.resCls = 'win'; }
       else if (bj && dBJ) { back += h.bet * 2; h.res = 'Beide Blackjack – gewonnen!'; h.resCls = 'win'; }
       else if (t > 21) { h.res = 'über 21'; h.resCls = 'lose'; }

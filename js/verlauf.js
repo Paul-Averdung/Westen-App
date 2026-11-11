@@ -112,7 +112,7 @@
 
   window.deleteVerlaufDay = function(type, idx) {
     if (type === 'current') {
-      showConfirm('Den heutigen Verlauf löschen? Dabei werden auch alle aktuellen Zähler und Orden zurückgesetzt.', function() {
+      showConfirm('Den heutigen Verlauf löschen? Dabei werden auch alle aktuellen Zähler und Medaillen zurückgesetzt.', function() {
         drinkLog = [];
         performReset();
         renderVerlaufList();

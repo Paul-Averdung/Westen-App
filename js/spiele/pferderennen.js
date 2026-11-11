@@ -120,6 +120,7 @@
   };
   function finish() {
     const place = race.result.indexOf(race.pick);   // 0 = Sieger
+    if (place === 0 && window.Trophaeen) Trophaeen.award('pferde', 1400);
     const top = race.result.slice(0, 3);
     gameSound('bell');
     document.getElementById('pr-comment').textContent = HORSES[top[0]].name + ' gewinnt!';

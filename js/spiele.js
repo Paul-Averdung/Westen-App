@@ -91,6 +91,7 @@ window.startReactionTest = function() {
 
   function showResults(times) {
     const total = times.reduce((a,b)=>a+b,0);
+    if (window.Trophaeen) Trophaeen.reaktion(total);
     let rating, col;
     if      (total < 900)  { rating = 'Scharf wie ein Adler 🦅';       col = '#50C878'; }
     else if (total < 1500) { rating = 'Leicht angeheitert 🍺';          col = '#FFD700'; }
@@ -548,6 +549,7 @@ window.startReactionTest = function() {
 
     if (win) {
       const jackpot = syms[0] === '🍺';
+      if (jackpot && window.Trophaeen) Trophaeen.award('jackpot', 2800);
       const gain = bet * (jackpot ? JACKPOT_X : 3);
       const before = getCoins();
       setCoins(before + gain);

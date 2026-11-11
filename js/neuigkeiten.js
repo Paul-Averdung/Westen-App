@@ -35,7 +35,7 @@
       bild: () => `<div class="nw-list">
         <div class="nw-row"><span>🎁</span><div><b>Tages-Coins</b><i>Einmal täglich das Casino öffnen</i></div></div>
         <div class="nw-row"><span>🎟️</span><div><b>Gutscheine</b><i>Einlösen im Casino unter „Gutschein einlösen“</i></div></div>
-        <div class="nw-row"><span>🏅</span><div><b>Außerdem neu</b><i>Neue Orden, Sounds und Mengen-Regler für Shots und Mischgetränke</i></div></div>
+        <div class="nw-row"><span>🏅</span><div><b>Außerdem neu</b><i>Neue Medaillen, Sounds und Mengen-Regler für Shots und Mischgetränke</i></div></div>
       </div>` },
   ];
 
