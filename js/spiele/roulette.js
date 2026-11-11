@@ -130,7 +130,13 @@
     render();
     const msg = document.getElementById('rl-msg');
     const name = n + (n === 0 ? ' Grün' : RED.has(n) ? ' Rot' : ' Schwarz');
-    if (back > 0) { GameShell.pay(back, back > total); msg.className = 'gm-msg win'; msg.textContent = name + ' · +' + back.toLocaleString('de-DE') + ' Coins'; }
-    else { slotSound('lose'); msg.className = 'gm-msg lose'; msg.textContent = name + ' · leider nichts'; }
+    // Gewinnzahl im Kessel und auf dem Tisch hervorheben, getroffene Wetten leuchten
+    const idx = ORDER.indexOf(n), zelle = k => document.querySelector(`.rl-cell[onclick="rlBet('${k}')"]`);
+    const fach = document.querySelectorAll('#rl-rotor .rl-w-pocket')[idx]; if (fach) fach.classList.add('rl-w-win');
+    if (zelle('z' + n)) zelle('z' + n).classList.add('rl-won');
+    Object.keys(last).forEach(k => { if (BETS[k].wins(n) && zelle(k)) zelle(k).classList.add('rl-hit'); });
+    const nachbarn = [ORDER[(idx + 36) % 37], ORDER[(idx + 1) % 37]], knapp = nachbarn.some(z => last['z' + z] > 0);
+    if (back > 0) { GameShell.pay(back, back > total, { einsatz: total, von: '.rl-wheel' }); msg.className = 'gm-msg ' + (back > total ? 'win' : 'info'); msg.textContent = name + ' · +' + back.toLocaleString('de-DE') + ' Coins'; }
+    else { GameShell.lose('.rl-wheel'); msg.className = 'gm-msg lose'; msg.textContent = name + (knapp ? ' · knapp daneben!' : ' · leider nichts'); }
   }
 })();

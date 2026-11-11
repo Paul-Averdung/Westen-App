@@ -552,6 +552,7 @@ window.startReactionTest = function() {
       if (jackpot && window.Trophaeen) Trophaeen.award('jackpot', 2800);
       const gain = bet * (jackpot ? JACKPOT_X : 3);
       if (window.Rekorde) Rekorde.gewinn(gain, 'Hopfen-Slots');
+      if (window.Effekte) Effekte.gewinn({ betrag: gain, einsatz: bet, spiel: 'Hopfen-Slots', nurBanner: true });
       const before = getCoins();
       setCoins(before + gain);
       _doubleRisk = gain;

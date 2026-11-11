@@ -30,7 +30,7 @@
   function handHTML(h, i) {
     const tt = total(h.cards);
     const lbl = isBJ(h) ? 'Blackjack!' : tt.t > 21 ? tt.t + ' – über 21' : (tt.soft && tt.t <= 21 && tt.t !== 21 ? (tt.t - 10) + ' / ' + tt.t : tt.t);
-    return `<div class="bj-hand ${g.state === 'spieler' && i === g.cur ? 'cur' : ''}">
+    return `<div class="bj-hand ${g.state === 'spieler' && i === g.cur ? 'cur' : ''}${g.state === 'ende' && isBJ(h) ? ' bj-gold' : ''}">
       <div class="bj-cards">${h.cards.map((c, k) => GameShell.cardHTML(c, k >= h.shown ? 'deal' : '')).join('')}</div>
       <div class="bj-total">${lbl}${h.doubled ? ' · verdoppelt' : ''}${h.res ? ' · <b class="' + h.resCls + '">' + h.res + '</b>' : ''}</div></div>`;
   }
@@ -133,7 +133,7 @@
   function settle() {
     g.state = 'ende';
     const d = total(g.dealer).t, dBJ = g.dealer.length === 2 && d === 21;
-    let back = 0, stake = 0;
+    let back = 0, stake = 0, knapp = false;
     g.hands.forEach(h => {
       stake += h.bet;
       const t = total(h.cards).t, bj = isBJ(h);
@@ -144,13 +144,13 @@
       else if (dBJ) { h.res = 'Bank hat Blackjack'; h.resCls = 'lose'; }
       else if (d > 21 || t > d) { back += h.bet * 2; h.res = 'Gewonnen'; h.resCls = 'win'; }
       else if (t === d) { back += h.bet * 2; h.res = 'Gleichstand ' + t + ' – gewonnen!'; h.resCls = 'win'; }
-      else { h.res = 'Verloren'; h.resCls = 'lose'; }
+      else { h.res = 'Verloren'; h.resCls = 'lose'; if (t >= 20 || d - t === 1) knapp = true; }
     });
     back = Math.floor(back);
     const net = back - stake;
-    g.msg = net > 0 ? '+' + net.toLocaleString('de-DE') + ' Coins' : net === 0 ? 'Einsatz zurück' : 'Bank gewinnt';
+    g.msg = net > 0 ? '+' + net.toLocaleString('de-DE') + ' Coins' : net === 0 ? 'Einsatz zurück' : knapp ? 'Knapp! Bank gewinnt' : 'Bank gewinnt';
     g.msgCls = net > 0 ? 'win' : net === 0 ? 'info' : 'lose';
-    if (back > 0) GameShell.pay(back, net > 0); else slotSound('lose');
+    if (back > 0) GameShell.pay(back, net > 0, { einsatz: stake, von: '.bj-hands' }); else GameShell.lose('.bj-hands');
     render();
   }
 })();

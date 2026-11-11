@@ -22,7 +22,8 @@
       document.getElementById('game-overlay').classList.remove('open');
       openCasino();
     },
-    coins() { document.getElementById('game-coins').textContent = Coins.get().toLocaleString('de-DE'); },
+    coins() { const el = document.getElementById('game-coins'); el.dataset.fx = ''; el.textContent = Coins.get().toLocaleString('de-DE'); },
+    titel() { return document.querySelector('#game-overlay .gm-title').textContent.replace(/^[^A-Za-zÄÖÜ]+/, '').trim(); },
     // Einsatz-Regler (HTML) und Wert
     betHTML(id, val) {
       return `<div class="gm-bet"><span>Einsatz</span>
@@ -35,7 +36,21 @@
     clamp(id) { const el = document.getElementById(id); if (parseInt(el.value) > MAX_BET) el.value = MAX_BET; },
     // Einsatz abbuchen; false wenn zu wenig Coins
     take(n) { const ok = Coins.spend(n); GameShell.coins(); if (!ok) GameShell.toast('Nicht genug Coins'); return ok; },
-    pay(n, big) { if (n <= 0) return; if (window.Rekorde) Rekorde.gewinn(n, document.querySelector('#game-overlay .gm-title').textContent.replace(/^[^A-Za-zÄÖÜ]+/, '').trim()); big ? Coins.add(n) : Coins.credit(n); GameShell.coins(); setTimeout(GameShell.coins, 1500); },
+    // Auszahlung n (inkl. Einsatz). fx = { einsatz, von } → Münzen fliegen von dort ins Konto, Banner je nach Höhe (js/effekte.js)
+    pay(n, big, fx) {
+      if (n <= 0) return;
+      if (window.Rekorde) Rekorde.gewinn(n, GameShell.titel());
+      if (window.Effekte && fx) {
+        const vor = Coins.get();
+        Coins.credit(n);
+        Effekte.gewinn({ betrag: n, einsatz: fx.einsatz, von: fx.von, vor, spiel: GameShell.titel() });
+        setTimeout(() => { if (!document.getElementById('game-coins').dataset.fx) GameShell.coins(); }, 2600);
+        return;
+      }
+      big ? Coins.add(n) : Coins.credit(n); GameShell.coins(); setTimeout(GameShell.coins, 1500);
+    },
+    // Verloren: kurzes Wackeln und leiser Ton statt des alten Verlier-Sounds
+    lose(von) { if (window.Effekte) Effekte.verlust({ von, spiel: GameShell.titel() }); else slotSound('lose'); },
     toast(text) {
       const t = document.getElementById('game-toast');
       t.textContent = text; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');

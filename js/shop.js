@@ -138,10 +138,10 @@
     if (!Coins.spend(price)) { toast('Nicht genug Coins'); return; }
     const o = owned(); o[kind].push(id); ls.set(K_OWNED, JSON.stringify(o));
     equip(kind, id);
-    if (typeof slotSound === 'function') slotSound('win', { gain: 10, small: true });
-    toast(item.name + ' gehört jetzt dir! 🎉');
-    if (item.tier === 'legendaer' && window.Trophaeen) Trophaeen.award('legendaer', 900);
+    const trophaee = () => { if (item.tier === 'legendaer' && window.Trophaeen) Trophaeen.award('legendaer', 300); };
     renderShop();
+    if (window.Effekte) Effekte.kauf({ bild: thumb(kind, id), name: item.name, stufe: item.tier, stufeName: TIER[item.tier] }, trophaee);
+    else { if (typeof slotSound === 'function') slotSound('win', { gain: 10, small: true }); toast(item.name + ' gehört jetzt dir! 🎉'); trophaee(); }
   };
 
   function toast(text) {

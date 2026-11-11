@@ -1,0 +1,87 @@
+/* ── Effekte: Gewinn-Momente, Verlieren, Kauf-Enthüllung (js/effekte.js) ─── */
+#fx-ebene { position: fixed; inset: 0; z-index: 12500; pointer-events: none; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+
+/* Fliegende Münzen */
+.fx-muenze { position: absolute; width: 0; height: 0; }
+.fx-muenze i { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #FFF6C8, #FFD23A 45%, #C8860A 100%); border: 1.5px solid #8a5a00; box-shadow: 0 2px 4px rgba(0,0,0,0.45), inset 0 0 0 2.5px rgba(255,255,255,0.25); }
+/* Coin-Anzeige pulsiert, wenn Münzen ankommen */
+.fx-puls { animation: fxPuls 0.5s cubic-bezier(.3,1.6,.5,1); }
+@keyframes fxPuls { 0% { transform: scale(1); } 40% { transform: scale(1.18); box-shadow: 0 0 14px rgba(255,210,58,0.8); } 100% { transform: scale(1); } }
+
+/* Banner */
+.fx-banner { position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; white-space: nowrap; transition: filter 0.25s ease; }
+.fx-banner.weg { filter: opacity(0); }
+.fx-banner b { font-weight: 900; font-variant-numeric: tabular-nums; }
+.fx-banner em { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 3px 10px 3px 6px; border-radius: 12px; font-style: normal; font-weight: 800; color: #FFE9A8; background: rgba(40,14,0,0.85); border: 1px solid #FF7A1A; }
+/* Stufe 1: Zahl ploppt an Ort und Stelle auf und steigt */
+.fx-gewinn { animation: fxSteig 1.1s cubic-bezier(.2,.9,.3,1) both; }
+.fx-gewinn b { font-size: 30px; color: #8ff5a8; text-shadow: 0 2px 0 #0b3018, 0 0 12px rgba(111,224,141,0.6); }
+@keyframes fxSteig { 0% { transform: translate(-50%, -20%) scale(0.3); opacity: 0; } 18% { transform: translate(-50%, -50%) scale(1.25); opacity: 1; } 32% { transform: translate(-50%, -55%) scale(1); } 100% { transform: translate(-50%, -120%) scale(1); opacity: 1; } }
+/* Stufe 2 + 3: goldenes Banner in der Mitte */
+.fx-gross, .fx-riesen { padding: 12px 26px 14px; border-radius: 18px; border: 2px solid #FFE27A; background: linear-gradient(180deg, rgba(74,46,0,0.96), rgba(30,16,0,0.96)); box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 26px rgba(255,210,58,0.45), inset 0 1px 0 rgba(255,255,255,0.25); animation: fxBanner 0.5s cubic-bezier(.2,1.5,.4,1) both; }
+.fx-gross span, .fx-riesen span { font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #FFE9A8; }
+.fx-gross b { font-size: 40px; line-height: 1.05; background: linear-gradient(180deg, #FFF6C8, #FFD23A 55%, #E09B12); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 0 #5a2a00); }
+.fx-riesen { padding: 16px 30px 18px; border-width: 3px; box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 44px rgba(255,210,58,0.75), inset 0 1px 0 rgba(255,255,255,0.3); }
+.fx-riesen span { font-size: 15px; color: #fff; }
+.fx-riesen b { font-size: 54px; line-height: 1.05; background: linear-gradient(180deg, #ffffff, #FFE27A 45%, #FF9A1F); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 #5a2a00); animation: fxGlanz 0.9s ease-in-out infinite alternate; }
+@keyframes fxBanner { 0% { transform: translate(-50%, -50%) scale(0.2) rotate(-6deg); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+@keyframes fxGlanz { from { filter: drop-shadow(0 3px 0 #5a2a00) brightness(1); } to { filter: drop-shadow(0 3px 0 #5a2a00) brightness(1.25); } }
+
+.fx-konfetti { position: absolute; width: 9px; height: 13px; border-radius: 2px; }
+
+/* Startpunkt leuchtet bei großen Gewinnen, wackelt beim Verlieren */
+.fx-leuchten { animation: fxLeuchten 1.2s ease; }
+@keyframes fxLeuchten { 0%, 100% { filter: none; } 30% { filter: brightness(1.35) drop-shadow(0 0 14px rgba(255,210,58,0.9)); } }
+.fx-wackeln { animation: fxWackeln 0.32s ease; }
+@keyframes fxWackeln { 0%, 100% { translate: 0 0; } 20% { translate: -5px 0; } 45% { translate: 4px 0; } 70% { translate: -3px 0; } 88% { translate: 2px 0; } }
+/* Verlieren ohne Rot */
+.gm-msg.lose { color: #b9c6aa; }
+
+/* ── Höhepunkte je Spiel ─────────────────────────────────────────────────── */
+/* Blackjack: 21 mit zwei Karten glänzt golden */
+.bj-hand.bj-gold .pc { animation: fxGold 1.3s ease 2; box-shadow: 0 0 0 2px #FFD23A, 0 0 16px rgba(255,210,58,0.85); }
+@keyframes fxGold { 0%, 100% { filter: none; } 50% { filter: brightness(1.18) sepia(0.35) saturate(1.6); } }
+/* Roulette: Gewinnzahl im Kessel und auf dem Tisch, getroffene Wetten */
+.rl-w-pocket.rl-w-win { stroke: #FFE27A; stroke-width: 1.4; animation: fxPocket 0.45s ease-in-out 6 alternate; }
+@keyframes fxPocket { from { filter: brightness(1); } to { filter: brightness(2.3); } }
+.rl-cell.rl-won { outline: 2.5px solid #FFE27A; outline-offset: -2px; z-index: 2; animation: fxZelle 0.5s ease-in-out 5 alternate; }
+.rl-cell.rl-hit { box-shadow: inset 0 0 0 3px #6fe08d, 0 0 14px rgba(111,224,141,0.85); z-index: 2; }
+@keyframes fxZelle { from { box-shadow: 0 0 0 rgba(255,226,122,0); } to { box-shadow: 0 0 16px rgba(255,226,122,0.95); } }
+/* Pferderennen: Zeitlupe auf den letzten Metern, Kranz für den Sieger */
+.pr-course.pr-zeitlupe { box-shadow: inset 0 0 0 2px rgba(255,226,122,0.8), inset 0 0 40px rgba(0,0,0,0.55); transition: box-shadow 0.25s; }
+.pr-runner.pr-sieger::before { content: ''; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 2.5px solid #FFD23A; box-shadow: 0 0 12px rgba(255,210,58,0.9), inset 0 0 8px rgba(255,210,58,0.5); animation: fxKranz 0.7s ease-in-out infinite alternate; pointer-events: none; }
+@keyframes fxKranz { from { transform: scale(0.92); opacity: 0.75; } to { transform: scale(1.08); opacity: 1; } }
+/* Hoch oder Tief: Serien-Flamme, Topf pulsiert mit jeder richtigen Runde stärker */
+.ht-serie { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 2px 10px 2px 5px; border-radius: 12px; font-size: 12px; font-weight: 800; color: #FFE9A8; background: rgba(40,14,0,0.8); border: 1px solid #FF7A1A; animation: fxSerie 0.4s cubic-bezier(.2,1.6,.4,1); }
+.ht-serie.s3 { font-size: 13px; } .ht-serie.s4 { font-size: 14.5px; } .ht-serie.s5 { font-size: 16px; box-shadow: 0 0 12px rgba(255,122,26,0.6); } .ht-serie.s6 { font-size: 17.5px; box-shadow: 0 0 18px rgba(255,122,26,0.9); }
+@keyframes fxSerie { from { transform: scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+.ht-pot.hot1 b, .ht-pot.hot2 b, .ht-pot.hot3 b, .ht-pot.hot4 b { animation: fxTopf 1.1s ease-in-out infinite alternate; }
+.ht-pot.hot2 b { animation-duration: 0.9s; } .ht-pot.hot3 b { animation-duration: 0.7s; font-size: 29px; } .ht-pot.hot4 b { animation-duration: 0.5s; font-size: 32px; }
+@keyframes fxTopf { from { text-shadow: 0 2px 0 #3a2400; transform: scale(1); } to { text-shadow: 0 2px 0 #3a2400, 0 0 16px rgba(255,210,58,0.9); transform: scale(1.06); } }
+
+/* ── Kauf-Enthüllung im Shop ─────────────────────────────────────────────── */
+#fx-kauf { --farbe: #b9c2b0; position: fixed; inset: 0; z-index: 13500; display: flex; align-items: center; justify-content: center; padding: 18px;
+  background: rgba(2,8,1,0.88); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); font-family: -apple-system, BlinkMacSystemFont, sans-serif; animation: mgIn 0.2s ease; transition: opacity 0.2s; -webkit-tap-highlight-color: transparent; }
+#fx-kauf.weg { opacity: 0; }
+#fx-kauf.t-selten { --farbe: #5fb6ff; } #fx-kauf.t-episch { --farbe: #c38bff; } #fx-kauf.t-legendaer { --farbe: #ffb43c; }
+.fxk-karte { width: 100%; max-width: 320px; text-align: center; }
+.fxk-kopf { color: var(--farbe); font-size: 13px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 18px; animation: fxEin 0.4s ease 0.15s both; }
+.fxk-buehne { position: relative; height: 210px; display: flex; align-items: center; justify-content: center; }
+.fxk-strahlen { position: absolute; left: 50%; top: 50%; width: 420px; height: 420px; margin: -210px 0 0 -210px; border-radius: 50%; opacity: 0.55;
+  background: repeating-conic-gradient(from 0deg, var(--farbe) 0deg 9deg, transparent 9deg 24deg);
+  -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 62%); mask-image: radial-gradient(circle, #000 12%, transparent 62%); animation: fxDreh 14s linear infinite; }
+@keyframes fxDreh { to { transform: rotate(360deg); } }
+.fxk-bild { position: relative; width: 190px; border-radius: 16px; padding: 8px; background: #102504; border: 2px solid var(--farbe); box-shadow: 0 0 26px color-mix(in srgb, var(--farbe) 60%, transparent), 0 12px 26px rgba(0,0,0,0.6); animation: fxEnthuellen 0.75s cubic-bezier(.2,1.4,.4,1) both; }
+.fxk-bild .sh-thumb, .fxk-bild .cos-thumb { height: 128px; }
+@keyframes fxEnthuellen { 0% { transform: perspective(600px) rotateY(180deg) scale(0.3); opacity: 0; } 60% { opacity: 1; } 100% { transform: perspective(600px) rotateY(0) scale(1); opacity: 1; } }
+.fxk-name { margin-top: 14px; color: #EFC93D; font-size: 22px; font-weight: 900; animation: fxEin 0.4s ease 0.45s both; }
+.fxk-stufe { margin-top: 2px; color: var(--farbe); font-size: 13px; font-weight: 800; animation: fxEin 0.4s ease 0.5s both; }
+.fxk-info { margin: 8px 0 18px; color: #C0DD97; font-size: 14px; animation: fxEin 0.4s ease 0.55s both; }
+.fxk-ok { width: 100%; padding: 13px 0; border-radius: 12px; border: none; cursor: pointer; background: linear-gradient(180deg, #FFE27A, #E8B923); color: #2a1c00; font-size: 16px; font-weight: 800; font-family: inherit; box-shadow: 0 3px 0 #8a6a10; animation: fxEin 0.4s ease 0.6s both; }
+@keyframes fxEin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-banner, .fxk-bild, .fxk-strahlen, .fx-riesen b, .bj-hand.bj-gold .pc, .rl-w-pocket.rl-w-win, .rl-cell.rl-won, .pr-runner.pr-sieger::before, .ht-pot b { animation: none !important; }
+}
+.bj-total b.lose, .gm-msg .lose { color: #b9c6aa; }

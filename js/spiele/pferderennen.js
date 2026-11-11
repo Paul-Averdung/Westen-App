@@ -99,13 +99,20 @@
     race.result = res.order;
     render();
     const frames = res.frames, TAKT = 1000 / 26;                 // 26 Takte pro Sekunde
-    const dur = frames.length * TAKT;
+    // Zeitlupe auf den letzten Metern, bis das erste Pferd im Ziel ist
+    const LUPE_AB = ZIEL * 0.9, LUPE_TEMPO = 0.4;
+    const inLupe = pos => { const m = Math.max(...pos); return m >= LUPE_AB && m < ZIEL; };
+    const dur = frames.length * TAKT + frames.filter(inLupe).length * TAKT * (1 / LUPE_TEMPO - 1);
     gameSound('startShot'); gameSound('gallop', { dur: dur / 1000 });
-    const t0 = performance.now(); let leader = -1;
+    let leader = -1, fPos = 0, zuletzt = performance.now();
+    const bahn = document.querySelector('.pr-course');
     const lanes = HORSES.map((h, i) => document.getElementById('pr-r' + i));
     const comment = document.getElementById('pr-comment');
     function frame(now) {
-      const f = Math.max(0, Math.min(frames.length - 1, (now - t0) / TAKT)), a = Math.floor(f), b = Math.min(frames.length - 1, a + 1), k = f - a;
+      const lupe = inLupe(frames[Math.min(frames.length - 1, Math.floor(fPos))]);
+      fPos = Math.min(frames.length - 1, fPos + Math.max(0, now - zuletzt) / TAKT * (lupe ? LUPE_TEMPO : 1)); zuletzt = now;
+      if (bahn) bahn.classList.toggle('pr-zeitlupe', lupe);
+      const f = fPos, a = Math.floor(f), b = Math.min(frames.length - 1, a + 1), k = f - a;
       const pos = frames[a].map((p, i) => p + (frames[b][i] - p) * k);
       pos.forEach((p, i) => { lanes[i].style.left = 'calc(' + Math.min(100, p) / ZIEL + ' * (100% - 34px))'; });
       const lead = pos.indexOf(Math.max(...pos));
@@ -124,14 +131,15 @@
     const top = race.result.slice(0, 3);
     gameSound('bell');
     document.getElementById('pr-comment').textContent = HORSES[top[0]].name + ' gewinnt!';
+    const sieger = document.getElementById('pr-r' + top[0]); if (sieger) sieger.classList.add('pr-sieger');
     let win = 0;
     if (place <= 2) win = Math.floor(race.bet * race.odds[race.pick][place]);
-    if (win > 0) GameShell.pay(win, place === 0 || win > race.bet); else slotSound('lose');
+    if (win > 0) GameShell.pay(win, place === 0 || win > race.bet, { einsatz: race.bet, von: '#pr-r' + race.pick }); else GameShell.lose('#pr-r' + race.pick);
     const medal = ['🥇', '🥈', '🥉'];
     document.getElementById('pr-result').innerHTML = `
       <div class="pr-podium">${top.map((i, k) => `<div class="${i === race.pick ? 'mine' : ''}">${medal[k]} <span class="pr-nr" style="background:${HORSES[i].c}">${i + 1}</span> ${HORSES[i].name}</div>`).join('')}</div>
       <div class="gm-msg ${win > race.bet ? 'win' : win > 0 ? 'info' : 'lose'}">${place <= 2
-        ? `Dein Pferd wurde ${place + 1}.! Auszahlung ${win.toLocaleString('de-DE')} Coins` + (win > race.bet ? ` (+${(win - race.bet).toLocaleString('de-DE')})` : win === race.bet ? ' (Einsatz zurück)' : ` (${(win - race.bet).toLocaleString('de-DE')})`)
+        ? `${place === 1 && win <= race.bet ? 'Knapp! ' : ''}Dein Pferd wurde ${place + 1}.! Auszahlung ${win.toLocaleString('de-DE')} Coins` + (win > race.bet ? ` (+${(win - race.bet).toLocaleString('de-DE')})` : win === race.bet ? ' (Einsatz zurück)' : ` (${(win - race.bet).toLocaleString('de-DE')})`)
         : `Dein Pferd wurde ${place + 1}. – leider nichts`}</div>
       <button class="gm-btn" onclick="pferdeNochmal()">Nächstes Rennen</button>`;
   }

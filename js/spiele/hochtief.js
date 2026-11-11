@@ -41,7 +41,8 @@
         <b>${label}</b><span>${c.p ? Math.round(c.p * 100) + ' % Chance' : 'unmöglich'}</span><em>${c.p ? '×' + GameShell.fmt(c.m) + ' (+' + Math.round((c.m - 1) * 100) + ' %)' : '–'}</em></button>`;
     root.innerHTML = `
       <div class="ht-table">
-        <div class="ht-pot"><span>Topf</span><b>🪙 ${Math.floor(st.pot).toLocaleString('de-DE')}</b><small>Einsatz ${st.bet} · ${st.steps} Treffer</small></div>
+        <div class="ht-pot hot${Math.min(4, st.steps)}"><span>Topf</span><b>🪙 ${Math.floor(st.pot).toLocaleString('de-DE')}</b><small>Einsatz ${st.bet} · ${st.steps} Treffer</small>
+          ${st.steps >= 2 && window.Effekte ? `<div class="ht-serie s${Math.min(6, st.steps)}">${Effekte.FLAMME}${st.steps} in Folge</div>` : ''}</div>
         <div class="ht-cards">${GameShell.cardHTML(st.card, 'big ' + (st.anim || ''))}</div>
         <div class="gm-msg ${st.msgCls || 'info'}">${st.msg || ''}</div>
         <div class="ht-hist">${st.hist.map(c => GameShell.cardHTML(c, 'small')).join('')}</div>
@@ -76,9 +77,10 @@
       st.msg = 'Richtig! +' + Math.round((c.m - 1) * 100) + ' %'; st.msgCls = 'win';
       if (st.pot >= TOPF_MAX) { st.pot = TOPF_MAX; st.card = next; st.anim = 'flip'; render(); setTimeout(() => cashout('Topf voll – automatisch ausgezahlt!'), 700); return; }
     } else {
+      const knapp = Math.abs(next.v - st.card.v) === 1;
       st.active = false; st.card = next; st.anim = 'flip';
-      st.msg = 'Leider falsch – der Topf ist weg'; st.msgCls = 'lose';
-      slotSound('lose'); render(); return;
+      st.msg = (knapp ? 'Knapp daneben' : 'Leider falsch') + ' – der Topf ist weg'; st.msgCls = 'lose';
+      GameShell.lose('.ht-cards'); render(); return;
     }
     st.card = next; st.anim = 'flip';
     render();
@@ -87,7 +89,7 @@
     if (!st || !st.active || !st.steps) return;
     const win = Math.floor(st.pot);
     st.active = false;
-    GameShell.pay(win, true);
+    GameShell.pay(win, true, { einsatz: st.bet, von: '.ht-cards' });
     st.msg = (text || 'Ausgezahlt!') + ' +' + win.toLocaleString('de-DE') + ' Coins'; st.msgCls = 'win';
     render();
   }
