@@ -22,16 +22,16 @@
       text: 'Es hat sich einiges getan: ein Casino, ein Shop und neue Designs für die ganze App. Wisch einmal durch – dauert keine halbe Minute.',
       bild: () => `<div class="nw-hero"><img src="img/wappen.png" alt=""><div class="nw-hero-icons"><span>🎰</span><span>🛍️</span><span>🎨</span></div></div>` },
     { kicker: 'Casino', title: 'Fünf Spiele, ein Casino',
-      text: 'Hopfen-Slots, Hoch oder Tief, Pferderennen, Blackjack und Roulette. Gespielt wird um Coins – kein echtes Geld. Zum Start gibt es 100 Coins, danach jeden Tag 30 dazu.',
+      text: 'Hopfen-Slots, Hoch oder Tief, Pferderennen, Blackjack und Roulette. Zum Start gibt es 100 Coins, danach jeden Tag 30 dazu.',
       bild: () => `<div class="nw-games">${CASINO_GAMES.map(g => `<div class="nw-game" style="background:${g.bg}"><div class="nw-game-icon">${g.icon}</div><div class="nw-game-name">${g.name}</div></div>`).join('')}</div>` },
     { kicker: 'Shop', title: 'Gib deine Coins aus',
-      text: 'Kartenrücken, Tischfilz, Rennbahnen, Renntiere, Roulette-Kessel und Automaten-Skins. Alles lässt sich vor dem Kauf kurz anprobieren.',
+      text: 'Kartenrücken, Tischfilz, Rennbahnen, Renntiere, Roulette-Kessel und Automaten-Skins.',
       bild: () => raster([['racer', 'dino'], ['cardback', 'gold'], ['skins', 'neon'], ['wheel', 'neon']]) },
     { kicker: 'Themes', title: 'Die App in deinem Look',
       text: 'Von Nachtblau bis Bierzelt bekommt die ganze App ein neues Design. Manche Themes gibt es nur zur passenden Zeit – Karneval ab dem 11.11., Schützenfest rund um Fronleichnam.',
       bild: () => raster([['themes', 'bierzelt'], ['themes', 'karneval'], ['themes', 'abendrot'], ['themes', 'gold']]) },
     { kicker: 'Coins', title: 'So kommst du an Coins',
-      text: 'Jeden Tag gibt es 30 Coins geschenkt, den Rest holst du dir im Casino. Wer sich für den Verein einsetzt, kann außerdem einen Coin-Gutschein bekommen.',
+      text: 'Jeden Tag gibt es 30 Coins geschenkt, den Rest holst du dir im Casino.',
       bild: () => `<div class="nw-list">
         <div class="nw-row"><span>🎁</span><div><b>Tages-Coins</b><i>Einmal täglich das Casino öffnen</i></div></div>
         <div class="nw-row"><span>🎟️</span><div><b>Gutscheine</b><i>Einlösen im Casino unter „Gutschein einlösen“</i></div></div>
