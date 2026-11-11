@@ -2,7 +2,7 @@
 // ein Fenster mit Kopfzeile (Titel, Coins, zurück ins Casino) und ein Einsatz-Regler.
 // Hinweis: Alle Dateien in js/ teilen sich einen Gültigkeitsbereich.
 (function() {
-  const MAX_BET = 50;
+  const MAX_BET = 100;
   let _onClose = null;
   window.GameShell = {
     MAX_BET,

@@ -1,11 +1,11 @@
-// Roulette – europäisch, eine Null. Chips 1/5/10/25 auf das Tableau setzen (gesamt max. 50 pro Dreh).
+// Roulette – europäisch, eine Null. Chips 1/5/10/25 auf das Tableau setzen (gesamt max. 100 pro Dreh).
 // Auszahlung (inkl. Einsatz, erhöht zugunsten der Spieler, ca. 111–112 %):
 // Zahl 41×, Dutzend/Kolonne 3,45×, Rot/Schwarz, Gerade/Ungerade, 1–18/19–36 je 2,3×. Summe wird gerundet.
 // Fällt die 0, verlieren alle Außenwetten.
 (function() {
   const ORDER = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
   const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
-  const MAX_TOTAL = 50, CHIPS = [1, 5, 10, 25];
+  const MAX_TOTAL = 100, CHIPS = [1, 5, 10, 25];
   // Wett-Arten: Schlüssel → { label, payout (Faktor inkl. Einsatz), wins(n) }
   const BETS = {
     rot:    { label: 'Rot',      pay: 2.3, wins: n => RED.has(n) },

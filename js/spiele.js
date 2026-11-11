@@ -288,7 +288,7 @@ window.startReactionTest = function() {
   const SYMBOLS = ['🍺','🎩','🦅','🌭','🪶','🍟','🥃'];
   const REEL_TIMES = [1500, 2000, 2550];   // Dauer bis zum Stopp je Walze (ms, ab Walzenstart)
   const LEVER_MS = 300;                    // Walzen starten, wenn der Hebel unten ist
-  const MAX_BET = 50;                      // höchster Einsatz pro Dreh (schützt die Shop-Preise)
+  const MAX_BET = 100;                     // höchster Einsatz pro Dreh (schützt die Shop-Preise)
   const MAX_DOUBLE = 3;                    // höchstens so oft hintereinander "Doppel oder Nichts"
   const JACKPOT_CHANCE = 0.02, JACKPOT_X = 10, GEWINN_CHANCE = 0.31, DOPPEL_CHANCE = 0.55;
   let _doubleCount = 0;

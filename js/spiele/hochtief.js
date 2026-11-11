@@ -6,7 +6,7 @@
 // Ass ist hoch (2 … 10, B, D, K, A). Jede Karte wird unabhängig gezogen.
 (function() {
   const RUECKFLUSS = 1.10;
-  const TOPF_MAX = 1000;
+  const TOPF_MAX = 2000;
   const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'B', 'D', 'K', 'A'];   // Wert = Index + 2
   const SUITS = ['♠', '♥', '♦', '♣'];
   let st = null;
