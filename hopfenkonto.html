@@ -20,6 +20,26 @@
 <link rel="stylesheet" href="css/profil.css">
 </head>
 <body>
+<!-- ── Startbildschirm (Optik am Ende von css/style.css) – steht ganz oben, damit er sofort sichtbar ist ── -->
+<div id="startbild" aria-hidden="true">
+  <img src="img/wappen.png" alt="">
+  <b>Hopfenkonto</b>
+  <i>Jungschützen seit '91</i>
+  <span><u></u></span>
+</div>
+<script>
+  // Bleibt mindestens eine Sekunde stehen und blendet aus, sobald die App geladen ist. Antippen überspringt.
+  (function() {
+    var el = document.getElementById('startbild'), t0 = Date.now(), fertig = false;
+    function weg(sofort) {
+      if (fertig) return; fertig = true;
+      setTimeout(function() { el.classList.add('weg'); setTimeout(function() { el.remove(); }, 450); }, sofort ? 0 : Math.max(0, 1000 - (Date.now() - t0)));
+    }
+    window.addEventListener('load', function() { weg(false); });
+    el.addEventListener('click', function() { weg(true); });
+    setTimeout(function() { weg(true); }, 4000);   // Sicherheitsnetz, falls etwas beim Laden hängt
+  })();
+</script>
 <div id="theme-scene" aria-hidden="true"></div>
 <div id="beer-fill"></div>
 <div class="app">
